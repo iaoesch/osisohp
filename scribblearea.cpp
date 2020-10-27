@@ -1,0 +1,525 @@
+/****************************************************************************
+**
+** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+** Contact: http://www.qt-project.org/legal
+**
+** This file is part of the examples of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:BSD$
+** You may use this file under the terms of the BSD license as follows:
+**
+** "Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions are
+** met:
+**   * Redistributions of source code must retain the above copyright
+**     notice, this list of conditions and the following disclaimer.
+**   * Redistributions in binary form must reproduce the above copyright
+**     notice, this list of conditions and the following disclaimer in
+**     the documentation and/or other materials provided with the
+**     distribution.
+**   * Neither the name of Digia Plc and its Subsidiary(-ies) nor the names
+**     of its contributors may be used to endorse or promote products derived
+**     from this software without specific prior written permission.
+**
+**
+** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+** "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+** LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+** A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+** OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+** SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+** LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+** OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+#include <QtWidgets>
+#ifndef QT_NO_PRINTER
+#include <QPrinter>
+#include <QPrintDialog>
+#endif
+
+#include "scribblearea.h"
+
+
+//! [0]
+ScribbleArea::ScribbleArea(QWidget *parent)
+    : QWidget(parent)
+{
+    setAttribute(Qt::WA_StaticContents);
+    modified = false;
+    scribbling = false;
+    LastDrawingValid = false;
+    Scrolling = false;
+    myPenWidth = 3;
+    myPenColor = Qt::blue;
+    connect(&MyTimer, SIGNAL(timeout()), this, SLOT(timeout()));
+    MyTimer.setSingleShot(true);
+
+    CopyTimeout = 500;
+    GestureTimeout = 500;
+    SelectTimeout = 500;
+
+
+
+}
+//! [0]
+
+//! [1]
+bool ScribbleArea::openImage(const QString &fileName)
+//! [1] //! [2]
+{
+    QImage loadedImage;
+    if (!loadedImage.load(fileName))
+        return false;
+
+    QSize newSize = loadedImage.size().expandedTo(size());
+    resizeImage(&loadedImage, newSize);
+    image = loadedImage;
+    modified = false;
+    update();
+    return true;
+}
+//! [2]
+
+//! [3]
+bool ScribbleArea::saveImage(const QString &fileName, const char *fileFormat)
+//! [3] //! [4]
+{
+
+    if (image.save(fileName, fileFormat)) {
+        modified = false;
+        return true;
+    } else {
+        return false;
+    }
+}
+//! [4]
+
+//! [5]
+void ScribbleArea::setPenColor(const QColor &newColor)
+//! [5] //! [6]
+{
+    myPenColor = newColor;
+}
+//! [6]
+
+void ScribbleArea::HandleToolAction(QAction *action)
+{
+    if (action->iconText() == "Red") {
+        myPenColor = Qt::red;
+    } else if (action->iconText() == "Blue") {
+        myPenColor = Qt::blue;
+    } else if (action->iconText() == "Green") {
+        myPenColor = Qt::green;
+    } else if (action->iconText() == "Yellow") {
+        myPenColor = Qt::yellow;
+    } else if (action->iconText() == "Black") {
+        myPenColor = Qt::black;
+    } else if (action->iconText() == "Orange") {
+        myPenColor = QColor(255,128,0);
+    } else if (action->iconText() == "Magenta") {
+        myPenColor = Qt::magenta;
+    }
+}
+
+//! [7]
+void ScribbleArea::setPenWidth(int newWidth)
+//! [7] //! [8]
+{
+    myPenWidth = newWidth;
+}
+//! [8]
+
+//! [9]
+void ScribbleArea::clearImage()
+//! [9] //! [10]
+{
+    image.fill(qRgba(255, 255, 255, 0));
+    modified = true;
+    update();
+}
+//! [10]
+
+//! [11]
+void ScribbleArea::mousePressEvent(QMouseEvent *event)
+//! [11] //! [12]
+{
+    if (event->button() == Qt::LeftButton) {
+
+        GestureTrackerLastPosition =  event->pos();
+        GestureTrackerLastPositionTimeStamp = event->timestamp();
+        GestureTrackeStartPosition =  event->pos();
+        GestureTrackerStartPositionTimeStamp = event->timestamp();
+        GestureTrackerAccumulatedSpeed = QPoint(0,0);
+        GestureTrackerAccumulatedSquaredSpeed =  QPoint(0,0);
+
+
+        lastPoint = event->pos();
+        scribbling = true;
+        NewDrawingStarted = true;
+        MoveSelected = false;
+        CurrentPaintedObjectBoundingBox.Clear();
+        CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(lastPoint.x(), lastPoint.y()));
+        SelectedCurrentPosition = event->pos();
+        MyTimer.start(SelectTimeout);
+        if (LastPaintedObjectBoundingBox.IsInside(PositionClass(event->pos().x(), event->pos().y()))) {
+           DownInsideObject = true;
+        } else {
+           DownInsideObject = false;
+        }
+    }
+}
+
+void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
+{
+
+    QPoint GestureMovement = event->pos() - GestureTrackerLastPosition;
+    ulong  GestureTime = event->timestamp() - GestureTrackerLastPositionTimeStamp;
+    if (GestureTime > 0) {
+       QPointF GestureSpeed = QPointF(GestureMovement) / GestureTime;
+       GestureTrackerLastPosition =  event->pos();
+       GestureTrackerLastPositionTimeStamp = event->timestamp();
+
+       GestureTrackerAccumulatedSpeed += GestureSpeed;
+       GestureTrackerAccumulatedSquaredSpeed += QPointF(GestureSpeed.x() * GestureSpeed.x(), GestureSpeed.y()*GestureSpeed.y() );
+    }
+
+    if ((event->buttons() & Qt::LeftButton)) {
+        if ((event->pos()-lastPoint).manhattanLength() < 6) {
+            return; // ignore small movements (probably use penwidth*2)
+        }
+        if (scribbling) {
+            NewDrawingStarted = false;
+           MyTimer.stop();
+            MyTimer.start(GestureTimeout);
+            if (LastDrawingValid) {
+              DrawLastDrawnPicture();
+
+              LastDrawingValid = false;
+              LastDrawnObjectPoints.clear();
+              LastDrawnObjectPoints.append(lastPoint);
+
+           }
+           //LastDrawnObject.fill(qqRgba(255, 255, 255, 0));
+           drawLineTo(event->pos());
+           LastDrawnObjectPoints.append(event->pos());
+           CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(event->pos().x(), event->pos().y()));
+        }
+        if (MoveSelected) {
+          // QPoint Offset = event->pos() - SelectedPoint;
+            MyTimer.stop();
+            MyTimer.start(CopyTimeout);
+
+            SelectedCurrentPosition = event->pos();
+            update();
+          // DrawMovedSelection(Offset);
+          // BoundingBoxClass MovedRectangle(LastPaintedObjectBoundingBox);
+          // MovedRectangle.Move(PositionClass(Offset.x(), Offset.y()));
+          // drawrectangle(MovedRectangle);
+           //        drawrectangle(BoundingBoxClass(LastPaintedObjectBoundingBox).Move(PositionClass(Offset.x(), Offset.y())));
+        }
+        if (Scrolling) {
+            if (LastDrawingValid) {
+               DrawLastDrawnPicture();
+
+               LastDrawingValid = false;
+               LastDrawnObjectPoints.clear();
+
+
+            }
+           Origin -= event->pos()- ScrollingLastPosition;
+           ScrollingLastPosition = event->pos();
+           update();
+        }
+    }
+}
+
+void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton && scribbling) {
+        MyTimer.stop();
+        drawLineTo(event->pos());
+        LastDrawnObjectPoints.append(event->pos());
+        scribbling = false;
+        LastDrawingValid = true;
+        CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(event->pos().x(), event->pos().y()));
+        LastPaintedObjectBoundingBox = CurrentPaintedObjectBoundingBox;
+        CurrentPaintedObjectBoundingBox.Clear();
+
+
+    }
+    if (MoveSelected) {
+      // QPoint Offset =  - SelectedPoint;
+        if (DiscardSelection == false) {
+           DrawMovedSelection(event->pos());
+        }
+      // BoundingBoxClass MovedRectangle(LastPaintedObjectBoundingBox);
+     //  MovedRectangle.Move(PositionClass(Offset.x(), Offset.y()));
+     //  drawrectangle(MovedRectangle);
+       MoveSelected = false;
+       LastDrawingValid = false;
+       //        drawrectangle(BoundingBoxClass(LastPaintedObjectBoundingBox).Move(PositionClass(Offset.x(), Offset.y())));
+    }
+    if (Scrolling) {
+       Scrolling = false;
+       Origin -= event->pos()- ScrollingLastPosition;
+       resizeScrolledImage();
+       update();
+    }
+}
+
+
+
+void ScribbleArea::timeout()
+{
+    /* Copying on long move pauses */
+    if (MoveSelected) {
+        if (DiscardSelection == false) {
+          if (GestureTrackerAccumulatedSpeed.manhattanLength()*10 > GestureTrackerAccumulatedSquaredSpeed.manhattanLength()) {
+             QPoint CopyPos(SelectedCurrentPosition);
+             SelectedCurrentPosition += QPoint(3,3);
+             DrawMovedSelection(CopyPos);
+          } else {
+             DiscardSelection = true;
+             update();
+          }
+        }
+    }
+    if (NewDrawingStarted) {
+       //drawrectangle(LastPaintedObjectBoundingBox);
+       if (DownInsideObject) {
+
+       SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.QRectangle().translated(Origin));
+       HintSelectedImagePart = SelectedImagePart;
+       HintSelectedImagePart.fill(qRgba(0, 0, 0, 0));
+       DiscardSelection = false;
+
+       QPainter painter2(&image);
+       painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                           Qt::RoundJoin));
+       painter2.setBrush(QBrush(QColor(0, 0, 0, 0)));
+       painter2.setCompositionMode(QPainter::CompositionMode_Source);
+      // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
+       painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+
+       QPainter painter(&HintSelectedImagePart);
+       painter.setPen(QPen(QColor(0, 30, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                           Qt::RoundJoin));
+       painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
+       LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetLeft(), -LastPaintedObjectBoundingBox.GetTop());
+       painter.drawPolygon(LastDrawnObjectPoints);
+       QPainterPath Path;
+       Path.addPolygon(LastDrawnObjectPoints);
+       QImage MaskedSelectedImagePart = SelectedImagePart;
+             MaskedSelectedImagePart.fill(qRgba(0, 0, 0, 0));
+       QPainter painter3(&MaskedSelectedImagePart);
+       painter3.setClipPath(Path);
+       painter3.drawImage(QPoint(0,0), SelectedImagePart);
+       SelectedImagePart = MaskedSelectedImagePart;
+
+       LastDrawnObjectPoints.clear();
+       modified = true;
+       LastDrawnObject.fill(qRgba(0, 0, 0, 0));
+
+
+       MoveSelected = true;
+       NewDrawingStarted = false;
+       SelectedPoint = lastPoint;
+       SelectedOffset = QPoint(LastPaintedObjectBoundingBox.GetLeft(), LastPaintedObjectBoundingBox.GetTop()) - lastPoint;
+       scribbling = false;
+       update();
+       } else {
+           SelectedImagePart =  image.copy();
+           HintSelectedImagePart = SelectedImagePart;
+           HintSelectedImagePart.fill(qRgba(0, 0, 0, 40));
+           Scrolling = true;
+           ScrollingLastPosition = SelectedCurrentPosition;
+           ScrollingOldOrigin = Origin;
+           scribbling = false;
+           update();
+
+       }
+    }
+    if (scribbling) {
+      //   QTextStream(stdout) << "<" << GestureTrackerAccumulatedSpeed.x() << "; " << GestureTrackerAccumulatedSpeed.y() << "> <"  << GestureTrackerAccumulatedSquaredSpeed.x() << ";" << GestureTrackerAccumulatedSquaredSpeed.y() << endl;
+    }
+
+}
+
+//! [12] //! [13]
+void ScribbleArea::paintEvent(QPaintEvent *event)
+//! [13] //! [14]
+{
+    QPainter painter(this);
+    QRect dirtyRect = event->rect();
+    painter.setPen(QPen(QColor(230,230, 200,255), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                        Qt::RoundJoin));
+    painter.setBrush(QBrush(QColor(230,230, 200,255)));
+    painter.drawRect(dirtyRect);
+    painter.drawImage(dirtyRect, image, dirtyRect.translated(Origin));
+    painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
+    if ((MoveSelected) && (DiscardSelection == false)) {
+       painter.drawImage(SelectedCurrentPosition+SelectedOffset, HintSelectedImagePart);
+       painter.drawImage(SelectedCurrentPosition+SelectedOffset, SelectedImagePart);
+    }
+    if (Scrolling) {
+        painter.setPen(QPen(QColor(90, 0, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                            Qt::RoundJoin));
+        painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
+
+        painter.drawRect(0,0,this->width(), this->height());
+
+    }
+
+
+}
+//! [14]
+
+//! [15]
+void ScribbleArea::resizeEvent(QResizeEvent *event)
+//! [15] //! [16]
+{
+    if (width() > LastDrawnObject.width() || height() > LastDrawnObject.height()) {
+        int newWidth = qMax(width() + 128, image.width());
+        int newHeight = qMax(height() + 128, image.height());
+        resizeImage(&image, QSize(newWidth+Origin.x(), newHeight+Origin.y()));
+        resizeImage(&LastDrawnObject, QSize(newWidth, newHeight));
+        update();
+    }
+    QWidget::resizeEvent(event);
+}
+//! [16]
+
+//! [17]
+void ScribbleArea::drawLineTo(const QPoint &endPoint)
+//! [17] //! [18]
+{
+    QPainter painter(&LastDrawnObject);
+    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                        Qt::RoundJoin));
+    painter.drawLine(lastPoint, endPoint);
+    modified = true;
+
+    int rad = (myPenWidth / 2) + 2;
+    update(QRect(lastPoint, endPoint).normalized()
+                                     .adjusted(-rad, -rad, +rad, +rad));
+    lastPoint = endPoint;
+}
+
+void ScribbleArea::drawrectangle(const BoundingBoxClass &Region)
+//! [17] //! [18]
+{
+    QPainter painter(&image);
+    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                        Qt::RoundJoin));
+    QRect Rectangle(Region.QRectangle());
+    painter.drawRect(Rectangle);
+    modified = true;
+
+    int rad = (myPenWidth / 2) + 2;
+    update(Rectangle.normalized()
+                                     .adjusted(-rad, -rad, +rad, +rad));
+
+}
+void ScribbleArea::DrawLastDrawnPicture()
+{
+    QPainter painter(&image);
+
+    painter.drawImage(Origin, LastDrawnObject);
+    LastDrawnObject.fill(qRgba(255, 255, 255, 0));
+    modified = true;
+
+    update();
+
+}
+
+void ScribbleArea::DrawMovedSelection(const QPoint Offset)
+{
+    QPainter painter(&image);
+
+
+    painter.drawImage(SelectedOffset+Offset+Origin, SelectedImagePart);
+    modified = true;
+
+    update();
+
+};
+
+//! [18]
+
+//! [19]
+void ScribbleArea::resizeImage(QImage *image, const QSize &newSize)
+//! [19] //! [20]
+{
+    if (image->size() == newSize)
+        return;
+
+    QImage newImage(newSize, QImage::Format_ARGB32);
+    newImage.fill(qRgba(255, 255, 255, 0));
+    QPainter painter(&newImage);
+    painter.drawImage(QPoint(0, 0), *image);
+    *image = newImage;
+}
+
+void ScribbleArea::resizeScrolledImage()
+//! [19] //! [20]
+{
+    int NewWidth;
+    int NewHeight;
+    int OffsetX = 0;
+    int OffsetY = 0;
+
+    if (Origin.x() < 0) {
+        NewWidth = image.size().width() - Origin.x();
+        OffsetX = - Origin.x();
+        Origin.setX(0);
+    } else if (Origin.x()+this->width() > image.size().width()){
+        NewWidth = Origin.x()+this->width();
+    } else {
+        NewWidth = image.size().width();
+    }
+    if (Origin.y() < 0) {
+        NewHeight = image.size().height() - Origin.y();
+        OffsetY = - Origin.y();
+        Origin.setY(0);
+    } else if (Origin.y()+this->height() > image.size().height()){
+        NewHeight = Origin.y()+this->height();
+    } else {
+        NewHeight = image.size().height();
+    }
+
+    QImage newImage(QSize(NewWidth ,NewHeight), QImage::Format_ARGB32);
+    newImage.fill(qRgba(255, 255, 255, 0));
+    QPainter painter(&newImage);
+    painter.drawImage(QPoint(OffsetX, OffsetY), image);
+    image = newImage;
+}
+
+//! [20]
+
+//! [21]
+void ScribbleArea::print()
+{
+#if !defined(QT_NO_PRINTER) && !defined(QT_NO_PRINTDIALOG)
+    QPrinter printer(QPrinter::HighResolution);
+
+    QPrintDialog printDialog(&printer, this);
+//! [21] //! [22]
+    if (printDialog.exec() == QDialog::Accepted) {
+        QPainter painter(&printer);
+        QRect rect = painter.viewport();
+        QSize size = image.size();
+        size.scale(rect.size(), Qt::KeepAspectRatio);
+        painter.setViewport(rect.x(), rect.y(), size.width(), size.height());
+        painter.setWindow(image.rect());
+        painter.drawImage(0, 0, image);
+    }
+#endif // QT_NO_PRINTER
+}
+//! [22]
