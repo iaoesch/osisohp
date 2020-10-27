@@ -157,15 +157,21 @@ void ScribbleArea::clearImage()
 
 //! [11]
 void ScribbleArea::mousePressEvent(QMouseEvent *event)
+{
+   HandlePressEvent(event->button(), event->pos(), event->timestamp());
+}
+
+void ScribbleArea::HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulong Timestamp)
+
 //! [11] //! [12]
 {
-    std::cout << "Mouse" << event->button()  << std::endl;
-    if (event->button() == Qt::LeftButton) {
+    std::cout << "Button Down: " << Button  << std::endl;
+    if (Button == Qt::LeftButton) {
 
-        GestureTrackerLastPosition =  event->pos();
-        GestureTrackerLastPositionTimeStamp = event->timestamp();
-        GestureTrackeStartPosition =  event->pos();
-        GestureTrackerStartPositionTimeStamp = event->timestamp();
+        GestureTrackerLastPosition =  Position;
+        GestureTrackerLastPositionTimeStamp = Timestamp;
+        GestureTrackeStartPosition =  Position;
+        GestureTrackerStartPositionTimeStamp = Timestamp;
         GestureTrackerAccumulatedSpeed = QPoint(0,0);
         GestureTrackerAccumulatedSquaredSpeed =  QPoint(0,0);
 
@@ -174,15 +180,15 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
         DeltaTLastDistance = 0;
         DeltaTCurrentDistance = 0;
 
-        lastPoint = event->pos();
+        lastPoint = Position;
         scribbling = true;
         NewDrawingStarted = true;
         MoveSelected = false;
         CurrentPaintedObjectBoundingBox.Clear();
         CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(lastPoint.x(), lastPoint.y()));
-        SelectedCurrentPosition = event->pos();
+        SelectedCurrentPosition = Position;
         MyTimer.start(SelectTimeout);
-        if (LastPaintedObjectBoundingBox.IsInside(PositionClass(event->pos().x(), event->pos().y()))) {
+        if (LastPaintedObjectBoundingBox.IsInside(PositionClass(Position.x(), Position.y()))) {
            DownInsideObject = true;
         } else {
            DownInsideObject = false;
@@ -192,9 +198,14 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
+   HandleMoveEvent(event->buttons(), event->pos(), event->timestamp());
+}
 
-    QPoint GestureMovement = event->pos() - GestureTrackerLastPosition;
-    ulong  GestureTime = event->timestamp() - GestureTrackerLastPositionTimeStamp;
+void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong  Timestamp)
+{
+
+    QPoint GestureMovement = Position - GestureTrackerLastPosition;
+    ulong  GestureTime = Timestamp - GestureTrackerLastPositionTimeStamp;
 
     LastDistance = CurrentDistance;
     DeltaTLastDistance = DeltaTCurrentDistance;
@@ -204,15 +215,15 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 
     if (GestureTime > 0) {
        QPointF GestureSpeed = QPointF(GestureMovement) / GestureTime;
-       GestureTrackerLastPosition =  event->pos();
-       GestureTrackerLastPositionTimeStamp = event->timestamp();
+       GestureTrackerLastPosition =  Position;
+       GestureTrackerLastPositionTimeStamp = Timestamp;
 
        GestureTrackerAccumulatedSpeed += GestureSpeed;
        GestureTrackerAccumulatedSquaredSpeed += QPointF(GestureSpeed.x() * GestureSpeed.x(), GestureSpeed.y()*GestureSpeed.y() );
     }
 
-    if ((event->buttons() & Qt::LeftButton)) {
-        if ((event->pos()-lastPoint).manhattanLength() < 6) {
+    if ((Buttons & Qt::LeftButton)) {
+        if ((Position-lastPoint).manhattanLength() < 6) {
             return; // ignore small movements (probably use penwidth*2)
         }
         if (scribbling) {
@@ -228,16 +239,16 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 
            }
            //LastDrawnObject.fill(qqRgba(255, 255, 255, 0));
-           drawLineTo(event->pos());
-           LastDrawnObjectPoints.append(event->pos());
-           CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(event->pos().x(), event->pos().y()));
+           drawLineTo(Position);
+           LastDrawnObjectPoints.append(Position);
+           CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
         }
         if (MoveSelected) {
           // QPoint Offset = event->pos() - SelectedPoint;
             MyTimer.stop();
             MyTimer.start(CopyTimeout);
 
-            SelectedCurrentPosition = event->pos();
+            SelectedCurrentPosition = Position;
             update();
           // DrawMovedSelection(Offset);
           // BoundingBoxClass MovedRectangle(LastPaintedObjectBoundingBox);
@@ -254,8 +265,8 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 
 
             }
-           Origin -= event->pos()- ScrollingLastPosition;
-           ScrollingLastPosition = event->pos();
+           Origin -= Position- ScrollingLastPosition;
+           ScrollingLastPosition = Position;
            update();
         }
     }
@@ -263,16 +274,22 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 
 void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton && scribbling) {
+   HandleReleaseEvent(event->button(), event->pos());
+}
+
+void ScribbleArea::HandleReleaseEvent(Qt::MouseButton Button, QPoint Position)
+{
+   std::cout << "Button Up: " << Button  << std::endl;
+
+    if (Button == Qt::LeftButton && scribbling) {
         MyTimer.stop();
-        drawLineTo(event->pos());
-        LastDrawnObjectPoints.append(event->pos());
+        drawLineTo(Position);
+        LastDrawnObjectPoints.append(Position);
         scribbling = false;
         LastDrawingValid = true;
-        CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(event->pos().x(), event->pos().y()));
+        CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
         LastPaintedObjectBoundingBox = CurrentPaintedObjectBoundingBox;
         CurrentPaintedObjectBoundingBox.Clear();
-
 
     }
     if (MoveSelected) {
@@ -285,7 +302,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
             ;
       // QPoint Offset =  - SelectedPoint;
         if (DiscardSelection == false) {
-           DrawMovedSelection(event->pos());
+           DrawMovedSelection(Position);
         }
       // BoundingBoxClass MovedRectangle(LastPaintedObjectBoundingBox);
      //  MovedRectangle.Move(PositionClass(Offset.x(), Offset.y()));
@@ -296,7 +313,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
     }
     if (Scrolling) {
        Scrolling = false;
-       Origin -= event->pos()- ScrollingLastPosition;
+       Origin -= Position - ScrollingLastPosition;
        resizeScrolledImage();
        update();
     }
@@ -306,14 +323,40 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
 {
     switch(event->type()){
        case QEvent::TabletRelease:
-       case QEvent::TabletPress:
-        std::cout << "Tablett " << event->type() << "/"<< event->button() << std::endl;
-           switch (event->button()) {
+          std::cout << "Tablett up " << event->type() << "/"<< event->button() << std::endl;
+          HandleReleaseEvent(event->button(), event->pos());
+          break;
 
-           }
+       case QEvent::TabletPress:
+        std::cout << "Tablett down " << event->type() << "/"<< event->button() << std::endl;
+        HandlePressEvent(event->button(), event->pos(), event->timestamp());
+        switch (event->button()) {
+           case Qt::NoButton:
+              break;
+           case Qt::LeftButton:
+              break;
+           case Qt::RightButton:
+              break;
+           case Qt::MiddleButton:
+              break;
+           case Qt::BackButton:
+              break;
+             case Qt::ForwardButton:
+              break;
+            case Qt::TaskButton:
+              break;
+            case Qt::ExtraButton4:
+              break;
+
+        }
         break;
        case QEvent::TabletMove:
-
+          // Tablett move also called on pressure or tilt changes
+          if (LastTablettMovePosition != event->pos()) {
+             std::cout << "Tablett move " << event->type() << "/"<< event->buttons() << " <" << event->pos().x() << ";" << event->pos().y() << ">:" << event->pressure() << std::endl;
+             HandleMoveEvent(event->buttons(), event->pos(), event->timestamp());
+             LastTablettMovePosition = event->pos();
+          }
         break;
     }
 }
@@ -323,6 +366,8 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
 void ScribbleArea::timeout()
 {
     /* Copying on long move pauses */
+   std::cout << "timeout " << std::endl;
+
     if (MoveSelected) {
         if (DiscardSelection == false) {
           if (GestureTrackerAccumulatedSpeed.manhattanLength()*10 > GestureTrackerAccumulatedSquaredSpeed.manhattanLength()) {

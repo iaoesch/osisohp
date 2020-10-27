@@ -131,6 +131,9 @@ private:
     ulong DeltaTLastDistance;
     ulong DeltaTCurrentDistance;
 
+    QPoint LastTablettMovePosition;
+
+
 
     QTimer MyTimer;
 
@@ -141,6 +144,9 @@ private:
 
     BoundingBoxClass LastPaintedObjectBoundingBox;
     BoundingBoxClass CurrentPaintedObjectBoundingBox;
+    void HandleReleaseEvent(Qt::MouseButton Button, QPoint Position);
+    void HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp);
+    void HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulong Timestamp);
 };
 //! [0]
 
