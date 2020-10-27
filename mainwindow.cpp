@@ -82,7 +82,7 @@ MainWindow::MainWindow()
     addToolBar(Qt::TopToolBarArea, toolBar);
 
     setWindowTitle(tr("Osis OHP"));
-    resize(500, 500);
+    resize(1500, 1500);
 }
 //! [0]
 

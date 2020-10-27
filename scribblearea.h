@@ -47,6 +47,7 @@
 #include <QWidget>
 #include <QTimer>
 #include <QPolygon>
+#include <list>
 
 #include "box.hpp"
 
@@ -82,6 +83,8 @@ protected:
     void tabletEvent(QTabletEvent * event) Q_DECL_OVERRIDE;
 
 private:
+
+
     void drawLineTo(const QPoint &endPoint);
     void drawrectangle(const BoundingBoxClass &Region);
     void DrawMovedSelection(const QPoint Offset);
@@ -90,18 +93,33 @@ private:
     void resizeImage(QImage *image, const QSize &newSize);
     void resizeScrolledImage();
 
+    struct PostIt {
+       QImage Image;
+       QPoint Position;
+       BoundingBoxClass Box;
+       PostIt(const QImage &NewImage, const QPoint &Pos, BoundingBoxClass NewBox) : Image(NewImage), Position(Pos), Box(NewBox) {}
+    };
+
+    std::list<PostIt> PostIts;
+    PostIt *SelectedPostit;
+    QPoint StartPositionSelectedPostIt;
+
     bool modified;
     bool scribbling;
     bool MoveSelected;
     bool NewDrawingStarted;
     bool LastDrawingValid;
     bool DownInsideObject;
+    bool WaitForPostIt;
     bool Scrolling;
     bool DiscardSelection;
     int myPenWidth;
     QColor myPenColor;
     QImage image;
     QImage LastDrawnObject;
+
+    QRgb BackGroundColor;
+
 
     QPolygon LastDrawnObjectPoints;
     QImage SelectedImagePart;
@@ -124,6 +142,7 @@ private:
 
     int CopyTimeout;
     int GestureTimeout;
+    int PostItTimeout;
     int SelectTimeout;
 
     ulong CurrentDistance;
@@ -145,8 +164,10 @@ private:
     BoundingBoxClass LastPaintedObjectBoundingBox;
     BoundingBoxClass CurrentPaintedObjectBoundingBox;
     void HandleReleaseEvent(Qt::MouseButton Button, QPoint Position);
-    void HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp);
+    void HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing);
     void HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulong Timestamp);
+    bool PostItSelected(QPoint Position);
+    void EraseLineTo(const QPoint &endPoint);
 };
 //! [0]
 
