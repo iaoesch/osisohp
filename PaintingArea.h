@@ -38,8 +38,8 @@
 **
 ****************************************************************************/
 
-#ifndef SCRIBBLEAREA_H
-#define SCRIBBLEAREA_H
+#ifndef PAINTINGAREA_H
+#define PAINTINGAREA_H
 
 #include <QColor>
 #include <QImage>
@@ -51,12 +51,36 @@
 #include "box.hpp"
 
 //! [0]
-class ScribbleArea : public QWidget
+class PaintingArea
 {
-    Q_OBJECT
+    //Q_OBJECT
 
 public:
-    ScribbleArea(QWidget *parent = 0);
+    PaintingArea();
+
+    CreateSelectionFromLastObject
+    MoveSelection
+    DrawSelectionTentiative
+    UndrawSelectionTentiative
+    DrawSelectionDefinitive
+
+
+    StartNewObject
+    DrawLineTo();
+    FinishNewObject
+
+    SelectAll
+    MoveAll
+    UnselectAll
+
+    IsInsideLastDrawnObject
+
+
+
+
+
+
+
 
     bool openImage(const QString &fileName);
     bool saveImage(const QString &fileName, const char *fileFormat);
@@ -67,19 +91,9 @@ public:
     QColor penColor() const { return myPenColor; }
     int penWidth() const { return myPenWidth; }
 
-public slots:
     void clearImage();
     void print();
-    void timeout();
-    void HandleToolAction(QAction *action);
 
-protected:
-    void mousePressEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
-    void mouseMoveEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
-    void mouseReleaseEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
-    void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
-    void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE;
-    void tabletEvent(QTabletEvent * event) Q_DECL_OVERRIDE;
 
 private:
     void drawLineTo(const QPoint &endPoint);
@@ -91,21 +105,18 @@ private:
     void resizeScrolledImage();
 
     bool modified;
-    bool scribbling;
-    bool MoveSelected;
-    bool NewDrawingStarted;
-    bool LastDrawingValid;
-    bool DownInsideObject;
-    bool Scrolling;
-    bool DiscardSelection;
+
     int myPenWidth;
     QColor myPenColor;
+    QColor BackGroundColor;
+    QColor SelectedBackGroundColor;
+
     QImage image;
     QImage LastDrawnObject;
-
     QPolygon LastDrawnObjectPoints;
     QImage SelectedImagePart;
     QImage HintSelectedImagePart;
+
     QPoint lastPoint;
     QPoint SelectedPoint;
     QPoint SelectedOffset;
@@ -113,12 +124,6 @@ private:
     QPoint ScrollingLastPosition;
     QPoint ScrollingOldOrigin;
 
-    QPoint GestureTrackeStartPosition;
-    ulong  GestureTrackerStartPositionTimeStamp;
-    QPoint GestureTrackerLastPosition;
-    ulong  GestureTrackerLastPositionTimeStamp;
-    QPointF GestureTrackerAccumulatedSpeed;
-    QPointF GestureTrackerAccumulatedSquaredSpeed;
 
     QPoint Origin;
 
@@ -126,18 +131,8 @@ private:
     int GestureTimeout;
     int SelectTimeout;
 
-    ulong CurrentDistance;
-    ulong LastDistance;
-    ulong DeltaTLastDistance;
-    ulong DeltaTCurrentDistance;
-
 
     QTimer MyTimer;
-
-    bool RecentlyPastedObjectValid;
-    QPoint RecentlyPastedObjectPosition;
-    QImage RecentlyPastedObject;
-    BoundingBoxClass RecentlyPastedObjectBoundingBox;
 
     BoundingBoxClass LastPaintedObjectBoundingBox;
     BoundingBoxClass CurrentPaintedObjectBoundingBox;

@@ -65,6 +65,15 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     GestureTimeout = 500;
     SelectTimeout = 500;
 
+    CurrentDistance = 0;
+    LastDistance = 0;
+    DeltaTLastDistance = 0;
+    DeltaTCurrentDistance = 0;
+
+
+    RecentlyPastedObjectValid = false;
+   // QImage RecentlyMovedObject;
+   // BoundingBoxClass RecentlyMovedObjectBoundingBox;
 
 
 }
@@ -150,6 +159,7 @@ void ScribbleArea::clearImage()
 void ScribbleArea::mousePressEvent(QMouseEvent *event)
 //! [11] //! [12]
 {
+    std::cout << "Mouse" << event->button()  << std::endl;
     if (event->button() == Qt::LeftButton) {
 
         GestureTrackerLastPosition =  event->pos();
@@ -159,6 +169,10 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
         GestureTrackerAccumulatedSpeed = QPoint(0,0);
         GestureTrackerAccumulatedSquaredSpeed =  QPoint(0,0);
 
+        CurrentDistance = 0;
+        LastDistance = 0;
+        DeltaTLastDistance = 0;
+        DeltaTCurrentDistance = 0;
 
         lastPoint = event->pos();
         scribbling = true;
@@ -181,6 +195,13 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 
     QPoint GestureMovement = event->pos() - GestureTrackerLastPosition;
     ulong  GestureTime = event->timestamp() - GestureTrackerLastPositionTimeStamp;
+
+    LastDistance = CurrentDistance;
+    DeltaTLastDistance = DeltaTCurrentDistance;
+    DeltaTCurrentDistance = GestureTime;
+    CurrentDistance = GestureMovement.manhattanLength();
+
+
     if (GestureTime > 0) {
        QPointF GestureSpeed = QPointF(GestureMovement) / GestureTime;
        GestureTrackerLastPosition =  event->pos();
@@ -255,6 +276,13 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 
     }
     if (MoveSelected) {
+        if ( ((DeltaTLastDistance + DeltaTCurrentDistance) > 0) &&
+             ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) > 0.25f) {
+            std::cout << "LeavingSpeed " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
+            DiscardSelection = true;
+        }
+        std::cout << "LeavingSpeed " << (LastDistance + CurrentDistance) << " / " << (DeltaTLastDistance + DeltaTCurrentDistance) << " = " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
+            ;
       // QPoint Offset =  - SelectedPoint;
         if (DiscardSelection == false) {
            DrawMovedSelection(event->pos());
@@ -271,6 +299,22 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
        Origin -= event->pos()- ScrollingLastPosition;
        resizeScrolledImage();
        update();
+    }
+}
+
+void ScribbleArea::tabletEvent(QTabletEvent * event)
+{
+    switch(event->type()){
+       case QEvent::TabletRelease:
+       case QEvent::TabletPress:
+        std::cout << "Tablett " << event->type() << "/"<< event->button() << std::endl;
+           switch (event->button()) {
+
+           }
+        break;
+       case QEvent::TabletMove:
+
+        break;
     }
 }
 
@@ -368,6 +412,9 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
        painter.drawImage(SelectedCurrentPosition+SelectedOffset, HintSelectedImagePart);
        painter.drawImage(SelectedCurrentPosition+SelectedOffset, SelectedImagePart);
     }
+    if (RecentlyPastedObjectValid == true) {
+        painter.drawImage(RecentlyPastedObjectPosition, RecentlyPastedObject);
+    }
     if (Scrolling) {
         painter.setPen(QPen(QColor(90, 0, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
                             Qt::RoundJoin));
@@ -411,7 +458,7 @@ void ScribbleArea::drawLineTo(const QPoint &endPoint)
                                      .adjusted(-rad, -rad, +rad, +rad));
     lastPoint = endPoint;
 }
-
+/*
 void ScribbleArea::drawrectangle(const BoundingBoxClass &Region)
 //! [17] //! [18]
 {
@@ -427,6 +474,7 @@ void ScribbleArea::drawrectangle(const BoundingBoxClass &Region)
                                      .adjusted(-rad, -rad, +rad, +rad));
 
 }
+*/
 void ScribbleArea::DrawLastDrawnPicture()
 {
     QPainter painter(&image);
