@@ -56,6 +56,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     scribbling = false;
     LastDrawingValid = false;
     Scrolling = false;
+    EraseLastDrawnObject = false;
     myPenWidth = 3;
     myPenColor = Qt::blue;
     connect(&MyTimer, SIGNAL(timeout()), this, SLOT(timeout()));
@@ -521,7 +522,14 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
     painter.drawRect(dirtyRect);
     painter.drawImage(dirtyRect, image, dirtyRect.translated(Origin));
     //painter.setCompositionMode(QPainter::CompositionMode_Source);
+    if (EraseLastDrawnObject) {
+       painter.setCompositionMode(QPainter::CompositionMode_Clear);
+    }
     painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
+    if (EraseLastDrawnObject) {
+       painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    }
+
     for (auto &&Picture: PostIts) {
        painter.drawImage(Picture.Position, Picture.Image);
     }
@@ -574,18 +582,21 @@ void ScribbleArea::drawLineTo(const QPoint &endPoint)
     update(QRect(lastPoint, endPoint).normalized()
                                      .adjusted(-rad, -rad, +rad, +rad));
     lastPoint = endPoint;
+    EraseLastDrawnObject = false;
+
 }
 
 void ScribbleArea::EraseLineTo(const QPoint &endPoint)
 //! [17] //! [18]
 {
     QPainter painter(&LastDrawnObject);
-    painter.setPen(QPen(TransparentColor, (myPenWidth+2)*3, Qt::SolidLine, Qt::RoundCap,
+    painter.setPen(QPen(myPenColor, (myPenWidth+2)*3, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
    // painter.setCompositionMode(QPainter::CompositionMode_Source);
-    painter.setCompositionMode(QPainter::CompositionMode_Clear);
+    //painter.setCompositionMode(QPainter::CompositionMode_Clear);
     painter.drawLine(lastPoint, endPoint);
     modified = true;
+    EraseLastDrawnObject = true;
 
     int rad = ((myPenWidth+2)*3 / 2) + 2;
     update(QRect(lastPoint, endPoint).normalized()
@@ -614,7 +625,9 @@ void ScribbleArea::DrawLastDrawnPicture()
 {
     QPainter painter(&image);
     //painter.setCompositionMode(QPainter::CompositionMode_Source);
-
+    if (EraseLastDrawnObject) {
+       painter.setCompositionMode(QPainter::CompositionMode_Clear);
+    }
     painter.drawImage(Origin, LastDrawnObject);
     LastDrawnObject.fill(TransparentColor);
     modified = true;

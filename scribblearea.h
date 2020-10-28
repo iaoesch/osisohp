@@ -117,6 +117,7 @@ private:
     QColor myPenColor;
     QImage image;
     QImage LastDrawnObject;
+    bool EraseLastDrawnObject;
 
     QColor TransparentColor;
     QColor BackGroundColor;
