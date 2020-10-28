@@ -67,7 +67,8 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     PostItTimeout = 1000;
     SelectedPostit = nullptr;
 
-    BackGroundColor = qRgba(255, 255, 255, 0);
+    TransparentColor = QColor(255, 255, 255, 0);
+    BackGroundColor = QColor(230,230, 200,255);
 
     CurrentDistance = 0;
     LastDistance = 0;
@@ -154,7 +155,7 @@ void ScribbleArea::setPenWidth(int newWidth)
 void ScribbleArea::clearImage()
 //! [9] //! [10]
 {
-    image.fill(BackGroundColor);
+    image.fill(TransparentColor);
     modified = true;
     update();
 }
@@ -289,16 +290,20 @@ void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ul
 
 void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {
-   HandleReleaseEvent(event->button(), event->pos());
+   HandleReleaseEvent(event->button(), event->pos(), false);
 }
 
-void ScribbleArea::HandleReleaseEvent(Qt::MouseButton Button, QPoint Position)
+void ScribbleArea::HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, bool Erasing)
 {
    std::cout << "Button Up: " << Button  << std::endl;
 
     if (Button == Qt::LeftButton && scribbling) {
         MyTimer.stop();
-        drawLineTo(Position);
+        if (Erasing) {
+           EraseLineTo(Position);
+        } else {
+           drawLineTo(Position);
+        }
         LastDrawnObjectPoints.append(Position);
         scribbling = false;
         LastDrawingValid = true;
@@ -351,7 +356,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
     switch(event->type()){
        case QEvent::TabletRelease:
           std::cout << "Tablett up " << event->type() << "/"<< event->button() << std::endl;
-          HandleReleaseEvent(event->button(), event->pos());
+          HandleReleaseEvent(event->button(), event->pos(), event->pointerType() == QTabletEvent::Eraser);
           break;
 
        case QEvent::TabletPress:
@@ -510,11 +515,12 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
     QRect dirtyRect = event->rect();
-    painter.setPen(QPen(QColor(230,230, 200,255), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+    painter.setPen(QPen(BackGroundColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
-    painter.setBrush(QBrush(QColor(230,230, 200,255)));
+    painter.setBrush(QBrush(BackGroundColor));
     painter.drawRect(dirtyRect);
     painter.drawImage(dirtyRect, image, dirtyRect.translated(Origin));
+    //painter.setCompositionMode(QPainter::CompositionMode_Source);
     painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
     for (auto &&Picture: PostIts) {
        painter.drawImage(Picture.Position, Picture.Image);
@@ -574,12 +580,14 @@ void ScribbleArea::EraseLineTo(const QPoint &endPoint)
 //! [17] //! [18]
 {
     QPainter painter(&LastDrawnObject);
-    painter.setPen(QPen(QColor(BackGroundColor), (myPenWidth+2)*3, Qt::SolidLine, Qt::RoundCap,
+    painter.setPen(QPen(TransparentColor, (myPenWidth+2)*3, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
+   // painter.setCompositionMode(QPainter::CompositionMode_Source);
+    painter.setCompositionMode(QPainter::CompositionMode_Clear);
     painter.drawLine(lastPoint, endPoint);
     modified = true;
 
-    int rad = (myPenWidth / 2) + 2;
+    int rad = ((myPenWidth+2)*3 / 2) + 2;
     update(QRect(lastPoint, endPoint).normalized()
                                      .adjusted(-rad, -rad, +rad, +rad));
     lastPoint = endPoint;
@@ -605,9 +613,10 @@ void ScribbleArea::drawrectangle(const BoundingBoxClass &Region)
 void ScribbleArea::DrawLastDrawnPicture()
 {
     QPainter painter(&image);
+    //painter.setCompositionMode(QPainter::CompositionMode_Source);
 
     painter.drawImage(Origin, LastDrawnObject);
-    LastDrawnObject.fill(BackGroundColor);
+    LastDrawnObject.fill(TransparentColor);
     modified = true;
 
     update();
@@ -636,8 +645,9 @@ void ScribbleArea::resizeImage(QImage *image, const QSize &newSize)
         return;
 
     QImage newImage(newSize, QImage::Format_ARGB32);
-    newImage.fill(BackGroundColor);
+    newImage.fill(TransparentColor);
     QPainter painter(&newImage);
+    //painter.setCompositionMode(QPainter::CompositionMode_Source);
     painter.drawImage(QPoint(0, 0), *image);
     *image = newImage;
 }
@@ -670,7 +680,7 @@ void ScribbleArea::resizeScrolledImage()
     }
 
     QImage newImage(QSize(NewWidth ,NewHeight), QImage::Format_ARGB32);
-    newImage.fill(BackGroundColor);
+    newImage.fill(TransparentColor);
     QPainter painter(&newImage);
     painter.drawImage(QPoint(OffsetX, OffsetY), image);
     image = newImage;

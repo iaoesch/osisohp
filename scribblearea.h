@@ -118,7 +118,8 @@ private:
     QImage image;
     QImage LastDrawnObject;
 
-    QRgb BackGroundColor;
+    QColor TransparentColor;
+    QColor BackGroundColor;
 
 
     QPolygon LastDrawnObjectPoints;
@@ -163,7 +164,7 @@ private:
 
     BoundingBoxClass LastPaintedObjectBoundingBox;
     BoundingBoxClass CurrentPaintedObjectBoundingBox;
-    void HandleReleaseEvent(Qt::MouseButton Button, QPoint Position);
+    void HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, bool Erasing);
     void HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing);
     void HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulong Timestamp);
     bool PostItSelected(QPoint Position);
