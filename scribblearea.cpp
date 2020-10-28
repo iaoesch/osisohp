@@ -523,11 +523,11 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
     painter.drawImage(dirtyRect, image, dirtyRect.translated(Origin));
     //painter.setCompositionMode(QPainter::CompositionMode_Source);
     if (EraseLastDrawnObject) {
-       painter.setCompositionMode(QPainter::CompositionMode_Clear);
+       painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     }
     painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
     if (EraseLastDrawnObject) {
-       painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+       painter.setCompositionMode(QPainter::CompositionMode_SourceOut);
     }
 
     for (auto &&Picture: PostIts) {
@@ -626,7 +626,7 @@ void ScribbleArea::DrawLastDrawnPicture()
     QPainter painter(&image);
     //painter.setCompositionMode(QPainter::CompositionMode_Source);
     if (EraseLastDrawnObject) {
-       painter.setCompositionMode(QPainter::CompositionMode_Clear);
+       painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     }
     painter.drawImage(Origin, LastDrawnObject);
     LastDrawnObject.fill(TransparentColor);
