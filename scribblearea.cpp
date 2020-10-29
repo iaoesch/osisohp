@@ -165,6 +165,7 @@ void ScribbleArea::clearImage()
 //! [11]
 void ScribbleArea::mousePressEvent(QMouseEvent *event)
 {
+   std::cout << "Mouse: ";
    HandlePressEvent(event->button(), event->pos(), event->timestamp());
 }
 
@@ -206,6 +207,7 @@ void ScribbleArea::HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulo
 
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
+   std::cout << "Mouse: ";
    HandleMoveEvent(event->buttons(), event->pos(), event->timestamp(), false);
 }
 
@@ -291,6 +293,7 @@ void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ul
 
 void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {
+   std::cout << "Mouse: ";
    HandleReleaseEvent(event->button(), event->pos(), false);
 }
 
@@ -522,9 +525,13 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
     painter.drawRect(dirtyRect);
     painter.drawImage(dirtyRect, image, dirtyRect.translated(Origin));
     //painter.setCompositionMode(QPainter::CompositionMode_Source);
+#if 0
+    // Probably nonsense, as widget cannot be transparent ???
     if (EraseLastDrawnObject) {
+
        painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     }
+#endif
     painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
     if (EraseLastDrawnObject) {
        painter.setCompositionMode(QPainter::CompositionMode_SourceOut);
@@ -572,6 +579,7 @@ void ScribbleArea::resizeEvent(QResizeEvent *event)
 void ScribbleArea::drawLineTo(const QPoint &endPoint)
 //! [17] //! [18]
 {
+   std::cout << "Drawing ";
     QPainter painter(&LastDrawnObject);
     painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
@@ -589,8 +597,9 @@ void ScribbleArea::drawLineTo(const QPoint &endPoint)
 void ScribbleArea::EraseLineTo(const QPoint &endPoint)
 //! [17] //! [18]
 {
+    std::cout << "Erasing ";
     QPainter painter(&LastDrawnObject);
-    painter.setPen(QPen(myPenColor, (myPenWidth+2)*3, Qt::SolidLine, Qt::RoundCap,
+    painter.setPen(QPen(BackGroundColor, (myPenWidth+2)*3, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
    // painter.setCompositionMode(QPainter::CompositionMode_Source);
     //painter.setCompositionMode(QPainter::CompositionMode_Clear);
