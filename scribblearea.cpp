@@ -58,6 +58,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     Scrolling = false;
     EraseLastDrawnObject = false;
     myPenWidth = 3;
+    SelectedPenWidth = myPenWidth;
     myPenColor = Qt::blue;
     connect(&MyTimer, SIGNAL(timeout()), this, SLOT(timeout()));
     MyTimer.setSingleShot(true);
@@ -122,11 +123,13 @@ void ScribbleArea::setPenColor(const QColor &newColor)
 //! [5] //! [6]
 {
     myPenColor = newColor;
+    myPenWidth = SelectedPenWidth;
 }
 //! [6]
 
 void ScribbleArea::HandleToolAction(QAction *action)
 {
+    myPenWidth = SelectedPenWidth;
     if (action->iconText() == "Red") {
         myPenColor = Qt::red;
     } else if (action->iconText() == "Blue") {
@@ -134,14 +137,18 @@ void ScribbleArea::HandleToolAction(QAction *action)
     } else if (action->iconText() == "Green") {
         myPenColor = Qt::green;
     } else if (action->iconText() == "Yellow") {
-        myPenColor = Qt::yellow;
+        myPenColor = Qt::darkYellow;
     } else if (action->iconText() == "Black") {
         myPenColor = Qt::black;
     } else if (action->iconText() == "Orange") {
         myPenColor = QColor(255,128,0);
     } else if (action->iconText() == "Magenta") {
         myPenColor = Qt::magenta;
-    }
+    } else if (action->iconText() == "MarkerYellow") {
+       myPenColor = Qt::yellow;
+       myPenColor.setAlpha(64);
+       myPenWidth = SelectedPenWidth * 5 + 2;
+   }
 }
 
 //! [7]
@@ -149,6 +156,7 @@ void ScribbleArea::setPenWidth(int newWidth)
 //! [7] //! [8]
 {
     myPenWidth = newWidth;
+    SelectedPenWidth = myPenWidth;
 }
 //! [8]
 
@@ -208,10 +216,10 @@ void ScribbleArea::HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulo
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
    std::cout << "Mouse: ";
-   HandleMoveEvent(event->buttons(), event->pos(), event->timestamp(), false);
+   HandleMoveEvent(event->buttons(), event->pos(), event->timestamp(), false, 0);
 }
 
-void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing)
+void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure)
 {
 
     QPoint GestureMovement = Position - GestureTrackerLastPosition;
@@ -250,9 +258,9 @@ void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ul
            }
            //LastDrawnObject.fill(BackgroundColor);
            if (Erasing) {
-              EraseLineTo(Position);
+              EraseLineTo(Position, Pressure);
            } else {
-              drawLineTo(Position);
+              drawLineTo(Position, Pressure);
            }
            LastDrawnObjectPoints.append(Position);
            CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
@@ -294,19 +302,19 @@ void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ul
 void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {
    std::cout << "Mouse: ";
-   HandleReleaseEvent(event->button(), event->pos(), false);
+   HandleReleaseEvent(event->button(), event->pos(), false, 0);
 }
 
-void ScribbleArea::HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, bool Erasing)
+void ScribbleArea::HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure)
 {
    std::cout << "Button Up: " << Button  << std::endl;
 
     if (Button == Qt::LeftButton && scribbling) {
         MyTimer.stop();
         if (Erasing) {
-           EraseLineTo(Position);
+           EraseLineTo(Position, Pressure);
         } else {
-           drawLineTo(Position);
+           drawLineTo(Position, Pressure);
         }
         LastDrawnObjectPoints.append(Position);
         scribbling = false;
@@ -360,7 +368,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
     switch(event->type()){
        case QEvent::TabletRelease:
           std::cout << "Tablett up " << event->type() << "/"<< event->button() << std::endl;
-          HandleReleaseEvent(event->button(), event->pos(), event->pointerType() == QTabletEvent::Eraser);
+          HandleReleaseEvent(event->button(), event->pos(), event->pointerType() == QTabletEvent::Eraser, event->pressure());
           break;
 
        case QEvent::TabletPress:
@@ -390,7 +398,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
           // Tablett move also called on pressure or tilt changes
           if (LastTablettMovePosition != event->pos()) {
              std::cout << "Tablett move " << event->type() << "/"<< event->buttons() << " <" << event->pos().x() << ";" << event->pos().y() << ">:" << event->pressure() << std::endl;
-             HandleMoveEvent(event->buttons(), event->pos(), event->timestamp(), event->pointerType() == QTabletEvent::Eraser);
+             HandleMoveEvent(event->buttons(), event->pos(), event->timestamp(), event->pointerType() == QTabletEvent::Eraser, event->pressure());
              LastTablettMovePosition = event->pos();
           }
         break;
@@ -576,12 +584,12 @@ void ScribbleArea::resizeEvent(QResizeEvent *event)
 //! [16]
 
 //! [17]
-void ScribbleArea::drawLineTo(const QPoint &endPoint)
+void ScribbleArea::drawLineTo(const QPoint &endPoint, double Pressure)
 //! [17] //! [18]
 {
    std::cout << "Drawing ";
     QPainter painter(&LastDrawnObject);
-    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
+    painter.setPen(QPen(myPenColor, myPenWidth * (1.0 + Pressure*Pressure*4), Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
     painter.drawLine(lastPoint, endPoint);
     modified = true;
@@ -594,7 +602,7 @@ void ScribbleArea::drawLineTo(const QPoint &endPoint)
 
 }
 
-void ScribbleArea::EraseLineTo(const QPoint &endPoint)
+void ScribbleArea::EraseLineTo(const QPoint &endPoint, double Pressure)
 //! [17] //! [18]
 {
     std::cout << "Erasing ";

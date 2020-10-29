@@ -85,7 +85,7 @@ protected:
 private:
 
 
-    void drawLineTo(const QPoint &endPoint);
+    void drawLineTo(const QPoint &endPoint, double Pressure);
     void drawrectangle(const BoundingBoxClass &Region);
     void DrawMovedSelection(const QPoint Offset);
 
@@ -114,6 +114,7 @@ private:
     bool Scrolling;
     bool DiscardSelection;
     int myPenWidth;
+    int SelectedPenWidth;
     QColor myPenColor;
     QImage image;
     QImage LastDrawnObject;
@@ -165,11 +166,11 @@ private:
 
     BoundingBoxClass LastPaintedObjectBoundingBox;
     BoundingBoxClass CurrentPaintedObjectBoundingBox;
-    void HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, bool Erasing);
-    void HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing);
+    void HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure);
+    void HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure);
     void HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulong Timestamp);
     bool PostItSelected(QPoint Position);
-    void EraseLineTo(const QPoint &endPoint);
+    void EraseLineTo(const QPoint &endPoint, double Pressure);
 };
 //! [0]
 
