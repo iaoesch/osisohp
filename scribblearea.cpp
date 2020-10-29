@@ -253,7 +253,13 @@ void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ul
            }
            ScribblingStarted = true;
             NewDrawingStarted = false;
-            //FillPolygon = false;
+            if (FillPolygon) {
+               if ((Position-FillPolygonStartPosition).manhattanLength() > (myPenWidth*3+2)) {
+                  FillPolygon = false;
+                  setCursor(Qt::ArrowCursor);
+
+               }
+            }
            MyTimer.stop();
             MyTimer.start(GestureTimeout);
             if (LastDrawingValid) {
@@ -338,6 +344,9 @@ void ScribbleArea::HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, b
         painter2.setCompositionMode(QPainter::CompositionMode_Source);
         // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
         painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+        setCursor(Qt::ArrowCursor);
+        FillPolygon = false;
+
         update();
         }
     }
@@ -347,6 +356,7 @@ void ScribbleArea::HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, b
              ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) > 0.25f) {
             std::cout << "LeavingSpeed " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
             DiscardSelection = true;
+            update();
         }
         std::cout << "LeavingSpeed " << (LastDistance + CurrentDistance) << " / " << (DeltaTLastDistance + DeltaTCurrentDistance) << " = " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
             ;
@@ -522,6 +532,8 @@ void ScribbleArea::timeout()
        //   QTextStream(stdout) << "<" << GestureTrackerAccumulatedSpeed.x() << "; " << GestureTrackerAccumulatedSpeed.y() << "> <"  << GestureTrackerAccumulatedSquaredSpeed.x() << ";" << GestureTrackerAccumulatedSquaredSpeed.y() << endl;
 
        FillPolygon = true;
+       FillPolygonStartPosition = lastPoint;
+       setCursor(Qt::BusyCursor);
        update();
 
     }
@@ -562,9 +574,11 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
     }
 #endif
     painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
+#if 0
     if (EraseLastDrawnObject) {
        painter.setCompositionMode(QPainter::CompositionMode_SourceOut);
     }
+#endif
 
     for (auto &&Picture: PostIts) {
        painter.drawImage(Picture.Position, Picture.Image);

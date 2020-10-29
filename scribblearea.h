@@ -136,6 +136,7 @@ private:
     QPoint SelectedCurrentPosition;
     QPoint ScrollingLastPosition;
     QPoint ScrollingOldOrigin;
+    QPoint FillPolygonStartPosition;
 
     QPoint GestureTrackeStartPosition;
     ulong  GestureTrackerStartPositionTimeStamp;
