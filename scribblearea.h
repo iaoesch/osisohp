@@ -66,7 +66,7 @@ public:
 
     bool isModified() const { return modified; }
     QColor penColor() const { return myPenColor; }
-    int penWidth() const { return myPenWidth; }
+    int penWidth() const { return SelectedPenWidth; }
 
 public slots:
     void clearImage();
@@ -106,6 +106,7 @@ private:
 
     bool modified;
     bool scribbling;
+    bool ScribblingStarted;
     bool MoveSelected;
     bool NewDrawingStarted;
     bool LastDrawingValid;
@@ -128,6 +129,7 @@ private:
     QImage SelectedImagePart;
     QImage HintSelectedImagePart;
     QPoint lastPoint;
+    QPoint ScribblingStartPosition;
     QPoint SelectedPoint;
     QPoint SelectedOffset;
     QPoint SelectedCurrentPosition;

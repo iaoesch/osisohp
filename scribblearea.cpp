@@ -57,7 +57,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     LastDrawingValid = false;
     Scrolling = false;
     EraseLastDrawnObject = false;
-    myPenWidth = 3;
+    myPenWidth = 1;
     SelectedPenWidth = myPenWidth;
     myPenColor = Qt::blue;
     connect(&MyTimer, SIGNAL(timeout()), this, SLOT(timeout()));
@@ -137,7 +137,7 @@ void ScribbleArea::HandleToolAction(QAction *action)
     } else if (action->iconText() == "Green") {
         myPenColor = Qt::green;
     } else if (action->iconText() == "Yellow") {
-        myPenColor = Qt::darkYellow;
+        myPenColor = QColor(128,128,0);
     } else if (action->iconText() == "Black") {
         myPenColor = Qt::black;
     } else if (action->iconText() == "Orange") {
@@ -198,7 +198,9 @@ void ScribbleArea::HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulo
         DeltaTCurrentDistance = 0;
 
         lastPoint = Position;
+        ScribblingStartPosition = Position;
         scribbling = true;
+        ScribblingStarted = false;
         NewDrawingStarted = true;
         MoveSelected = false;
         CurrentPaintedObjectBoundingBox.Clear();
@@ -241,10 +243,14 @@ void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ul
     }
 
     if ((Buttons & Qt::LeftButton)) {
-        if ((Position-lastPoint).manhattanLength() < myPenWidth) {
+        if ((Position-ScribblingStartPosition).manhattanLength() < myPenWidth) {
             return; // ignore small movements (probably use penwidth*2)
         }
         if (scribbling) {
+           if ((ScribblingStarted == false) && ((Position-ScribblingStartPosition).manhattanLength() < (myPenWidth*3+2))) {
+               return; // ignore small movements (probably use penwidth*2)
+           }
+           ScribblingStarted = true;
             NewDrawingStarted = false;
            MyTimer.stop();
             MyTimer.start(GestureTimeout);
@@ -588,13 +594,14 @@ void ScribbleArea::drawLineTo(const QPoint &endPoint, double Pressure)
 //! [17] //! [18]
 {
    std::cout << "Drawing ";
+   int ModifiedPenWidth = myPenWidth * (1.0 + Pressure*Pressure*4);
     QPainter painter(&LastDrawnObject);
-    painter.setPen(QPen(myPenColor, myPenWidth * (1.0 + Pressure*Pressure*4), Qt::SolidLine, Qt::RoundCap,
+    painter.setPen(QPen(myPenColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
     painter.drawLine(lastPoint, endPoint);
     modified = true;
 
-    int rad = (myPenWidth / 2) + 2;
+    int rad = (ModifiedPenWidth / 2) + 2;
     update(QRect(lastPoint, endPoint).normalized()
                                      .adjusted(-rad, -rad, +rad, +rad));
     lastPoint = endPoint;
@@ -607,7 +614,8 @@ void ScribbleArea::EraseLineTo(const QPoint &endPoint, double Pressure)
 {
     std::cout << "Erasing ";
     QPainter painter(&LastDrawnObject);
-    painter.setPen(QPen(BackGroundColor, (myPenWidth+2)*3, Qt::SolidLine, Qt::RoundCap,
+    int ModifiedPenWidth = (myPenWidth+2)*3*(1.0 + Pressure*Pressure*10);
+    painter.setPen(QPen(BackGroundColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
    // painter.setCompositionMode(QPainter::CompositionMode_Source);
     //painter.setCompositionMode(QPainter::CompositionMode_Clear);
@@ -615,7 +623,7 @@ void ScribbleArea::EraseLineTo(const QPoint &endPoint, double Pressure)
     modified = true;
     EraseLastDrawnObject = true;
 
-    int rad = ((myPenWidth+2)*3 / 2) + 2;
+    int rad = (ModifiedPenWidth / 2) + 2;
     update(QRect(lastPoint, endPoint).normalized()
                                      .adjusted(-rad, -rad, +rad, +rad));
     lastPoint = endPoint;
