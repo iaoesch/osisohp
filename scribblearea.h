@@ -107,6 +107,7 @@ private:
     bool modified;
     bool scribbling;
     bool ScribblingStarted;
+    bool FillPolygon;
     bool MoveSelected;
     bool NewDrawingStarted;
     bool LastDrawingValid;

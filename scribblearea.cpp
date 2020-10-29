@@ -200,6 +200,7 @@ void ScribbleArea::HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulo
         lastPoint = Position;
         ScribblingStartPosition = Position;
         scribbling = true;
+        FillPolygon = false;
         ScribblingStarted = false;
         NewDrawingStarted = true;
         MoveSelected = false;
@@ -243,7 +244,7 @@ void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ul
     }
 
     if ((Buttons & Qt::LeftButton)) {
-        if ((Position-ScribblingStartPosition).manhattanLength() < myPenWidth) {
+        if ((Position-lastPoint).manhattanLength() < myPenWidth) {
             return; // ignore small movements (probably use penwidth*2)
         }
         if (scribbling) {
@@ -252,6 +253,7 @@ void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ul
            }
            ScribblingStarted = true;
             NewDrawingStarted = false;
+            //FillPolygon = false;
            MyTimer.stop();
             MyTimer.start(GestureTimeout);
             if (LastDrawingValid) {
@@ -328,7 +330,16 @@ void ScribbleArea::HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, b
         CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
         LastPaintedObjectBoundingBox = CurrentPaintedObjectBoundingBox;
         CurrentPaintedObjectBoundingBox.Clear();
-
+        if (FillPolygon) {
+        QPainter painter2(&image);
+        painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                             Qt::RoundJoin));
+        painter2.setBrush(QBrush(myPenColor));
+        painter2.setCompositionMode(QPainter::CompositionMode_Source);
+        // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
+        painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+        update();
+        }
     }
     if (Button == Qt::LeftButton && MoveSelected) {
        WaitForPostIt = false;
@@ -509,6 +520,10 @@ void ScribbleArea::timeout()
     }
     if (scribbling) {
        //   QTextStream(stdout) << "<" << GestureTrackerAccumulatedSpeed.x() << "; " << GestureTrackerAccumulatedSpeed.y() << "> <"  << GestureTrackerAccumulatedSquaredSpeed.x() << ";" << GestureTrackerAccumulatedSquaredSpeed.y() << endl;
+
+       FillPolygon = true;
+       update();
+
     }
 
 }
