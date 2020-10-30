@@ -66,7 +66,7 @@ public:
 
     bool isModified() const { return modified; }
     QColor penColor() const { return myPenColor; }
-    int penWidth() const { return myPenWidth; }
+    int penWidth() const { return SelectedPenWidth; }
 
 public slots:
     void clearImage();
@@ -85,7 +85,7 @@ protected:
 private:
 
 
-    void drawLineTo(const QPoint &endPoint);
+    void drawLineTo(const QPoint &endPoint, double Pressure);
     void drawrectangle(const BoundingBoxClass &Region);
     void DrawMovedSelection(const QPoint Offset);
 
@@ -106,6 +106,8 @@ private:
 
     bool modified;
     bool scribbling;
+    bool ScribblingStarted;
+    bool FillPolygon;
     bool MoveSelected;
     bool NewDrawingStarted;
     bool LastDrawingValid;
@@ -114,9 +116,11 @@ private:
     bool Scrolling;
     bool DiscardSelection;
     int myPenWidth;
+    int SelectedPenWidth;
     QColor myPenColor;
     QImage image;
     QImage LastDrawnObject;
+    bool EraseLastDrawnObject;
 
     QColor TransparentColor;
     QColor BackGroundColor;
@@ -126,11 +130,13 @@ private:
     QImage SelectedImagePart;
     QImage HintSelectedImagePart;
     QPoint lastPoint;
+    QPoint ScribblingStartPosition;
     QPoint SelectedPoint;
     QPoint SelectedOffset;
     QPoint SelectedCurrentPosition;
     QPoint ScrollingLastPosition;
     QPoint ScrollingOldOrigin;
+    QPoint FillPolygonStartPosition;
 
     QPoint GestureTrackeStartPosition;
     ulong  GestureTrackerStartPositionTimeStamp;
@@ -164,11 +170,11 @@ private:
 
     BoundingBoxClass LastPaintedObjectBoundingBox;
     BoundingBoxClass CurrentPaintedObjectBoundingBox;
-    void HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, bool Erasing);
-    void HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing);
+    void HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure);
+    void HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure);
     void HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulong Timestamp);
     bool PostItSelected(QPoint Position);
-    void EraseLineTo(const QPoint &endPoint);
+    void EraseLineTo(const QPoint &endPoint, double Pressure);
 };
 //! [0]
 

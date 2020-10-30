@@ -60,7 +60,7 @@ MainWindow::MainWindow()
     ToolIcon.fill(Qt::green);
     toolBar->addAction(ToolIcon, "Green");
 
-    ToolIcon.fill(Qt::yellow);
+    ToolIcon.fill(Qt::darkYellow);
     toolBar->addAction(ToolIcon, "Yellow");
 
     ToolIcon.fill(QColor(255, 128, 0));
@@ -74,6 +74,9 @@ MainWindow::MainWindow()
 
     ToolIcon.fill(Qt::black);
     toolBar->addAction(ToolIcon, "Black");
+
+    ToolIcon.fill(Qt::yellow);
+    toolBar->addAction(ToolIcon, "MarkerYellow");
 
     connect(toolBar, SIGNAL(actionTriggered(QAction *)),
             scribbleArea, SLOT(HandleToolAction(QAction * )));
