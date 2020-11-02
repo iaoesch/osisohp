@@ -177,6 +177,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
    HandlePressEvent(event->button(), event->pos(), event->timestamp());
 }
 
+#ifndef USE_STATEMACHINE
 void ScribbleArea::HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulong Timestamp)
 
 //! [11] //! [12]
@@ -215,8 +216,9 @@ void ScribbleArea::HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulo
         }
     }
 }
+#endif
 
-
+#ifdef USE_STATEMACHINE
 void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPoint Position, ulong Timestamp)
 {
     std::cout << "Button Down: " << Button  << std::endl;
@@ -260,14 +262,14 @@ void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPoint Position, u
         }
     }
 }
-
+#endif
 
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
    std::cout << "Mouse: ";
    HandleMoveEvent(event->buttons(), event->pos(), event->timestamp(), false, 0);
 }
-
+#ifndef USE_STATEMACHINE
 void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure)
 {
 
@@ -358,7 +360,9 @@ void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ul
         }
     }
 }
+#endif
 
+#ifdef USE_STATEMACHINE
 void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure)
 {
 
@@ -472,13 +476,14 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, 
         }
     }
 }
-
+#endif
 
 void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {
    std::cout << "Mouse: ";
    HandleReleaseEvent(event->button(), event->pos(), false, 0);
 }
+#ifndef USE_STATEMACHINE
 
 void ScribbleArea::HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure)
 {
@@ -549,7 +554,9 @@ void ScribbleArea::HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, b
        update();
     }
 }
+#endif
 
+#ifdef USE_STATEMACHINE
 void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure)
 {
    std::cout << "Button Up: " << Button  << std::endl;
@@ -641,7 +648,7 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position,
       }
    }
 }
-
+#endif
 void ScribbleArea::tabletEvent(QTabletEvent * event)
 {
    std::cout << "Tablett Pen Type " << event->pointerType() << std::endl;
@@ -686,6 +693,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
 }
 
 
+#ifndef USE_STATEMACHINE
 
 void ScribbleArea::timeout()
 {
@@ -792,7 +800,9 @@ void ScribbleArea::timeout()
     }
 
 }
+#endif
 
+#ifdef USE_STATEMACHINE
 void ScribbleArea::timeoutSM()
 {
     /* Copying on long move pauses */
@@ -926,7 +936,7 @@ void ScribbleArea::timeoutSM()
 
 
 }
-
+#endif
 
 bool ScribbleArea::PostItSelected(QPoint Position)
 {
