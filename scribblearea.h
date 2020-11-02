@@ -51,7 +51,7 @@
 
 #include "box.hpp"
 
-//#define USE_STATEMACHINE
+#define USE_STATEMACHINE
 
 //! [0]
 class ScribbleArea : public QWidget
