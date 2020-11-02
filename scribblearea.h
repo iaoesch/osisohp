@@ -104,6 +104,22 @@ private:
     PostIt *SelectedPostit;
     QPoint StartPositionSelectedPostIt;
 
+    enum ScribblingState {
+       Idle,
+       WaitingToLeaveJitterProtectionForDrawing,
+       WaitingToLeaveJitterProtectionWithSelectedAreaForMoving,
+       WaitingToLeaveJitterProtectionForScrolling,
+       WaitingToLeaveJitterProtectionWithCreatedPostitForMoving,
+       WaitingToLeaveJitterProtectionWithSelectedPostitForMoving,
+       Drawing,
+       DrawingPaused,
+       DrawingFillRequested,
+       MovingSelection,
+       MovingSelectionPaused,
+       MovingPostit,
+       ScrollingDrawingArea,
+};
+    enum ScribblingState State;
     bool modified;
     bool scribbling;
     bool ScribblingStarted;
@@ -175,6 +191,10 @@ private:
     void HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulong Timestamp);
     bool PostItSelected(QPoint Position);
     void EraseLineTo(const QPoint &endPoint, double Pressure);
+    void HandlePressEventSM(Qt::MouseButton Button, QPoint Position, ulong Timestamp);
+    void HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure);
+    void HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure);
+    void timeoutSM();
 };
 //! [0]
 

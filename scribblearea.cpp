@@ -216,6 +216,52 @@ void ScribbleArea::HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulo
     }
 }
 
+
+void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPoint Position, ulong Timestamp)
+{
+    std::cout << "Button Down: " << Button  << std::endl;
+    if (Button == Qt::LeftButton) {
+        if (State != Idle) {
+           std::cout << "HandlePressEventSM: unexpected State: " << State  << std::endl;
+        }
+        State = WaitingToLeaveJitterProtectionForDrawing;
+
+        GestureTrackerLastPosition =  Position;
+        GestureTrackerLastPositionTimeStamp = Timestamp;
+        GestureTrackeStartPosition =  Position;
+        GestureTrackerStartPositionTimeStamp = Timestamp;
+        GestureTrackerAccumulatedSpeed = QPoint(0,0);
+        GestureTrackerAccumulatedSquaredSpeed =  QPoint(0,0);
+
+        CurrentDistance = 0;
+        LastDistance = 0;
+        DeltaTLastDistance = 0;
+        DeltaTCurrentDistance = 0;
+
+        lastPoint = Position;
+        ScribblingStartPosition = Position;
+#if 0
+        scribbling = true;
+        FillPolygon = false;
+        ScribblingStarted = false;
+        NewDrawingStarted = true;
+        MoveSelected = false;
+#endif
+        CurrentPaintedObjectBoundingBox.Clear();
+        CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(lastPoint.x(), lastPoint.y()));
+        SelectedCurrentPosition = Position;
+        MyTimer.start(SelectTimeout);
+
+
+        if (LastPaintedObjectBoundingBox.IsInside(PositionClass(Position.x(), Position.y()))) {
+           DownInsideObject = true;
+        } else {
+           DownInsideObject = false;
+        }
+    }
+}
+
+
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
    std::cout << "Mouse: ";
@@ -313,6 +359,121 @@ void ScribbleArea::HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ul
     }
 }
 
+void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+
+    QPoint GestureMovement = Position - GestureTrackerLastPosition;
+    ulong  GestureTime = Timestamp - GestureTrackerLastPositionTimeStamp;
+
+    LastDistance = CurrentDistance;
+    DeltaTLastDistance = DeltaTCurrentDistance;
+    DeltaTCurrentDistance = GestureTime;
+    CurrentDistance = GestureMovement.manhattanLength();
+    WaitForPostIt = false;
+
+    if (GestureTime > 0) {
+       QPointF GestureSpeed = QPointF(GestureMovement) / GestureTime;
+       GestureTrackerLastPosition =  Position;
+       GestureTrackerLastPositionTimeStamp = Timestamp;
+
+       GestureTrackerAccumulatedSpeed += GestureSpeed;
+       GestureTrackerAccumulatedSquaredSpeed += QPointF(GestureSpeed.x() * GestureSpeed.x(), GestureSpeed.y()*GestureSpeed.y() );
+    }
+
+    if ((Buttons & Qt::LeftButton)) {
+        if ((Position-lastPoint).manhattanLength() < myPenWidth) {
+            return; // ignore small movements (probably use penwidth*2)
+        }
+        switch (State) {
+           case ScribbleArea::Idle:
+              break;
+           case ScribbleArea::WaitingToLeaveJitterProtectionForDrawing:
+              if (((Position-ScribblingStartPosition).manhattanLength() < (myPenWidth*3+2))) {
+                  return; // ignore small movements (probably use penwidth*2)
+              }
+              State = Drawing;
+              [[fallthrough]];
+           case ScribbleArea::Drawing:
+           case ScribbleArea::DrawingFillRequested:
+               if (State == DrawingFillRequested) {
+                  if ((Position-FillPolygonStartPosition).manhattanLength() > (myPenWidth*3+2)) {
+                     State = Drawing;
+                     setCursor(Qt::ArrowCursor);
+
+                  }
+               }
+               MyTimer.stop();
+               MyTimer.start(GestureTimeout);
+               if (LastDrawingValid) {
+                 DrawLastDrawnPicture();
+
+                 LastDrawingValid = false;
+                 LastDrawnObjectPoints.clear();
+                 LastDrawnObjectPoints.append(lastPoint);
+
+              }
+              //LastDrawnObject.fill(BackgroundColor);
+              if (Erasing) {
+                 EraseLineTo(Position, Pressure);
+              } else {
+                 drawLineTo(Position, Pressure);
+              }
+              LastDrawnObjectPoints.append(Position);
+              CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
+              break;
+
+           case ScribbleArea::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving:
+              break;
+           case ScribbleArea::WaitingToLeaveJitterProtectionForScrolling:
+              break;
+           case ScribbleArea::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving:
+              break;
+           case ScribbleArea::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving:
+              break;
+           case ScribbleArea::DrawingPaused:
+              break;
+              break;
+           case ScribbleArea::MovingSelection:
+              // QPoint Offset = event->pos() - SelectedPoint;
+                MyTimer.stop();
+                MyTimer.start(CopyTimeout);
+
+                SelectedCurrentPosition = Position;
+                update();
+              // DrawMovedSelection(Offset);
+              // BoundingBoxClass MovedRectangle(LastPaintedObjectBoundingBox);
+              // MovedRectangle.Move(PositionClass(Offset.x(), Offset.y()));
+              // drawrectangle(MovedRectangle);
+               //        drawrectangle(BoundingBoxClass(LastPaintedObjectBoundingBox).Move(PositionClass(Offset.x(), Offset.y())));
+              break;
+           case ScribbleArea::MovingSelectionPaused:
+              break;
+           case ScribbleArea::MovingPostit:
+              if (SelectedPostit != nullptr) {
+                 std::cout << "Moving postit " << std::endl;
+                 SelectedPostit->Position = Position;
+                 update();
+              }
+              break;
+           case ScribbleArea::ScrollingDrawingArea:
+              if (LastDrawingValid) {
+                 DrawLastDrawnPicture();
+
+                 LastDrawingValid = false;
+                 LastDrawnObjectPoints.clear();
+
+
+              }
+             Origin -= Position- ScrollingLastPosition;
+             ScrollingLastPosition = Position;
+             update();
+              break;
+
+        }
+    }
+}
+
+
 void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {
    std::cout << "Mouse: ";
@@ -387,6 +548,98 @@ void ScribbleArea::HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, b
        resizeScrolledImage();
        update();
     }
+}
+
+void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure)
+{
+   std::cout << "Button Up: " << Button  << std::endl;
+
+   if (Button == Qt::LeftButton) {
+      switch(State) {
+         case ScribbleArea::Idle:
+         case ScribbleArea::WaitingToLeaveJitterProtectionForDrawing:
+         case ScribbleArea::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving:
+         case ScribbleArea::WaitingToLeaveJitterProtectionForScrolling:
+         case ScribbleArea::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving:
+         case ScribbleArea::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving:
+            State = Idle;
+            break;
+
+         case ScribbleArea::Drawing:
+         case ScribbleArea::DrawingPaused:
+         case ScribbleArea::DrawingFillRequested:
+            MyTimer.stop();
+            if (Erasing) {
+               EraseLineTo(Position, Pressure);
+            } else {
+               drawLineTo(Position, Pressure);
+            }
+            LastDrawnObjectPoints.append(Position);
+            LastDrawingValid = true;
+            CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
+            LastPaintedObjectBoundingBox = CurrentPaintedObjectBoundingBox;
+            CurrentPaintedObjectBoundingBox.Clear();
+            if (State == DrawingFillRequested) {
+               QPainter painter2(&image);
+               painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                                    Qt::RoundJoin));
+               painter2.setBrush(QBrush(myPenColor));
+               painter2.setCompositionMode(QPainter::CompositionMode_Source);
+               // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
+               painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+               setCursor(Qt::ArrowCursor);
+               FillPolygon = false;
+
+               update();
+            }
+            State = Idle;
+            break;
+         case ScribbleArea::MovingSelection:
+         case ScribbleArea::MovingSelectionPaused:
+            //WaitForPostIt = false;
+             if ( ((DeltaTLastDistance + DeltaTCurrentDistance) > 0) &&
+                  ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) > 0.25f) {
+                 std::cout << "LeavingSpeed " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
+                 DiscardSelection = true;
+                 update();
+             }
+             std::cout << "LeavingSpeed " << (LastDistance + CurrentDistance) << " / " << (DeltaTLastDistance + DeltaTCurrentDistance) << " = " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
+                 ;
+           // QPoint Offset =  - SelectedPoint;
+             if (DiscardSelection == false) {
+                DrawMovedSelection(Position);
+             }
+           // BoundingBoxClass MovedRectangle(LastPaintedObjectBoundingBox);
+          //  MovedRectangle.Move(PositionClass(Offset.x(), Offset.y()));
+          //  drawrectangle(MovedRectangle);
+            MoveSelected = false;
+            LastDrawingValid = false;
+            //        drawrectangle(BoundingBoxClass(LastPaintedObjectBoundingBox).Move(PositionClass(Offset.x(), Offset.y())));
+            State = Idle;
+            break;
+         case ScribbleArea::MovingPostit:
+            if ((SelectedPostit != nullptr)) {
+               std::cout << "Fixing postit " << std::endl;
+               SelectedPostit->Position = Position;
+               SelectedPostit->Box.Move(PositionClass(Position.x()-StartPositionSelectedPostIt.x(), Position.y()-StartPositionSelectedPostIt.y()));
+               MoveSelected = false;
+               LastDrawingValid = false;
+               SelectedPostit = nullptr;
+               setCursor(Qt::ArrowCursor);
+               update();
+            }
+            State = Idle;
+            break;
+
+         case ScribbleArea::ScrollingDrawingArea:
+            Origin -= Position - ScrollingLastPosition;
+            resizeScrolledImage();
+            update();
+            State = Idle;
+            break;
+
+      }
+   }
 }
 
 void ScribbleArea::tabletEvent(QTabletEvent * event)
@@ -539,6 +792,141 @@ void ScribbleArea::timeout()
     }
 
 }
+
+void ScribbleArea::timeoutSM()
+{
+    /* Copying on long move pauses */
+   std::cout << "timeout " << std::endl;
+   switch(State) {
+      case ScribbleArea::Idle:
+         break;
+      case ScribbleArea::WaitingToLeaveJitterProtectionForDrawing:
+         if (DownInsideObject) {
+
+            SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.QRectangle().translated(Origin));
+            HintSelectedImagePart = SelectedImagePart;
+            HintSelectedImagePart.fill(qRgba(0, 0, 0, 0));
+            DiscardSelection = false;
+
+            QPainter painter2(&image);
+            painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                                 Qt::RoundJoin));
+            painter2.setBrush(QBrush(QColor(0, 0, 0, 0)));
+            painter2.setCompositionMode(QPainter::CompositionMode_Source);
+            // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
+            painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+
+            QPainter painter(&HintSelectedImagePart);
+            painter.setPen(QPen(QColor(0, 30, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                                Qt::RoundJoin));
+            painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
+            LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetLeft(), -LastPaintedObjectBoundingBox.GetTop());
+            painter.drawPolygon(LastDrawnObjectPoints);
+            QPainterPath Path;
+            Path.addPolygon(LastDrawnObjectPoints);
+            QImage MaskedSelectedImagePart = SelectedImagePart;
+            MaskedSelectedImagePart.fill(qRgba(0, 0, 0, 0));
+            QPainter painter3(&MaskedSelectedImagePart);
+            painter3.setClipPath(Path);
+            painter3.drawImage(QPoint(0,0), SelectedImagePart);
+            SelectedImagePart = MaskedSelectedImagePart;
+
+            LastDrawnObjectPoints.clear();
+            modified = true;
+            LastDrawnObject.fill(qRgba(0, 0, 0, 0));
+
+
+            //MoveSelected = true;
+            NewDrawingStarted = false;
+            SelectedPoint = lastPoint;
+            SelectedOffset = QPoint(LastPaintedObjectBoundingBox.GetLeft(), LastPaintedObjectBoundingBox.GetTop()) - lastPoint;
+            //scribbling = false;
+            update();
+            //WaitForPostIt = true;
+            MyTimer.start(PostItTimeout);
+            State = WaitingToLeaveJitterProtectionWithSelectedAreaForMoving;
+
+         } else {
+
+            if (PostItSelected(SelectedCurrentPosition)) {
+               //scribbling = false;
+               NewDrawingStarted = false;
+               setCursor(Qt::ClosedHandCursor);
+               std::cout << "Selected postit " << std::endl;
+               State = WaitingToLeaveJitterProtectionWithSelectedPostitForMoving;
+
+
+            } else {
+               SelectedImagePart =  image.copy();
+               HintSelectedImagePart = SelectedImagePart;
+               HintSelectedImagePart.fill(qRgba(0, 0, 0, 40));
+               //Scrolling = true;
+               ScrollingLastPosition = SelectedCurrentPosition;
+               ScrollingOldOrigin = Origin;
+               //scribbling = false;
+               update();
+               State = WaitingToLeaveJitterProtectionForScrolling;
+            }
+
+         }
+         break;
+      case ScribbleArea::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving:
+         {
+            std::cout << "Creating postit " << std::endl;
+
+            //WaitForPostIt = false;
+            QImage NewPostit(HintSelectedImagePart);
+            QPainter painter(&NewPostit);
+            painter.drawImage(0,0,SelectedImagePart);
+            PostIts.push_back(PostIt(NewPostit, SelectedCurrentPosition+SelectedOffset, LastPaintedObjectBoundingBox));
+            State = WaitingToLeaveJitterProtectionWithCreatedPostitForMoving;
+         }
+         break;
+
+      case ScribbleArea::WaitingToLeaveJitterProtectionForScrolling:
+         break;
+      case ScribbleArea::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving:
+         break;
+      case ScribbleArea::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving:
+         break;
+      case ScribbleArea::Drawing:
+         //   QTextStream(stdout) << "<" << GestureTrackerAccumulatedSpeed.x() << "; " << GestureTrackerAccumulatedSpeed.y() << "> <"  << GestureTrackerAccumulatedSquaredSpeed.x() << ";" << GestureTrackerAccumulatedSquaredSpeed.y() << endl;
+
+         FillPolygon = true;
+         FillPolygonStartPosition = lastPoint;
+         setCursor(Qt::BusyCursor);
+         update();
+         State = DrawingPaused;
+         break;
+      case ScribbleArea::DrawingPaused:
+         break;
+      case ScribbleArea::DrawingFillRequested:
+         break;
+      case ScribbleArea::MovingSelection:
+         if (DiscardSelection == false) {
+
+         if (GestureTrackerAccumulatedSpeed.manhattanLength()*10 > GestureTrackerAccumulatedSquaredSpeed.manhattanLength()) {
+            QPoint CopyPos(SelectedCurrentPosition);
+            SelectedCurrentPosition += QPoint(3,3);
+            DrawMovedSelection(CopyPos);
+         } else {
+            DiscardSelection = true;
+            update();
+         }
+         State = MovingSelectionPaused;
+         }
+         break;
+      case ScribbleArea::MovingSelectionPaused:
+         break;
+      case ScribbleArea::MovingPostit:
+         break;
+      case ScribbleArea::ScrollingDrawingArea:
+         break;
+   }
+
+
+}
+
 
 bool ScribbleArea::PostItSelected(QPoint Position)
 {
