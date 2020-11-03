@@ -78,6 +78,19 @@ MainWindow::MainWindow()
     ToolIcon.fill(Qt::yellow);
     toolBar->addAction(ToolIcon, "MarkerYellow");
 
+    ToolIcon.fill(Qt::yellow);
+    QPainter IconPainter(&ToolIcon);
+    IconPainter.setPen(Qt::black);
+    IconPainter.setBrush(QBrush(Qt::black));
+    IconPainter.drawEllipse(4,4,5,5);
+    toolBar->addAction(ToolIcon, "SmallPen");
+
+    IconPainter.drawEllipse(3,3,7,7);
+    toolBar->addAction(ToolIcon, "MediumPen");
+
+    IconPainter.drawEllipse(2,2,9,9);
+    toolBar->addAction(ToolIcon, "LargePen");
+
     connect(toolBar, SIGNAL(actionTriggered(QAction *)),
             scribbleArea, SLOT(HandleToolAction(QAction * )));
     //  toolBar->insertAction(0, new PushButtonAction(QIcon(":/Search.gif"), "Search"));

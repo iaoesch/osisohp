@@ -155,7 +155,7 @@ private:
     QImage SelectedImagePart;
     QImage HintSelectedImagePart;
     QPoint lastPoint;
-    QPoint ScribblingStartPosition;
+    QPoint ButtonDownPosition;
     QPoint SelectedPoint;
     QPoint SelectedOffset;
     QPoint SelectedCurrentPosition;
