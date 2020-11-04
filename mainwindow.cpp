@@ -55,7 +55,7 @@ MainWindow::MainWindow()
   //  toolBar->insertAction(0, new PushButtonAction(QIcon(":/Refresh.gif"), "Refresh"));
     QPixmap ToolIcon(15, 15);
     ToolIcon.fill(Qt::blue);
-    toolBar->addAction(QIcon(ToolIcon), "Blue");
+    toolBar->addAction(QIcon(ToolIcon), "Blue")->setChecked(true);
 
     ToolIcon.fill(Qt::green);
     toolBar->addAction(ToolIcon, "Green");
@@ -77,6 +77,20 @@ MainWindow::MainWindow()
 
     ToolIcon.fill(Qt::yellow);
     toolBar->addAction(ToolIcon, "MarkerYellow");
+
+    ToolIcon.fill(Qt::yellow);
+    QPainter IconPainter(&ToolIcon);
+    IconPainter.setPen(Qt::black);
+    IconPainter.setBrush(QBrush(Qt::black));
+    IconPainter.drawEllipse(4,4,5,5);
+    toolBar->addAction(ToolIcon, "SmallPen");
+
+    IconPainter.drawEllipse(3,3,7,7);
+    toolBar->addAction(ToolIcon, "MediumPen");
+
+    IconPainter.drawEllipse(2,2,9,9);
+    QAction *LargePen = toolBar->addAction(ToolIcon, "LargePen");
+    LargePen->setChecked(true);
 
     connect(toolBar, SIGNAL(actionTriggered(QAction *)),
             scribbleArea, SLOT(HandleToolAction(QAction * )));

@@ -71,8 +71,8 @@ public:
 public slots:
     void clearImage();
     void print();
-    void timeout();
     void HandleToolAction(QAction *action);
+    void timeoutSM();
 
 protected:
     void mousePressEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
@@ -104,16 +104,25 @@ private:
     PostIt *SelectedPostit;
     QPoint StartPositionSelectedPostIt;
 
+    enum ScribblingState {
+       Idle,
+       WaitingToLeaveJitterProtectionForDrawing,
+       WaitingToLeaveJitterProtectionWithSelectedAreaForMoving,
+       WaitingToLeaveJitterProtectionForScrolling,
+       WaitingToLeaveJitterProtectionWithCreatedPostitForMoving,
+       WaitingToLeaveJitterProtectionWithSelectedPostitForMoving,
+       Drawing,
+       DrawingPaused,
+       DrawingFillRequested,
+       MovingSelection,
+       MovingSelectionPaused,
+       MovingPostit,
+       ScrollingDrawingArea,
+};
+    enum ScribblingState State;
     bool modified;
-    bool scribbling;
-    bool ScribblingStarted;
-    bool FillPolygon;
-    bool MoveSelected;
-    bool NewDrawingStarted;
     bool LastDrawingValid;
     bool DownInsideObject;
-    bool WaitForPostIt;
-    bool Scrolling;
     bool DiscardSelection;
     int myPenWidth;
     int SelectedPenWidth;
@@ -130,7 +139,7 @@ private:
     QImage SelectedImagePart;
     QImage HintSelectedImagePart;
     QPoint lastPoint;
-    QPoint ScribblingStartPosition;
+    QPoint ButtonDownPosition;
     QPoint SelectedPoint;
     QPoint SelectedOffset;
     QPoint SelectedCurrentPosition;
@@ -170,9 +179,9 @@ private:
 
     BoundingBoxClass LastPaintedObjectBoundingBox;
     BoundingBoxClass CurrentPaintedObjectBoundingBox;
-    void HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure);
-    void HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure);
-    void HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulong Timestamp);
+    void HandlePressEventSM(Qt::MouseButton Button, QPoint Position, ulong Timestamp);
+    void HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure);
+    void HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure);
     bool PostItSelected(QPoint Position);
     void EraseLineTo(const QPoint &endPoint, double Pressure);
 };
