@@ -155,6 +155,15 @@ void ScribbleArea::HandleToolAction(QAction *action)
        myPenColor = Qt::yellow;
        myPenColor.setAlpha(64);
        myPenWidth = SelectedPenWidth * 5 + 2;
+    } else if (action->iconText() == "SmallPen") {
+       SelectedPenWidth = 1;
+       myPenWidth = SelectedPenWidth;
+    } else if (action->iconText() == "MediumPen") {
+       SelectedPenWidth = 2;
+       myPenWidth = SelectedPenWidth;
+    } else if (action->iconText() == "LargePen") {
+       SelectedPenWidth = 4;
+       myPenWidth = SelectedPenWidth;
    }
 }
 
@@ -415,6 +424,7 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, 
               }
               State = Drawing;
               [[fallthrough]];
+           case ScribbleArea::DrawingPaused:
            case ScribbleArea::Drawing:
            case ScribbleArea::DrawingFillRequested:
                if (State == DrawingFillRequested) {
@@ -423,6 +433,8 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, 
                      setCursor(Qt::ArrowCursor);
 
                   }
+               } else if (State == DrawingPaused) {
+                  State = DrawingFillRequested;
                }
                MyTimer.stop();
                MyTimer.start(GestureTimeout);
@@ -444,7 +456,6 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, 
               CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
               break;
 
-            case ScribbleArea::DrawingPaused:
               break;
               break;
            case ScribbleArea::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving:
@@ -590,12 +601,13 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position,
    if (Button == Qt::LeftButton) {
       switch(State) {
          case ScribbleArea::Idle:
-         case ScribbleArea::WaitingToLeaveJitterProtectionForDrawing:
+//         case ScribbleArea::WaitingToLeaveJitterProtectionForDrawing:
          case ScribbleArea::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving:
          case ScribbleArea::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving:
             State = Idle;
             break;
 
+         case ScribbleArea::WaitingToLeaveJitterProtectionForDrawing:
          case ScribbleArea::Drawing:
          case ScribbleArea::DrawingPaused:
          case ScribbleArea::DrawingFillRequested:
@@ -610,7 +622,7 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position,
             CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
             LastPaintedObjectBoundingBox = CurrentPaintedObjectBoundingBox;
             CurrentPaintedObjectBoundingBox.Clear();
-            if (State == DrawingFillRequested) {
+            if ((State == DrawingFillRequested)||(State == DrawingPaused)) {
                QPainter painter2(&image);
                painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
                                     Qt::RoundJoin));
@@ -1214,6 +1226,13 @@ void ScribbleArea::resizeScrolledImage()
     newImage.fill(TransparentColor);
     QPainter painter(&newImage);
     painter.drawImage(QPoint(OffsetX, OffsetY), image);
+    // Now adjust all postits
+    for (auto &&Picture: PostIts) {
+       Picture.Position += QPoint(OffsetX, OffsetY);
+       Picture.Box.Move(PositionClass(OffsetX, OffsetY));
+
+    }
+
     image = newImage;
 }
 
