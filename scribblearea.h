@@ -51,8 +51,6 @@
 
 #include "box.hpp"
 
-#define USE_STATEMACHINE
-
 //! [0]
 class ScribbleArea : public QWidget
 {
@@ -74,11 +72,7 @@ public slots:
     void clearImage();
     void print();
     void HandleToolAction(QAction *action);
-#ifdef USE_STATEMACHINE
     void timeoutSM();
-#else
-    void timeout();
-#endif
 
 protected:
     void mousePressEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
@@ -110,7 +104,6 @@ private:
     PostIt *SelectedPostit;
     QPoint StartPositionSelectedPostIt;
 
-#ifdef USE_STATEMACHINE
     enum ScribblingState {
        Idle,
        WaitingToLeaveJitterProtectionForDrawing,
@@ -127,15 +120,6 @@ private:
        ScrollingDrawingArea,
 };
     enum ScribblingState State;
-#else
-    bool scribbling;
-    bool ScribblingStarted;
-    bool FillPolygon;
-    bool MoveSelected;
-    bool NewDrawingStarted;
-    bool WaitForPostIt;
-    bool Scrolling;
-#endif
     bool modified;
     bool LastDrawingValid;
     bool DownInsideObject;
@@ -195,15 +179,9 @@ private:
 
     BoundingBoxClass LastPaintedObjectBoundingBox;
     BoundingBoxClass CurrentPaintedObjectBoundingBox;
-#ifdef USE_STATEMACHINE
     void HandlePressEventSM(Qt::MouseButton Button, QPoint Position, ulong Timestamp);
     void HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure);
     void HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure);
-#else
-    void HandleReleaseEvent(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure);
-    void HandleMoveEvent(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure);
-    void HandlePressEvent(Qt::MouseButton Button, QPoint Position, ulong Timestamp);
-#endif
     bool PostItSelected(QPoint Position);
     void EraseLineTo(const QPoint &endPoint, double Pressure);
 };
