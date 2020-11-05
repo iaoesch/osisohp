@@ -52,6 +52,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     : QWidget(parent)
 {
     setAttribute(Qt::WA_StaticContents);
+    setTabletTracking(true);
     modified = false;
     LastDrawingValid = false;
     EraseLastDrawnObject = false;
@@ -190,6 +191,7 @@ void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPoint Position, u
 {
     std::cout << "Button Down: " << Button  << std::endl;
     if (Button == Qt::LeftButton) {
+       setCursor(Qt::ArrowCursor);
         if (State != Idle) {
            std::cout << "HandlePressEventSM: unexpected State: " << State  << std::endl;
         }
@@ -347,6 +349,14 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, 
               break;
 
         }
+    } else if (Buttons == Qt::NoButton) {
+        if (IsInsideAnyPostIt(Position)) {
+           setCursor(Qt::PointingHandCursor);
+        }  else {
+           setCursor(Qt::ArrowCursor);
+        }
+    } else {
+       setCursor(Qt::ArrowCursor);
     }
 }
 
@@ -654,6 +664,17 @@ bool ScribbleArea::PostItSelected(QPoint Position)
    return false;
 }
 
+
+bool ScribbleArea::IsInsideAnyPostIt(QPoint Position)
+{
+   Position += Origin;
+   for (auto &&PostIt: PostIts) {
+     if (PostIt.Box.IsInside(PositionClass(Position.x(), Position.y()))) {
+        return true;
+     }
+   }
+   return false;
+}
 //! [12] //! [13]
 void ScribbleArea::paintEvent(QPaintEvent *event)
 //! [13] //! [14]

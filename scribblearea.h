@@ -184,6 +184,7 @@ private:
     void HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure);
     bool PostItSelected(QPoint Position);
     void EraseLineTo(const QPoint &endPoint, double Pressure);
+    bool IsInsideAnyPostIt(QPoint Position);
 };
 //! [0]
 
