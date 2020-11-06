@@ -594,6 +594,7 @@ void ScribbleArea::timeoutSM()
 
             //WaitForPostIt = false;
             QImage NewPostit(HintSelectedImagePart);
+            // Here we could add a different background for postits
             QPainter painter(&NewPostit);
             painter.drawImage(0,0,SelectedImagePart);
             BoundingBoxClass TranslatedBoundingBox (LastPaintedObjectBoundingBox);
