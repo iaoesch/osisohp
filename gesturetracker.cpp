@@ -1,27 +1,20 @@
 /*****************************************************************************/
-/*  Class      : BoundingBoxClass                               Version 1.0  */
+/*  Class      : GestureTrackerClass                            Version 1.0  */
 /*****************************************************************************/
 /*                                                                           */
-/*  Function   : This class holds a bounding box. This is the rectangle      */
-/*               enclosing all elements belonging to a graphical object      */
+/*  Function   : This class keeps track of gestures                          */
 /*                                                                           */
-/*  Methodes   : BoundingBoxClass()                                          */
-/*              ~BoundingBoxClass()                                          */
-/*               AddPoint()                                                  */
-/*               AddBox()                                                    */
-/*               IsInside()                                                  */
-/*               IsOverlapping()                                             */
-/*               GetTop()                                                    */
-/*               GetBottom()                                                 */
-/*               GetLeft()                                                   */
-/*               GetRigth()                                                  */
-/*               IsValid()                                                   */
+/*  Methodes   : GestureTrackerClass()                                       */
+/*               StartTracking()                                             */
+/*               Trackmovement()                                             */
+/*               GetCurrentSpeed()                                           */
+/*               IsFastShaking()                                             */
 /*                                                                           */
 /*  Author     : I. Oesch                                                    */
 /*                                                                           */
-/*  History    : 05.12.1999  IO Created                                      */
+/*  History    : 05.11.2020  IO Created                                      */
 /*                                                                           */
-/*  File       : box.cpp                                                     */
+/*  File       : gesturetracker.cpp                                          */
 /*                                                                           */
 /*****************************************************************************/
 /* MagicSoft                                                                 */
@@ -39,75 +32,75 @@
 /* Class procedure declaration */
 
 /*****************************************************************************/
-/*  Method      : BoundingBoxClass                                           */
+/*  Method      : GestureTrackerClass                                        */
 /*****************************************************************************/
 /*                                                                           */
-/*  Function    : Constructor for the boundingbox Class. initializes a       */
-/*                boundingbox                                                */
+/*  Function    : Constructor for the GestureTracker Class. initializes a    */
+/*                tracker                                                    */
 /*                                                                           */
 /*  Type        : Constructor                                                */
 /*                                                                           */
-/*  Input Para  : x1, y1, x2, y2: Shape of box                               */
+/*  Input Para  : None                                                       */
 /*                                                                           */
 /*  Output Para : None                                                       */
 /*                                                                           */
 /*  Author      : I. Oesch                                                   */
 /*                                                                           */
-/*  History     : 05.12.1999  IO  Created                                    */
+/*  History     : 05.11.2020  IO  Created                                    */
 /*                                                                           */
 /*****************************************************************************/
-GestureTracker::GestureTracker()
+GestureTrackerClass::GestureTrackerClass()
 {
    /* Method data declaration      */
 
    /* Method code declaration      */
    CurrentDistance = 0;
    LastDistance = 0;
-   DeltaTLastDistance = 0;
-   DeltaTCurrentDistance = 0;
+   DeltaTimeLastDistance = 0;
+   DeltaTimeCurrentDistance = 0;
 }
 
 /*****************************************************************************/
-/*  End  Method : BoundingBoxClass                                           */
+/*  End  Method : GestureTrackerClass                                        */
 /*****************************************************************************/
 
 /*****************************************************************************/
 /*  Method      : StartTracking                                              */
 /*****************************************************************************/
 /*                                                                           */
-/*  Function    : Resizes the boundingbox if needed to include the given     */
-/*                point                                                      */
+/*  Function    : Starts tracking of movement for detecting gestures         */
 /*                                                                           */
 /*  Type        : Public                                                     */
 /*                                                                           */
-/*  Input Para  : x, y: Coordinates of point to include                      */
+/*  Input Para  : Position: Starting position of possible gesture            */
+/*                Timestamp: Starting time of possible gesture               */
 /*                                                                           */
 /*  Output Para : None                                                       */
 /*                                                                           */
 /*  Author      : I. Oesch                                                   */
 /*                                                                           */
-/*  History     : 05.12.1999  IO  Created                                    */
+/*  History     : 05.11.2020  IO  Created                                    */
 /*                                                                           */
 /*****************************************************************************/
-void GestureTracker::StartTracking(QPoint Position, ulong Timestamp)
+void GestureTrackerClass::StartTracking(QPoint Position, ulong Timestamp)
 {
    /* Method data declaration      */
 
    /* Method code declaration      */
 
-   GestureTrackerLastPosition =  Position;
-   GestureTrackerLastPositionTimeStamp = Timestamp;
-   GestureTrackeStartPosition =  Position;
-   GestureTrackerStartPositionTimeStamp = Timestamp;
-   GestureTrackerAccumulatedSpeed = QPoint(0,0);
-   GestureTrackerAccumulatedSquaredSpeed =  QPoint(0,0);
+   /* Prepare for gesture detection */
+   LastPosition =  Position;
+   LastPositionTimeStamp = Timestamp;
+   StartPosition =  Position;
+   StartPositionTimeStamp = Timestamp;
+   AccumulatedSpeed = QPoint(0,0);
+   AccumulatedSquaredSpeed =  QPoint(0,0);
    CurrentDistance = 0;
    LastDistance = 0;
-   DeltaTLastDistance = 0;
-   DeltaTCurrentDistance = 0;
+   DeltaTimeLastDistance = 0;
+   DeltaTimeCurrentDistance = 0;
 
 }
-
 /*****************************************************************************/
 /*  End  Method : StartTracking                                              */
 /*****************************************************************************/
@@ -116,113 +109,120 @@ void GestureTracker::StartTracking(QPoint Position, ulong Timestamp)
 /*  Method      : Trackmovement                                              */
 /*****************************************************************************/
 /*                                                                           */
-/*  Function    : Resizes the boundingbox if needed to include the given     */
-/*                boundingbox                                                */
+/*  Function    : Keeps track of movement to detect gestures                 */
 /*                                                                           */
 /*  Type        : Public                                                     */
 /*                                                                           */
-/*  Input Para  : x, y: Coordinates of point to include                      */
+/*  Input Para  : Position: Current position of possible gesture             */
+/*                Timestamp: Current time of possible gesture                */
 /*                                                                           */
 /*  Output Para : None                                                       */
 /*                                                                           */
 /*  Author      : I. Oesch                                                   */
 /*                                                                           */
-/*  History     : 05.12.1999  IO  Created                                    */
+/*  History     : 05.11.2020  IO  Created                                    */
 /*                                                                           */
 /*****************************************************************************/
-void GestureTracker::Trackmovement(QPoint Position, ulong Timestamp)
+void GestureTrackerClass::Trackmovement(QPoint Position, ulong Timestamp)
 {
    /* Method data declaration      */
-   QPoint GestureMovement = Position - GestureTrackerLastPosition;
-   ulong  GestureTime = Timestamp - GestureTrackerLastPositionTimeStamp;
+   QPoint MovementSinceLastTracking = Position - LastPosition;
+   ulong  TimeSinceLastTracking = Timestamp - LastPositionTimeStamp;
 
    /* Method code declaration      */
 
+   /* Keep track of old Move */
    LastDistance = CurrentDistance;
-   DeltaTLastDistance = DeltaTCurrentDistance;
-   DeltaTCurrentDistance = GestureTime;
-   CurrentDistance = GestureMovement.manhattanLength();
+   DeltaTimeLastDistance = DeltaTimeCurrentDistance;
 
-   if (GestureTime > 0) {
-      QPointF GestureSpeed = QPointF(GestureMovement) / GestureTime;
-      GestureTrackerLastPosition =  Position;
-      GestureTrackerLastPositionTimeStamp = Timestamp;
+   /* Store current move */
+   DeltaTimeCurrentDistance = TimeSinceLastTracking;
+   CurrentDistance = MovementSinceLastTracking.manhattanLength();
 
-      GestureTrackerAccumulatedSpeed += GestureSpeed;
-      GestureTrackerAccumulatedSquaredSpeed += QPointF(GestureSpeed.x() * GestureSpeed.x(), GestureSpeed.y()*GestureSpeed.y() );
+   /* Discard moves with no time inbetween */
+   if (TimeSinceLastTracking > 0) {
+
+      /* Calculate speed of last move */
+      QPointF GestureSpeed = QPointF(MovementSinceLastTracking) / TimeSinceLastTracking;
+
+      /* Store current position for next round */
+      LastPosition =  Position;
+      LastPositionTimeStamp = Timestamp;
+
+      /* Accumulate speed and squared speed */
+      /* needed to detect shaking */
+      AccumulatedSpeed += GestureSpeed;
+      AccumulatedSquaredSpeed += QPointF(GestureSpeed.x() * GestureSpeed.x(), GestureSpeed.y()*GestureSpeed.y() );
    }
 }
-
 /*****************************************************************************/
 /*  End  Method : Trackmovement                                              */
 /*****************************************************************************/
 
 /*****************************************************************************/
-/*  Method      : Move                                                       */
+/*  Method      : GetCurrentSpeed                                            */
 /*****************************************************************************/
 /*                                                                           */
-/*  Function    : Moves the boundingbox for the given amount                 */
+/*  Function    : Returns the speed of the last two moves                    */
 /*                                                                           */
 /*  Type        : Public                                                     */
 /*                                                                           */
-/*  Input Para  : dx, dy: Offset to move                                     */
+/*  Input Para  : None                                                       */
 /*                                                                           */
-/*  Output Para : None                                                       */
+/*  Output Para : Speed of the last two moves, 0 if not calculable           */
 /*                                                                           */
 /*  Author      : I. Oesch                                                   */
 /*                                                                           */
-/*  History     : 05.12.1999  IO  Created                                    */
+/*  History     : 05.11.2020  IO  Created                                    */
 /*                                                                           */
 /*****************************************************************************/
-
-float GestureTracker::GetCurrentSpeed()
+float GestureTrackerClass::GetCurrentSpeed()
 {
    /* Method data declaration      */
 
    /* Method code declaration      */
 
-   if ( (DeltaTLastDistance + DeltaTCurrentDistance) > 0) {
-        return ((LastDistance + CurrentDistance) / static_cast<float>(DeltaTLastDistance + DeltaTCurrentDistance));
+   if ( (DeltaTimeLastDistance + DeltaTimeCurrentDistance) > 0) {
+        return ((LastDistance + CurrentDistance) / static_cast<float>(DeltaTimeLastDistance + DeltaTimeCurrentDistance));
    }
    return 0;
 }
+/*****************************************************************************/
+/*  End  Method : GetCurrentSpeed                                            */
+/*****************************************************************************/
 
 /*****************************************************************************/
-/*  End  Method : Move                                                       */
-/*****************************************************************************/
-
-/*****************************************************************************/
-/*  Method      : IsInside                                                   */
+/*  Method      : IsFastShaking                                              */
 /*****************************************************************************/
 /*                                                                           */
-/*  Function    : Check if given point or box is inside this box             */
+/*  Function    : Returns true if current movement is a fast shaking         */
 /*                                                                           */
 /*  Type        : Public                                                     */
 /*                                                                           */
-/*  Input Para  : x, y: Coordinates of point to test for beeing inside       */
-/*                Box:  Box to test for beeing inside this box               */
+/*  Input Para  : None                                                       */
 /*                                                                           */
-/*  Output Para : None                                                       */
+/*  Output Para : True on fast shaking, False otherwise                      */
 /*                                                                           */
 /*  Author      : I. Oesch                                                   */
 /*                                                                           */
-/*  History     : 05.12.1999  IO  Created                                    */
+/*  History     : 05.11.2020  IO  Created                                    */
 /*                                                                           */
 /*****************************************************************************/
-bool GestureTracker::IsFastShaking() {
+bool GestureTrackerClass::IsFastShaking() {
    /* Method data declaration      */
 
    /* Method code declaration      */
 
-   return (GestureTrackerAccumulatedSpeed.manhattanLength()*10) < (GestureTrackerAccumulatedSquaredSpeed.manhattanLength());
+   /* On fast shaking speed cancels out (posiotive and negative values) */
+   /* Squared speed summs up */
+   return (AccumulatedSpeed.manhattanLength()*10) < (AccumulatedSquaredSpeed.manhattanLength());
 }
+/*****************************************************************************/
+/*  End  Method : IsFastShaking                                              */
+/*****************************************************************************/
 
 /*****************************************************************************/
-/*  End  Method : IsInside                                                   */
-/*****************************************************************************/
-
-/*****************************************************************************/
-/*  End Class   : BoundingBoxClass                                           */
+/*  End Class   : GestureTrackerClass                                        */
 /*****************************************************************************/
 
 

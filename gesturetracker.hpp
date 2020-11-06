@@ -1,29 +1,22 @@
 #ifndef GESTURETRACKER_HPP
 #define GESTURETRACKER_HPP
 /*****************************************************************************/
-/*  Header     : BoundingBoxClass                               Version 1.0  */
+/*  Header     : GestureTrackerClass                            Version 1.0  */
 /*****************************************************************************/
 /*                                                                           */
-/*  Function   : This class holds a bounding box. This is the rectangle      */
-/*               enclosing all elements belonging to a graphical object      */
+/*  Function   : This class keeps track of gestures                          */
 /*                                                                           */
-/*  Methodes   : BoundingBoxClass()                                          */
-/*              ~BoundingBoxClass()                                          */
-/*               AddPoint()                                                  */
-/*               AddBox()                                                    */
-/*               IsInside()                                                  */
-/*               IsOverlapping()                                             */
-/*               GetTop()                                                    */
-/*               GetBottom()                                                 */
-/*               GetLeft()                                                   */
-/*               GetRigth()                                                  */
-/*               IsValid()                                                   */
+/*  Methodes   : GestureTrackerClass()                                       */
+/*               StartTracking()                                             */
+/*               Trackmovement()                                             */
+/*               GetCurrentSpeed()                                           */
+/*               IsFastShaking()                                             */
 /*                                                                           */
 /*  Author     : I. Oesch                                                    */
 /*                                                                           */
-/*  History    : 05.12.1999  IO Created                                      */
+/*  History    : 05.11.2020  IO Created                                      */
 /*                                                                           */
-/*  File       : box.hpp                                                     */
+/*  File       : gesturetracker.hpp                                          */
 /*                                                                           */
 /*****************************************************************************/
 /* MagicSoft                                                                 */
@@ -41,23 +34,22 @@
 /* Class data declaration      */
 
 /* Class definition            */
-class GestureTracker {
+class GestureTrackerClass {
 
    // Data
    private:
 
-   QPoint  GestureTrackeStartPosition;
-   ulong   GestureTrackerStartPositionTimeStamp;
-   QPoint  GestureTrackerLastPosition;
-   ulong   GestureTrackerLastPositionTimeStamp;
-   QPointF GestureTrackerAccumulatedSpeed;
-   QPointF GestureTrackerAccumulatedSquaredSpeed;
+   QPoint  StartPosition;
+   ulong   StartPositionTimeStamp;
+   QPoint  LastPosition;
+   ulong   LastPositionTimeStamp;
+   QPointF AccumulatedSpeed;
+   QPointF AccumulatedSquaredSpeed;
 
    ulong CurrentDistance;
    ulong LastDistance;
-   ulong DeltaTLastDistance;
-   ulong DeltaTCurrentDistance;
-
+   ulong DeltaTimeLastDistance;
+   ulong DeltaTimeCurrentDistance;
 
    // Methods
    public:
@@ -65,11 +57,10 @@ class GestureTracker {
    void Trackmovement(QPoint Position, ulong Timestamp);
    float GetCurrentSpeed();
    bool IsFastShaking();
-   GestureTracker();
+   GestureTrackerClass();
 };
 
-
 /*****************************************************************************/
-/*  End Header  : BoundingBoxClass                                           */
+/*  End Header  : GestureTrackerClass                                        */
 /*****************************************************************************/
 #endif // GESTURETRACKER_HPP

@@ -151,7 +151,7 @@ private:
     QPoint ScrollingOldOrigin;
     QPoint FillPolygonStartPosition;
 
-    GestureTracker Tracker;
+    GestureTrackerClass Tracker;
 
     QPoint Origin;
 
