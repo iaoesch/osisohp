@@ -506,6 +506,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
              LastTablettMovePosition = event->pos();
           }
         break;
+       default: event->ignore();
     }
 }
 
