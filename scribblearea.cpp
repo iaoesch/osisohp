@@ -47,13 +47,6 @@
 #include "scribblearea.h"
 
 
-GestureTracker::GestureTracker()
-{
-   CurrentDistance = 0;
-   LastDistance = 0;
-   DeltaTLastDistance = 0;
-   DeltaTCurrentDistance = 0;
-}
 //! [0]
 ScribbleArea::ScribbleArea(QWidget *parent)
     : QWidget(parent)
@@ -189,21 +182,6 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 
 }
 
-void GestureTracker::StartTracking(QPoint Position, ulong Timestamp)
-{
-   GestureTrackerLastPosition =  Position;
-   GestureTrackerLastPositionTimeStamp = Timestamp;
-   GestureTrackeStartPosition =  Position;
-   GestureTrackerStartPositionTimeStamp = Timestamp;
-   GestureTrackerAccumulatedSpeed = QPoint(0,0);
-   GestureTrackerAccumulatedSquaredSpeed =  QPoint(0,0);
-   CurrentDistance = 0;
-   LastDistance = 0;
-   DeltaTLastDistance = 0;
-   DeltaTCurrentDistance = 0;
-
-}
-
 void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPoint Position, ulong Timestamp)
 {
     std::cout << "Button Down: " << Button  << std::endl;
@@ -240,48 +218,13 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
    HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), false, 0);
 }
 
-void GestureTracker::Trackmovement(QPoint Position, ulong Timestamp)
-{
-   QPoint GestureMovement = Position - GestureTrackerLastPosition;
-   ulong  GestureTime = Timestamp - GestureTrackerLastPositionTimeStamp;
-
-  // LastDistance = CurrentDistance;
-  // DeltaTLastDistance = DeltaTCurrentDistance;
-  // DeltaTCurrentDistance = GestureTime;
-  // CurrentDistance = GestureMovement.manhattanLength();
-   //WaitForPostIt = false;
-
-   if (GestureTime > 0) {
-      QPointF GestureSpeed = QPointF(GestureMovement) / GestureTime;
-      GestureTrackerLastPosition =  Position;
-      GestureTrackerLastPositionTimeStamp = Timestamp;
-
-      GestureTrackerAccumulatedSpeed += GestureSpeed;
-      GestureTrackerAccumulatedSquaredSpeed += QPointF(GestureSpeed.x() * GestureSpeed.x(), GestureSpeed.y()*GestureSpeed.y() );
-   }
-}
 
 void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure)
 {
 
     Tracker.Trackmovement(Position, Timestamp);
-  //  QPoint GestureMovement = Position - GestureTrackerLastPosition;
-  //  ulong  GestureTime = Timestamp - GestureTrackerLastPositionTimeStamp;
-
-  //  LastDistance = CurrentDistance;
-  //  DeltaTLastDistance = DeltaTCurrentDistance;
-  //  DeltaTCurrentDistance = GestureTime;
-  //  CurrentDistance = GestureMovement.manhattanLength();
     //WaitForPostIt = false;
 
-    //if (GestureTime > 0) {
-    //   QPointF GestureSpeed = QPointF(GestureMovement) / GestureTime;
-    //   GestureTrackerLastPosition =  Position;
-    //   GestureTrackerLastPositionTimeStamp = Timestamp;
-
-     //  GestureTrackerAccumulatedSpeed += GestureSpeed;
-     //  GestureTrackerAccumulatedSquaredSpeed += QPointF(GestureSpeed.x() * GestureSpeed.x(), GestureSpeed.y()*GestureSpeed.y() );
-   // }
 
     if ((Buttons & Qt::LeftButton)) {
         if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
@@ -396,13 +339,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
    HandleReleaseEventSM(event->button(), event->pos(), false, 0);
 }
 
-float GestureTracker::GetCurrentSpeed()
-{
-   if ( (DeltaTLastDistance + DeltaTCurrentDistance) > 0) {
-        return ((LastDistance + CurrentDistance) / static_cast<float>(DeltaTLastDistance + DeltaTCurrentDistance));
-   }
-   return 0;
-}
+
 void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure)
 {
    std::cout << "Button Up: " << Button  << std::endl;
@@ -547,9 +484,6 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
     }
 }
 
-bool GestureTracker::IsFastShaking() {
-   return (GestureTrackerAccumulatedSpeed.manhattanLength()*10) < (GestureTrackerAccumulatedSquaredSpeed.manhattanLength());
-}
 
 void ScribbleArea::timeoutSM()
 {

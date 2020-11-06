@@ -50,32 +50,10 @@
 #include <list>
 
 #include "box.hpp"
+#include "gesturetracker.hpp"
 
 //! [0]
 //!
-
-class GestureTracker {
-   QPoint  GestureTrackeStartPosition;
-   ulong   GestureTrackerStartPositionTimeStamp;
-   QPoint  GestureTrackerLastPosition;
-   ulong   GestureTrackerLastPositionTimeStamp;
-   QPointF GestureTrackerAccumulatedSpeed;
-   QPointF GestureTrackerAccumulatedSquaredSpeed;
-
-   ulong CurrentDistance;
-   ulong LastDistance;
-   ulong DeltaTLastDistance;
-   ulong DeltaTCurrentDistance;
-
-
-
-public:
-   void StartTracking(QPoint Position, ulong Timestamp);
-   void Trackmovement(QPoint Position, ulong Timestamp);
-   float GetCurrentSpeed();
-   bool IsFastShaking();
-   GestureTracker();
-};
 
 
 class ScribbleArea : public QWidget
