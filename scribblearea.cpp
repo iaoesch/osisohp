@@ -56,7 +56,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     modified = false;
     LastDrawingValid = false;
     EraseLastDrawnObject = false;
-    myPenWidth = 1;
+    myPenWidth = 2;
     SelectedPenWidth = myPenWidth;
     myPenColor = Qt::blue;
     connect(&MyTimer, SIGNAL(timeout()), this, SLOT(timeoutSM()));
