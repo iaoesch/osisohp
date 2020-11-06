@@ -72,6 +72,9 @@ class GestureTracker {
 public:
    void StartTracking(QPoint Position, ulong Timestamp);
    void Trackmovement(QPoint Position, ulong Timestamp);
+   float GetCurrentSpeed();
+   bool IsFastShaking();
+   GestureTracker();
 };
 
 

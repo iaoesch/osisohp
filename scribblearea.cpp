@@ -47,6 +47,13 @@
 #include "scribblearea.h"
 
 
+GestureTracker::GestureTracker()
+{
+   CurrentDistance = 0;
+   LastDistance = 0;
+   DeltaTLastDistance = 0;
+   DeltaTCurrentDistance = 0;
+}
 //! [0]
 ScribbleArea::ScribbleArea(QWidget *parent)
     : QWidget(parent)
@@ -72,10 +79,6 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     TransparentColor = QColor(255, 255, 255, 0);
     BackGroundColor = QColor(230,230, 200,255);
 
-    CurrentDistance = 0;
-    LastDistance = 0;
-    DeltaTLastDistance = 0;
-    DeltaTCurrentDistance = 0;
 
 
     RecentlyPastedObjectValid = false;
@@ -194,6 +197,11 @@ void GestureTracker::StartTracking(QPoint Position, ulong Timestamp)
    GestureTrackerStartPositionTimeStamp = Timestamp;
    GestureTrackerAccumulatedSpeed = QPoint(0,0);
    GestureTrackerAccumulatedSquaredSpeed =  QPoint(0,0);
+   CurrentDistance = 0;
+   LastDistance = 0;
+   DeltaTLastDistance = 0;
+   DeltaTCurrentDistance = 0;
+
 }
 
 void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPoint Position, ulong Timestamp)
@@ -208,10 +216,6 @@ void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPoint Position, u
 
         Tracker.StartTracking(Position, Timestamp);
 
-        CurrentDistance = 0;
-        LastDistance = 0;
-        DeltaTLastDistance = 0;
-        DeltaTCurrentDistance = 0;
 
         lastPoint = Position;
         ButtonDownPosition = Position;
@@ -391,6 +395,14 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
    std::cout << "Mouse: ";
    HandleReleaseEventSM(event->button(), event->pos(), false, 0);
 }
+
+float GestureTracker::GetCurrentSpeed()
+{
+   if ( (DeltaTLastDistance + DeltaTCurrentDistance) > 0) {
+        return ((LastDistance + CurrentDistance) / static_cast<float>(DeltaTLastDistance + DeltaTCurrentDistance));
+   }
+   return 0;
+}
 void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure)
 {
    std::cout << "Button Up: " << Button  << std::endl;
@@ -437,13 +449,12 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position,
          case ScribbleArea::MovingSelection:
          case ScribbleArea::MovingSelectionPaused:
             //WaitForPostIt = false;
-             if ( ((DeltaTLastDistance + DeltaTCurrentDistance) > 0) &&
-                  ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) > 0.25f) {
-                 std::cout << "LeavingSpeed " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
+             if (Tracker.GetCurrentSpeed() > 0.25f) {
+                 std::cout << "LeavingSpeed " << Tracker.GetCurrentSpeed() << std::endl;
                  DiscardSelection = true;
                  update();
              }
-             std::cout << "LeavingSpeed " << (LastDistance + CurrentDistance) << " / " << (DeltaTLastDistance + DeltaTCurrentDistance) << " = " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
+             //std::cout << "LeavingSpeed " << (LastDistance + CurrentDistance) << " / " << (DeltaTLastDistance + DeltaTCurrentDistance) << " = " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
                  ;
            // QPoint Offset =  - SelectedPoint;
              if (DiscardSelection == false) {
@@ -536,6 +547,9 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
     }
 }
 
+bool GestureTracker::IsFastShaking() {
+   return (GestureTrackerAccumulatedSpeed.manhattanLength()*10) < (GestureTrackerAccumulatedSquaredSpeed.manhattanLength());
+}
 
 void ScribbleArea::timeoutSM()
 {
@@ -654,15 +668,15 @@ void ScribbleArea::timeoutSM()
          if (DiscardSelection == false) {
 
             // Fast shaking followed by a pause means throw away selection
-         if (GestureTrackerAccumulatedSpeed.manhattanLength()*10 > GestureTrackerAccumulatedSquaredSpeed.manhattanLength()) {
-            QPoint CopyPos(SelectedCurrentPosition);
-            SelectedCurrentPosition += QPoint(3,3);
-            DrawMovedSelection(CopyPos);
-         } else {
-            DiscardSelection = true;
-            update();
-         }
-         State = MovingSelectionPaused;
+            if (Tracker.IsFastShaking()) {
+               DiscardSelection = true;
+               update();
+            } else {
+               QPoint CopyPos(SelectedCurrentPosition);
+               SelectedCurrentPosition += QPoint(3,3);
+               DrawMovedSelection(CopyPos);
+            }
+            State = MovingSelectionPaused;
          }
          break;
       case ScribbleArea::MovingSelectionPaused:
