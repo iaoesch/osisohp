@@ -50,8 +50,12 @@
 #include <list>
 
 #include "box.hpp"
+#include "gesturetracker.hpp"
 
 //! [0]
+//!
+
+
 class ScribbleArea : public QWidget
 {
     Q_OBJECT
@@ -147,12 +151,7 @@ private:
     QPoint ScrollingOldOrigin;
     QPoint FillPolygonStartPosition;
 
-    QPoint GestureTrackeStartPosition;
-    ulong  GestureTrackerStartPositionTimeStamp;
-    QPoint GestureTrackerLastPosition;
-    ulong  GestureTrackerLastPositionTimeStamp;
-    QPointF GestureTrackerAccumulatedSpeed;
-    QPointF GestureTrackerAccumulatedSquaredSpeed;
+    GestureTrackerClass Tracker;
 
     QPoint Origin;
 
@@ -161,10 +160,6 @@ private:
     int PostItTimeout;
     int SelectTimeout;
 
-    ulong CurrentDistance;
-    ulong LastDistance;
-    ulong DeltaTLastDistance;
-    ulong DeltaTCurrentDistance;
 
     QPoint LastTablettMovePosition;
 
