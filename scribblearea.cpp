@@ -53,6 +53,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
 {
     setAttribute(Qt::WA_StaticContents);
     setTabletTracking(true);
+    setMouseTracking(true);
     modified = false;
     LastDrawingValid = false;
     EraseLastDrawnObject = false;
