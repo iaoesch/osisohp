@@ -596,6 +596,10 @@ void ScribbleArea::timeoutSM()
             QImage NewPostit(HintSelectedImagePart);
             // Here we could add a different background for postits
             QPainter painter(&NewPostit);
+            painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+            painter.setBrush(QBrush(QColor(100, 0, 0, 50)));
+            painter.drawRect(NewPostit.rect());
+            painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
             painter.drawImage(0,0,SelectedImagePart);
             BoundingBoxClass TranslatedBoundingBox (LastPaintedObjectBoundingBox);
             TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
@@ -603,6 +607,7 @@ void ScribbleArea::timeoutSM()
             SelectedPostit = &PostIts.back();
             StartPositionSelectedPostIt = SelectedPostit->Position;
             State = WaitingToLeaveJitterProtectionWithCreatedPostitForMoving;
+            update();
          }
          break;
 
