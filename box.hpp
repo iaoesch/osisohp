@@ -31,6 +31,8 @@
 
 /* imports */
 #include <QRect>
+#include <QDataStream>
+
 
 #include"position.hpp"
 
@@ -69,7 +71,21 @@ class BoundingBoxClass
       int   GetRight(void)  const {return Right;};
       int   IsValid(void)   const {return (Left <= Right);} 
       QRect QRectangle() const { return QRect(Left, Top, Right-Left, Bottom - Top);} ;
+      friend QDataStream& operator << (QDataStream &Stream, const BoundingBoxClass &Box);
+      friend QDataStream& operator >> (QDataStream &Stream, BoundingBoxClass &Box);
 };
+
+inline QDataStream& operator << (QDataStream &Stream, const BoundingBoxClass &Box)
+{
+   Stream << Box.Top << Box.Left << Box.Right << Box.Bottom;
+   return Stream;
+}
+
+inline QDataStream& operator >> (QDataStream &Stream, BoundingBoxClass &Box)
+{
+   Stream >> Box.Top >> Box.Left >> Box.Right >> Box.Bottom;
+   return Stream;
+}
 
 /*****************************************************************************/
 /*  End Header  : BoundingBoxClass                                           */
