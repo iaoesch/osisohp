@@ -222,7 +222,7 @@ void MainWindow::createActions()
 void MainWindow::createMenus()
 //! [15] //! [16]
 {
-    saveAsMenu = new QMenu(tr("&Save As"), this);
+    saveAsMenu = new QMenu(tr("&Export As"), this);
     foreach (QAction *action, saveAsActs)
         saveAsMenu->addAction(action);
 
@@ -284,7 +284,7 @@ bool MainWindow::saveFile(const QByteArray &fileFormat)
     if (fileName.isEmpty()) {
         return false;
     } else {
-        return scribbleArea->saveImage(fileName, fileFormat.constData());
+        return scribbleArea->ExportImage(fileName, fileFormat.constData());
     }
 }
 //! [20]

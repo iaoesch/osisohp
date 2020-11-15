@@ -95,15 +95,86 @@ bool ScribbleArea::openImage(const QString &fileName)
     resizeImage(&loadedImage, newSize);
     image = loadedImage;
     modified = false;
+    Origin = {0,0};
+    modified = false;
+    LastDrawingValid = false;
+    EraseLastDrawnObject = false;
     update();
     return true;
 }
 //! [2]
 
 //! [3]
-bool ScribbleArea::saveImage(const QString &fileName, const char *fileFormat)
+bool ScribbleArea::ExportImage(const QString &fileName, const char *fileFormat)
 //! [3] //! [4]
 {
+
+    if (image.save(fileName, fileFormat)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool ScribbleArea::SaveImage(const QString &fileName)
+//! [3] //! [4]
+{
+   QFile file("file.xxx");
+   file.open(QIODevice::WriteOnly);
+   QDataStream out(&file);
+
+   // Write a header with a "magic number" and a version
+   out << (quint32)0x139A1A7F;
+   out << (qint32)100;
+
+   out.setVersion(QDataStream::Qt_5_0);
+
+   // Write the data
+   out << image;
+   out << Origin;
+   // Now save all postits
+   out << (qint32)(PostIts.size());
+   for (auto &&Picture: PostIts) {
+      out << Picture.Position;
+      out << Picture.Image;
+      out << Picture.Box;
+   }
+
+
+#if 0
+
+   Then read it in with:
+
+   QFile file("file.xxx");
+   file.open(QIODevice::ReadOnly);
+   QDataStream in(&file);
+
+   // Read and check the header
+   quint32 magic;
+   in >> magic;
+   if (magic != 0xA0B0C0D0)
+       return XXX_BAD_FILE_FORMAT;
+
+   // Read the version
+   qint32 version;
+   in >> version;
+   if (version < 100)
+       return XXX_BAD_FILE_TOO_OLD;
+   if (version > 123)
+       return XXX_BAD_FILE_TOO_NEW;
+
+   if (version <= 110)
+       in.setVersion(QDataStream::Qt_3_2);
+   else
+       in.setVersion(QDataStream::Qt_4_0);
+
+   // Read the data
+   in >> lots_of_interesting_data;
+   if (version >= 120)
+       in >> data_new_in_XXX_version_1_2;
+   in >> other_interesting_data;
+
+
 
     if (image.save(fileName, fileFormat)) {
         modified = false;
@@ -111,6 +182,7 @@ bool ScribbleArea::saveImage(const QString &fileName, const char *fileFormat)
     } else {
         return false;
     }
+#endif
 }
 //! [4]
 

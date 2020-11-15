@@ -64,7 +64,7 @@ public:
     ScribbleArea(QWidget *parent = 0);
 
     bool openImage(const QString &fileName);
-    bool saveImage(const QString &fileName, const char *fileFormat);
+    bool ExportImage(const QString &fileName, const char *fileFormat);
     void setPenColor(const QColor &newColor);
     void setPenWidth(int newWidth);
 
@@ -72,6 +72,7 @@ public:
     QColor penColor() const { return myPenColor; }
     int penWidth() const { return SelectedPenWidth; }
 
+    bool SaveImage(const QString &fileName);
 public slots:
     void clearImage();
     void print();
