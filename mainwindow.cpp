@@ -167,6 +167,14 @@ void MainWindow::penWidth()
         scribbleArea->setPenWidth(newWidth);
 }
 //! [10]
+//!
+//!
+void MainWindow::DirectSelect()
+//! [9] //! [10]
+{
+
+    scribbleArea->setDirectSelect(DirectPostitSelectAct->isChecked());
+}
 
 //! [11]
 void MainWindow::about()
@@ -215,6 +223,11 @@ void MainWindow::createActions()
     penWidthAct = new QAction(tr("Pen &Width..."), this);
     connect(penWidthAct, SIGNAL(triggered()), this, SLOT(penWidth()));
 
+
+    DirectPostitSelectAct = new QAction(tr("&Direct select"), this);
+    DirectPostitSelectAct->setCheckable(true);
+    connect(DirectPostitSelectAct, SIGNAL(triggered()), this, SLOT(DirectSelect()));
+
     clearScreenAct = new QAction(tr("&Clear Screen"), this);
     clearScreenAct->setShortcut(tr("Ctrl+L"));
     connect(clearScreenAct, SIGNAL(triggered()),
@@ -247,6 +260,7 @@ void MainWindow::createMenus()
     optionMenu = new QMenu(tr("&Options"), this);
     optionMenu->addAction(penColorAct);
     optionMenu->addAction(penWidthAct);
+    optionMenu->addAction(DirectPostitSelectAct);
     optionMenu->addSeparator();
     optionMenu->addAction(clearScreenAct);
 

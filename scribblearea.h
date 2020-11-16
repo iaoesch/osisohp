@@ -69,6 +69,7 @@ public:
     bool ExportImage(const QString &fileName, const char *fileFormat);
     void setPenColor(const QColor &newColor);
     void setPenWidth(int newWidth);
+    void setDirectSelect(bool Mode) {SelectPostitsDirectly = Mode;}
 
     bool isModified() const { return modified; }
     QColor penColor() const { return myPenColor; }
@@ -128,6 +129,7 @@ private:
 };
     enum ScribblingState State;
     bool modified;
+    bool SelectPostitsDirectly;
     bool LastDrawingValid;
     bool DownInsideObject;
     bool DiscardSelection;

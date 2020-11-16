@@ -69,6 +69,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     SelectTimeout = 500;
     PostItTimeout = 1000;
     SelectedPostit = nullptr;
+    SelectPostitsDirectly = true;
 
     TransparentColor = QColor(255, 255, 255, 0);
     BackGroundColor = QColor(230,230, 200,255);
@@ -287,13 +288,21 @@ void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPoint Position, u
         CurrentPaintedObjectBoundingBox.Clear();
         CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(lastPoint.x(), lastPoint.y()));
         SelectedCurrentPosition = Position;
-        MyTimer.start(SelectTimeout);
 
+        if ((SelectPostitsDirectly == true) &&
+            (PostItSelected(SelectedCurrentPosition))) {
+              DownInsideObject = false;
+              MyTimer.start(10);
 
-        if (LastPaintedObjectBoundingBox.IsInside(PositionClass(Position.x(), Position.y()))) {
-           DownInsideObject = true;
         } else {
-           DownInsideObject = false;
+           MyTimer.start(SelectTimeout);
+
+
+           if (LastPaintedObjectBoundingBox.IsInside(PositionClass(Position.x(), Position.y()))) {
+              DownInsideObject = true;
+           } else {
+              DownInsideObject = false;
+           }
         }
     }
 }

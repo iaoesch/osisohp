@@ -65,6 +65,7 @@ private slots:
     void about();
 
     void Save();
+    void DirectSelect();
 private:
     void createActions();
     void createMenus();
@@ -84,6 +85,7 @@ private:
     QAction *exitAct;
     QAction *penColorAct;
     QAction *penWidthAct;
+    QAction *DirectPostitSelectAct;
     QAction *printAct;
     QAction *clearScreenAct;
     QAction *aboutAct;
