@@ -63,7 +63,9 @@ class ScribbleArea : public QWidget
 public:
     ScribbleArea(QWidget *parent = 0);
 
-    bool openImage(const QString &fileName);
+    bool ImportImage(const QString &fileName);
+    bool LoadImage(const QString &fileName);
+    QString GetFileName();
     bool ExportImage(const QString &fileName, const char *fileFormat);
     void setPenColor(const QColor &newColor);
     void setPenWidth(int newWidth);

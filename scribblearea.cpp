@@ -84,7 +84,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
 //! [0]
 
 //! [1]
-bool ScribbleArea::openImage(const QString &fileName)
+bool ScribbleArea::ImportImage(const QString &fileName)
 //! [1] //! [2]
 {
     QImage loadedImage;
@@ -119,7 +119,7 @@ bool ScribbleArea::ExportImage(const QString &fileName, const char *fileFormat)
 bool ScribbleArea::SaveImage(const QString &fileName)
 //! [3] //! [4]
 {
-   QFile file("file.xxx");
+   QFile file(fileName);
    file.open(QIODevice::WriteOnly);
    QDataStream out(&file);
 
@@ -139,49 +139,63 @@ bool ScribbleArea::SaveImage(const QString &fileName)
       out << Picture.Image;
       out << Picture.Box;
    }
+   return true;
 
 
-#if 0
+}
+bool ScribbleArea::LoadImage(const QString &fileName)
+//! [1] //! [2]
+{
+#if 1
 
-   Then read it in with:
+   //Then read it in with:
 
-   QFile file("file.xxx");
+   QFile file(fileName);
    file.open(QIODevice::ReadOnly);
    QDataStream in(&file);
 
    // Read and check the header
    quint32 magic;
    in >> magic;
-   if (magic != 0xA0B0C0D0)
-       return XXX_BAD_FILE_FORMAT;
+   if (magic != 0x139A1A7F)
+       return SaveImage(fileName);
 
    // Read the version
    qint32 version;
    in >> version;
-   if (version < 100)
-       return XXX_BAD_FILE_TOO_OLD;
-   if (version > 123)
-       return XXX_BAD_FILE_TOO_NEW;
+   if (version < 90)
+       return false; // too old
+   if (version > 100)
+       return false; // too new
 
-   if (version <= 110)
-       in.setVersion(QDataStream::Qt_3_2);
-   else
-       in.setVersion(QDataStream::Qt_4_0);
+   if (version <= 100) {
+       in.setVersion(QDataStream::Qt_5_0);
+   }
+   else {
+      // in.setVersion(QDataStream::Qt_6_0);
+   }
 
-   // Read the data
-   in >> lots_of_interesting_data;
-   if (version >= 120)
-       in >> data_new_in_XXX_version_1_2;
-   in >> other_interesting_data;
+   // Write the data
+   in >> image;
+   in >> Origin;
+   // Now read all postits
+   qint32 NumberOfSavedPostits = 0;
+   in >> NumberOfSavedPostits;
+   QImage NewImage;
+   QPoint Position;
+   BoundingBoxClass NewBox;
+   for (int i = 0; i < NumberOfSavedPostits; i++) {
+      in >> Position;
+      in >> NewImage;
+      in >> NewBox;
+      PostIts.push_back(PostIt(NewImage, Position, NewBox));
+   }
+   modified = false;
+   LastDrawingValid = false;
+   EraseLastDrawnObject = false;
 
-
-
-    if (image.save(fileName, fileFormat)) {
-        modified = false;
-        return true;
-    } else {
-        return false;
-    }
+   update();
+   return true;
 #endif
 }
 //! [4]

@@ -99,6 +99,7 @@ MainWindow::MainWindow()
     addToolBar(Qt::TopToolBarArea, toolBar);
 
     setWindowTitle(tr("Osis OHP"));
+
     resize(1500, 1500);
 }
 //! [0]
@@ -123,20 +124,25 @@ void MainWindow::open()
         QString fileName = QFileDialog::getOpenFileName(this,
                                    tr("Open File"), QDir::currentPath());
         if (!fileName.isEmpty())
-            scribbleArea->openImage(fileName);
+            scribbleArea->LoadImage(fileName);
     }
 }
 //! [4]
 
 //! [5]
-void MainWindow::save()
+void MainWindow::Export()
 //! [5] //! [6]
 {
     QAction *action = qobject_cast<QAction *>(sender());
     QByteArray fileFormat = action->data().toByteArray();
-    saveFile(fileFormat);
+    ExportFile(fileFormat);
 }
 //! [6]
+void MainWindow::Save()
+//! [5] //! [6]
+{
+    SaveFile("ohp");
+}
 
 //! [7]
 void MainWindow::penColor()
@@ -183,12 +189,16 @@ void MainWindow::createActions()
     openAct->setShortcuts(QKeySequence::Open);
     connect(openAct, SIGNAL(triggered()), this, SLOT(open()));
 
+    saveAct = new QAction(tr("&Save..."), this);
+    saveAct->setShortcuts(QKeySequence::Save);
+    connect(saveAct, SIGNAL(triggered()), this, SLOT(Save()));
+
     foreach (QByteArray format, QImageWriter::supportedImageFormats()) {
         QString text = tr("%1...").arg(QString(format).toUpper());
 
         QAction *action = new QAction(text, this);
         action->setData(format);
-        connect(action, SIGNAL(triggered()), this, SLOT(save()));
+        connect(action, SIGNAL(triggered()), this, SLOT(Export()));
         saveAsActs.append(action);
     }
 
@@ -228,6 +238,7 @@ void MainWindow::createMenus()
 
     fileMenu = new QMenu(tr("&File"), this);
     fileMenu->addAction(openAct);
+    fileMenu->addAction(saveAct);
     fileMenu->addMenu(saveAsMenu);
     fileMenu->addAction(printAct);
     fileMenu->addSeparator();
@@ -261,7 +272,7 @@ bool MainWindow::maybeSave()
                           QMessageBox::Save | QMessageBox::Discard
                           | QMessageBox::Cancel);
         if (ret == QMessageBox::Save) {
-            return saveFile("png");
+            return SaveFile("ohp");
         } else if (ret == QMessageBox::Cancel) {
             return false;
         }
@@ -271,7 +282,7 @@ bool MainWindow::maybeSave()
 //! [18]
 
 //! [19]
-bool MainWindow::saveFile(const QByteArray &fileFormat)
+bool MainWindow::ExportFile(const QByteArray &fileFormat)
 //! [19] //! [20]
 {
     QString initialPath = QDir::currentPath() + "/untitled." + fileFormat;
@@ -285,6 +296,22 @@ bool MainWindow::saveFile(const QByteArray &fileFormat)
         return false;
     } else {
         return scribbleArea->ExportImage(fileName, fileFormat.constData());
+    }
+}
+bool MainWindow::SaveFile(const QByteArray &fileFormat)
+//! [19] //! [20]
+{
+    QString initialPath = QDir::currentPath() + "/untitled." + fileFormat;
+
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),
+                               initialPath,
+                               tr("%1 Files (*.%2);;All Files (*)")
+                               .arg(QString::fromLatin1(fileFormat.toUpper()))
+                               .arg(QString::fromLatin1(fileFormat)));
+    if (fileName.isEmpty()) {
+        return false;
+    } else {
+        return scribbleArea->SaveImage(fileName);
     }
 }
 //! [20]

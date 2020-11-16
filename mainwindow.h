@@ -59,16 +59,17 @@ protected:
 
 private slots:
     void open();
-    void save();
+    void Export();
     void penColor();
     void penWidth();
     void about();
 
+    void Save();
 private:
     void createActions();
     void createMenus();
     bool maybeSave();
-    bool saveFile(const QByteArray &fileFormat);
+    bool ExportFile(const QByteArray &fileFormat);
 
     ScribbleArea *scribbleArea;
 
@@ -78,6 +79,7 @@ private:
     QMenu *helpMenu;
 
     QAction *openAct;
+    QAction *saveAct;
     QList<QAction *> saveAsActs;
     QAction *exitAct;
     QAction *penColorAct;
@@ -86,6 +88,7 @@ private:
     QAction *clearScreenAct;
     QAction *aboutAct;
     QAction *aboutQtAct;
+    bool SaveFile(const QByteArray &fileFormat);
 };
 //! [0]
 
