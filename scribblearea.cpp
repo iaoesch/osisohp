@@ -69,7 +69,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     SelectTimeout = 500;
     PostItTimeout = 1000;
     SelectedPostit = nullptr;
-    SelectPostitsDirectly = true;
+    SelectPostitsDirectly = false;
 
     TransparentColor = QColor(255, 255, 255, 0);
     BackGroundColor = QColor(230,230, 200,255);
@@ -156,13 +156,13 @@ bool ScribbleArea::LoadImage(const QString &fileName)
    QDataStream in(&file);
 
    // Read and check the header
-   quint32 magic;
+   quint32 magic = 0;
    in >> magic;
    if (magic != 0x139A1A7F)
-       return SaveImage(fileName);
+       return ImportImage(fileName);
 
    // Read the version
-   qint32 version;
+   qint32 version = 0;
    in >> version;
    if (version < 90)
        return false; // too old
@@ -760,13 +760,15 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
 
     // First draw the background
     QRect dirtyRect = event->rect();
-    painter.setPen(QPen(BackGroundColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
+    painter.setPen(QPen(QColor(50,0,0,0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
     painter.setBrush(QBrush(BackGroundColor));
+    //painter.setBrush(QBrush(QColor(50,0,0,100)));
+
     painter.drawRect(dirtyRect);
 
     // Then draw our current image (Without the currently drawn object)
-    painter.drawImage(dirtyRect, image, dirtyRect.translated(Origin));
+      painter.drawImage(dirtyRect, image, dirtyRect.translated(Origin));
     //painter.setCompositionMode(QPainter::CompositionMode_Source);
 #if 0
     // Probably nonsense, as widget cannot be transparent ???
