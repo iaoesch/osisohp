@@ -70,6 +70,8 @@ public:
     void setPenColor(const QColor &newColor);
     void setPenWidth(int newWidth);
     void setDirectSelect(bool Mode) {SelectPostitsDirectly = Mode;}
+    void setShowPostitsFrame(bool Mode) {ShowPostitsFrame = Mode; update();}
+
 
     bool isModified() const { return modified; }
     QColor penColor() const { return myPenColor; }
@@ -130,6 +132,7 @@ private:
     enum ScribblingState State;
     bool modified;
     bool SelectPostitsDirectly;
+    bool ShowPostitsFrame;
     bool LastDrawingValid;
     bool DownInsideObject;
     bool DiscardSelection;

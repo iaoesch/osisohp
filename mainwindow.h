@@ -66,6 +66,7 @@ private slots:
 
     void Save();
     void DirectSelect();
+    void ShowPostitsFrame();
 private:
     void createActions();
     void createMenus();
@@ -77,6 +78,7 @@ private:
     QMenu *saveAsMenu;
     QMenu *fileMenu;
     QMenu *optionMenu;
+    QMenu *DebugMenu;
     QMenu *helpMenu;
 
     QAction *openAct;
@@ -86,6 +88,7 @@ private:
     QAction *penColorAct;
     QAction *penWidthAct;
     QAction *DirectPostitSelectAct;
+    QAction *ShowPostitsFrameAct;
     QAction *printAct;
     QAction *clearScreenAct;
     QAction *aboutAct;

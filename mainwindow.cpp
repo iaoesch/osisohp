@@ -176,6 +176,13 @@ void MainWindow::DirectSelect()
     scribbleArea->setDirectSelect(DirectPostitSelectAct->isChecked());
 }
 
+void MainWindow::ShowPostitsFrame()
+//! [9] //! [10]
+{
+
+    scribbleArea->setShowPostitsFrame(ShowPostitsFrameAct->isChecked());
+}
+
 //! [11]
 void MainWindow::about()
 //! [11] //! [12]
@@ -228,6 +235,10 @@ void MainWindow::createActions()
     DirectPostitSelectAct->setCheckable(true);
     connect(DirectPostitSelectAct, SIGNAL(triggered()), this, SLOT(DirectSelect()));
 
+    ShowPostitsFrameAct = new QAction(tr("&Postit Frame"), this);
+    ShowPostitsFrameAct->setCheckable(true);
+    connect(ShowPostitsFrameAct, SIGNAL(triggered()), this, SLOT(ShowPostitsFrame()));
+
     clearScreenAct = new QAction(tr("&Clear Screen"), this);
     clearScreenAct->setShortcut(tr("Ctrl+L"));
     connect(clearScreenAct, SIGNAL(triggered()),
@@ -264,12 +275,17 @@ void MainWindow::createMenus()
     optionMenu->addSeparator();
     optionMenu->addAction(clearScreenAct);
 
+    DebugMenu = new QMenu(tr("&Debug"), this);
+    DebugMenu->addAction(ShowPostitsFrameAct);
+
     helpMenu = new QMenu(tr("&Help"), this);
     helpMenu->addAction(aboutAct);
     helpMenu->addAction(aboutQtAct);
 
     menuBar()->addMenu(fileMenu);
     menuBar()->addMenu(optionMenu);
+    menuBar()->addMenu(DebugMenu);
+
     menuBar()->addMenu(helpMenu);
 }
 //! [16]

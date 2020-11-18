@@ -70,6 +70,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     PostItTimeout = 1000;
     SelectedPostit = nullptr;
     SelectPostitsDirectly = false;
+    ShowPostitsFrame = false;
 
     TransparentColor = QColor(255, 255, 255, 0);
     BackGroundColor = QColor(230,230, 200,255);
@@ -789,10 +790,11 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
     // Now draw all postits
     for (auto &&Picture: PostIts) {
        painter.drawImage(Picture.Position-Origin, Picture.Image);
-#if 0
-       painter.setPen(Qt::black);
-       painter.drawRect(Picture.Box.QRectangle().translated(-Origin));
-#endif
+       if (ShowPostitsFrame == true) {
+          painter.setBrush(QBrush(Qt::NoBrush));
+          painter.setPen(Qt::black);
+          painter.drawRect(Picture.Box.QRectangle().translated(-Origin));
+       }
     }
 
     // If we have something selected, draw it
