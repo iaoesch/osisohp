@@ -185,6 +185,7 @@ bool ScribbleArea::LoadImage(const QString &fileName)
    QImage NewImage;
    QPoint Position;
    BoundingBoxClass NewBox;
+   PostIts.clear();
    for (int i = 0; i < NumberOfSavedPostits; i++) {
       in >> Position;
       in >> NewImage;
