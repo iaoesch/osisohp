@@ -111,7 +111,11 @@ private:
     };
 
     std::list<PostIt> PostIts;
-    PostIt *SelectedPostit;
+    struct PostItDescriptor{
+       std::list<PostIt>::iterator postit;
+       QPoint StartPosition;
+    } ;
+    std::list<PostItDescriptor> SelectedPostit;
     QPoint StartPositionSelectedPostIt;
 
     enum ScribblingState {

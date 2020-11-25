@@ -68,7 +68,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     GestureTimeout = 500;
     SelectTimeout = 500;
     PostItTimeout = 1000;
-    SelectedPostit = nullptr;
+    SelectedPostit.clear();
     SelectPostitsDirectly = false;
     ShowPostitsFrame = false;
 
@@ -392,14 +392,16 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, 
            case ScribbleArea::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving:
               State = MovingPostit;
            case ScribbleArea::MovingPostit:
-              if (SelectedPostit != nullptr) {
+              if (!SelectedPostit.empty()) {
                  std::cout << "Moving postit " << std::endl;
-                 //SelectedPostit->Position = Position;
-                 QPoint LastPosition = SelectedPostit->Position;
-                 SelectedPostit->Position = StartPositionSelectedPostIt + (Position - ButtonDownPosition);
+                 for(auto &r: SelectedPostit) {
+                    //SelectedPostit->Position = Position;
+                    QPoint LastPosition = r.postit->Position;
+                    r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
 
-                 SelectedPostit->Box.Move(PositionClass(SelectedPostit->Position.x()-LastPosition.x(), SelectedPostit->Position.y()-LastPosition.y()));
-               //  SelectedPostit->Position = SelectedPostit->Position  Origin + Position;
+                    r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
+                //  SelectedPostit->Position = SelectedPostit->Position  Origin + Position;
+                 }
                  update();
               }
               break;
@@ -504,15 +506,19 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position,
             State = Idle;
             break;
          case ScribbleArea::MovingPostit:
-            if ((SelectedPostit != nullptr)) {
+            if ((!SelectedPostit.empty())) {
                std::cout << "Fixing postit " << std::endl;
-               QPoint LastPosition = SelectedPostit->Position;
-               SelectedPostit->Position = StartPositionSelectedPostIt + (Position - ButtonDownPosition);
+               for (auto &r: SelectedPostit) {
+                  QPoint LastPosition = r.postit->Position;
+                  r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
 
-               SelectedPostit->Box.Move(PositionClass(SelectedPostit->Position.x()-LastPosition.x(), SelectedPostit->Position.y()-LastPosition.y()));
-             //  MoveSelected = false;
+                  r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
+                  // Place moved postits on top of each other
+                  PostIts.splice( PostIts.end(), PostIts, r.postit);
+               }
+               //  MoveSelected = false;
                LastDrawingValid = false;
-               SelectedPostit = nullptr;
+               SelectedPostit.clear();
                setCursor(Qt::ArrowCursor);
                update();
             }
@@ -520,7 +526,7 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position,
             break;
 
          case ScribbleArea::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving:
-            SelectedPostit = nullptr;
+            SelectedPostit.clear();
             setCursor(Qt::ArrowCursor);
             State = Idle;
             break;
@@ -676,8 +682,7 @@ void ScribbleArea::timeoutSM()
             BoundingBoxClass TranslatedBoundingBox (LastPaintedObjectBoundingBox);
             TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
             PostIts.push_back(PostIt(NewPostit, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox));
-            SelectedPostit = &PostIts.back();
-            StartPositionSelectedPostIt = SelectedPostit->Position;
+            SelectedPostit.push_back({std::prev(PostIts.end()), PostIts.back().Position});
             State = WaitingToLeaveJitterProtectionWithCreatedPostitForMoving;
             update();
          }
@@ -730,17 +735,16 @@ void ScribbleArea::timeoutSM()
 
 bool ScribbleArea::PostItSelected(QPoint Position)
 {
+   bool Found = false;
+   SelectedPostit.clear();
    Position += Origin;
-   for (auto &&PostIt: PostIts) {
-     if (PostIt.Box.IsInside(PositionClass(Position.x(), Position.y()))) {
-        // first found, first served...
-        SelectedPostit = &PostIt;
-        StartPositionSelectedPostIt = PostIt.Position;
-        return true;
+   for (auto PostIt = PostIts.begin(); PostIt != PostIts.end(); PostIt++) {
+     if (PostIt->Box.IsInside(PositionClass(Position.x(), Position.y()))) {
+        SelectedPostit.push_back({PostIt, PostIt->Position});
+        Found = true;
      }
    }
-   SelectedPostit = nullptr;
-   return false;
+   return Found;
 }
 
 
