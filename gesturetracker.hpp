@@ -39,9 +39,9 @@ class GestureTrackerClass {
    // Data
    private:
 
-   QPoint  StartPosition;
+   QPointF  StartPosition;
    ulong   StartPositionTimeStamp;
-   QPoint  LastPosition;
+   QPointF  LastPosition;
    ulong   LastPositionTimeStamp;
    QPointF AccumulatedSpeed;
    QPointF AccumulatedSquaredSpeed;
@@ -53,8 +53,8 @@ class GestureTrackerClass {
 
    // Methods
    public:
-   void StartTracking(QPoint Position, ulong Timestamp);
-   void Trackmovement(QPoint Position, ulong Timestamp);
+   void StartTracking(QPointF Position, ulong Timestamp);
+   void Trackmovement(QPointF Position, ulong Timestamp);
    float GetCurrentSpeed();
    bool IsFastShaking();
    GestureTrackerClass();

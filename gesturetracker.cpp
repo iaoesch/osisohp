@@ -82,7 +82,7 @@ GestureTrackerClass::GestureTrackerClass()
 /*  History     : 05.11.2020  IO  Created                                    */
 /*                                                                           */
 /*****************************************************************************/
-void GestureTrackerClass::StartTracking(QPoint Position, ulong Timestamp)
+void GestureTrackerClass::StartTracking(QPointF Position, ulong Timestamp)
 {
    /* Method data declaration      */
 
@@ -123,10 +123,10 @@ void GestureTrackerClass::StartTracking(QPoint Position, ulong Timestamp)
 /*  History     : 05.11.2020  IO  Created                                    */
 /*                                                                           */
 /*****************************************************************************/
-void GestureTrackerClass::Trackmovement(QPoint Position, ulong Timestamp)
+void GestureTrackerClass::Trackmovement(QPointF Position, ulong Timestamp)
 {
    /* Method data declaration      */
-   QPoint MovementSinceLastTracking = Position - LastPosition;
+   QPointF MovementSinceLastTracking = Position - LastPosition;
    ulong  TimeSinceLastTracking = Timestamp - LastPositionTimeStamp;
 
    /* Method code declaration      */

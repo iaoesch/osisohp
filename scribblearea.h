@@ -95,9 +95,9 @@ protected:
 private:
 
 
-    void drawLineTo(const QPoint &endPoint, double Pressure);
+    void drawLineTo(const QPointF &endPoint, double Pressure);
     void drawrectangle(const BoundingBoxClass &Region);
-    void DrawMovedSelection(const QPoint Offset);
+    void DrawMovedSelection(const QPointF Offset);
 
     void DrawLastDrawnPicture();
     void resizeImage(QImage *image, const QSize &newSize);
@@ -105,7 +105,7 @@ private:
 
     struct PostIt {
        QImage Image;
-       QPoint Position;
+       QPointF Position;
        BoundingBoxClass Box;
        PostIt(const QImage &NewImage, const QPoint &Pos, BoundingBoxClass NewBox) : Image(NewImage), Position(Pos), Box(NewBox) {}
     };
@@ -151,21 +151,21 @@ private:
     QColor BackGroundColor;
 
 
-    QPolygon LastDrawnObjectPoints;
+    QPolygonF LastDrawnObjectPoints;
     QImage SelectedImagePart;
     QImage HintSelectedImagePart;
-    QPoint lastPoint;
-    QPoint ButtonDownPosition;
-    QPoint SelectedPoint;
-    QPoint SelectedOffset;
-    QPoint SelectedCurrentPosition;
-    QPoint ScrollingLastPosition;
-    QPoint ScrollingOldOrigin;
-    QPoint FillPolygonStartPosition;
+    QPointF lastPoint;
+    QPointF ButtonDownPosition;
+    QPointF SelectedPoint;
+    QPointF SelectedOffset;
+    QPointF SelectedCurrentPosition;
+    QPointF ScrollingLastPosition;
+    QPointF ScrollingOldOrigin;
+    QPointF FillPolygonStartPosition;
 
     GestureTrackerClass Tracker;
 
-    QPoint Origin;
+    QPointF Origin;
 
     int CopyTimeout;
     int GestureTimeout;
@@ -173,25 +173,25 @@ private:
     int SelectTimeout;
 
 
-    QPoint LastTablettMovePosition;
+    QPointF LastTablettMovePosition;
 
 
 
     QTimer MyTimer;
 
     bool RecentlyPastedObjectValid;
-    QPoint RecentlyPastedObjectPosition;
+    QPointF RecentlyPastedObjectPosition;
     QImage RecentlyPastedObject;
     BoundingBoxClass RecentlyPastedObjectBoundingBox;
 
     BoundingBoxClass LastPaintedObjectBoundingBox;
     BoundingBoxClass CurrentPaintedObjectBoundingBox;
-    void HandlePressEventSM(Qt::MouseButton Button, QPoint Position, ulong Timestamp);
-    void HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure);
-    void HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure);
-    bool PostItSelected(QPoint Position);
-    void EraseLineTo(const QPoint &endPoint, double Pressure);
-    bool IsInsideAnyPostIt(QPoint Position);
+    void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
+    void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
+    void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
+    bool PostItSelected(QPointF Position);
+    void EraseLineTo(const QPointF &endPoint, double Pressure);
+    bool IsInsideAnyPostIt(QPointF Position);
 };
 //! [0]
 

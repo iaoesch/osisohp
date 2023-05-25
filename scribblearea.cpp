@@ -272,7 +272,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 
 }
 
-void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPoint Position, ulong Timestamp)
+void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
     std::cout << "Button Down: " << Button  << std::endl;
     if (Button == Qt::LeftButton) {
@@ -317,7 +317,7 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 }
 
 
-void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, ulong Timestamp, bool Erasing, double Pressure)
+void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
 
     Tracker.Trackmovement(Position, Timestamp);
@@ -396,7 +396,7 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint Position, 
                  std::cout << "Moving postit " << std::endl;
                  for(auto &r: SelectedPostit) {
                     //SelectedPostit->Position = Position;
-                    QPoint LastPosition = r.postit->Position;
+                    QPointF LastPosition = r.postit->Position;
                     r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
 
                     r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
@@ -440,7 +440,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 }
 
 
-void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position, bool Erasing, double Pressure)
+void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 {
    std::cout << "Button Up: " << Button  << std::endl;
 
@@ -509,7 +509,7 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPoint Position,
             if ((!SelectedPostit.empty())) {
                std::cout << "Fixing postit " << std::endl;
                for (auto &r: SelectedPostit) {
-                  QPoint LastPosition = r.postit->Position;
+                  QPointF LastPosition = r.postit->Position;
                   r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
 
                   r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
@@ -550,12 +550,12 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
     switch(event->type()){
        case QEvent::TabletRelease:
           std::cout << "Tablett up " << event->type() << "/"<< event->button() << std::endl;
-          HandleReleaseEventSM(event->button(), event->pos(), event->pointerType() == QTabletEvent::Eraser, event->pressure());
+          HandleReleaseEventSM(event->button(), event->position(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
           break;
 
        case QEvent::TabletPress:
         std::cout << "Tablett down " << event->type() << "/"<< event->button() << std::endl;
-        HandlePressEventSM(event->button(), event->pos(), event->timestamp());
+        HandlePressEventSM(event->button(), event->position(), event->timestamp());
         switch (event->button()) {
            case Qt::NoButton:
               break;
@@ -578,10 +578,10 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
         break;
        case QEvent::TabletMove:
           // Tablett move also called on pressure or tilt changes
-          if (LastTablettMovePosition != event->pos()) {
+          if (LastTablettMovePosition != event->position()) {
              std::cout << "Tablett move " << event->type() << "/"<< event->buttons() << " <" << event->pos().x() << ";" << event->pos().y() << ">:" << event->pressure() << std::endl;
-             HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), event->pointerType() == QTabletEvent::Eraser, event->pressure());
-             LastTablettMovePosition = event->pos();
+             HandleMoveEventSM(event->buttons(), event->position(), event->timestamp(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
+             LastTablettMovePosition = event->position();
           }
         break;
        default: event->ignore();
@@ -599,7 +599,7 @@ void ScribbleArea::timeoutSM()
       case ScribbleArea::WaitingToLeaveJitterProtectionForDrawing:
          if (DownInsideObject) {
 
-            SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.QRectangle().translated(Origin));
+            SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.QRectangle().translated(Origin.toPoint()));
             HintSelectedImagePart = SelectedImagePart;
             HintSelectedImagePart.fill(qRgba(0, 0, 0, 0));
             DiscardSelection = false;
@@ -733,7 +733,7 @@ void ScribbleArea::timeoutSM()
 
 }
 
-bool ScribbleArea::PostItSelected(QPoint Position)
+bool ScribbleArea::PostItSelected(QPointF Position)
 {
    bool Found = false;
    SelectedPostit.clear();
@@ -748,7 +748,7 @@ bool ScribbleArea::PostItSelected(QPoint Position)
 }
 
 
-bool ScribbleArea::IsInsideAnyPostIt(QPoint Position)
+bool ScribbleArea::IsInsideAnyPostIt(QPointF Position)
 {
    Position += Origin;
    for (auto &&PostIt: PostIts) {
@@ -840,7 +840,7 @@ void ScribbleArea::resizeEvent(QResizeEvent *event)
 //! [16]
 
 //! [17]
-void ScribbleArea::drawLineTo(const QPoint &endPoint, double Pressure)
+void ScribbleArea::drawLineTo(const QPointF &endPoint, double Pressure)
 //! [17] //! [18]
 {
    std::cout << "Drawing ";
@@ -859,7 +859,7 @@ void ScribbleArea::drawLineTo(const QPoint &endPoint, double Pressure)
 
 }
 
-void ScribbleArea::EraseLineTo(const QPoint &endPoint, double Pressure)
+void ScribbleArea::EraseLineTo(const QPointF &endPoint, double Pressure)
 //! [17] //! [18]
 {
     std::cout << "Erasing ";
@@ -874,7 +874,7 @@ void ScribbleArea::EraseLineTo(const QPoint &endPoint, double Pressure)
     EraseLastDrawnObject = true;
 
     int rad = (ModifiedPenWidth / 2) + 2;
-    update(QRect(lastPoint, endPoint).normalized()
+    update(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized()
                                      .adjusted(-rad, -rad, +rad, +rad));
     lastPoint = endPoint;
 }
@@ -911,7 +911,7 @@ void ScribbleArea::DrawLastDrawnPicture()
 
 }
 
-void ScribbleArea::DrawMovedSelection(const QPoint Offset)
+void ScribbleArea::DrawMovedSelection(const QPointF Offset)
 {
     QPainter painter(&image);
 
