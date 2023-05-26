@@ -74,7 +74,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
 
     TransparentColor = QColor(255, 255, 255, 0);
     BackGroundColor = QColor(230,230, 200,255);
-
+    DefaultBackGroundColor = BackGroundColor;
 
 
     RecentlyPastedObjectValid = false;
@@ -220,9 +220,9 @@ void ScribbleArea::HandleToolAction(QAction *action)
     } else if (action->iconText() == "Blue") {
         myPenColor = Qt::blue;
     } else if (action->iconText() == "Green") {
-        myPenColor = Qt::green;
+        myPenColor = Qt::darkGreen;
     } else if (action->iconText() == "Yellow") {
-        myPenColor = QColor(128,128,0);
+        myPenColor = QColor(196,196,0);
     } else if (action->iconText() == "Black") {
         myPenColor = Qt::black;
     } else if (action->iconText() == "Orange") {
@@ -715,8 +715,8 @@ void ScribbleArea::timeoutSM()
                DiscardSelection = true;
                update();
             } else {
-               QPoint CopyPos(SelectedCurrentPosition);
-               SelectedCurrentPosition += QPoint(3,3);
+               QPointF CopyPos(SelectedCurrentPosition);
+               SelectedCurrentPosition += QPointF(3,3);
                DrawMovedSelection(CopyPos);
             }
             State = MovingSelectionPaused;
@@ -774,7 +774,7 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
     painter.drawRect(dirtyRect);
 
     // Then draw our current image (Without the currently drawn object)
-      painter.drawImage(dirtyRect, image, dirtyRect.translated(Origin));
+      painter.drawImage(dirtyRect, image, dirtyRect.translated(Origin.toPoint()));
     //painter.setCompositionMode(QPainter::CompositionMode_Source);
 #if 0
     // Probably nonsense, as widget cannot be transparent ???
@@ -797,7 +797,7 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
        if (ShowPostitsFrame == true) {
           painter.setBrush(QBrush(Qt::NoBrush));
           painter.setPen(Qt::black);
-          painter.drawRect(Picture.Box.QRectangle().translated(-Origin));
+          painter.drawRect(Picture.Box.QRectangle().translated(-Origin.toPoint()));
        }
     }
 
@@ -852,7 +852,7 @@ void ScribbleArea::drawLineTo(const QPointF &endPoint, double Pressure)
     modified = true;
 
     int rad = (ModifiedPenWidth / 2) + 2;
-    update(QRect(lastPoint, endPoint).normalized()
+    update(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized()
                                      .adjusted(-rad, -rad, +rad, +rad));
     lastPoint = endPoint;
     EraseLastDrawnObject = false;

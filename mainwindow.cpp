@@ -49,6 +49,7 @@ MainWindow::MainWindow()
     scribbleArea = new ScribbleArea;
     setCentralWidget(scribbleArea);
 
+    QActionGroup *Group = new QActionGroup(this);
     createActions();
     createMenus();
     QToolBar * toolBar= new QToolBar("Main Window Tool Bar");
@@ -57,23 +58,25 @@ MainWindow::MainWindow()
     ToolIcon.fill(Qt::blue);
     toolBar->addAction(QIcon(ToolIcon), "Blue")->setChecked(true);
 
-    ToolIcon.fill(Qt::green);
-    toolBar->addAction(ToolIcon, "Green");
+    ToolIcon.fill(Qt::darkGreen);
+    Group->addAction(toolBar->addAction(ToolIcon, "Green"))->setCheckable(true);
+
 
     ToolIcon.fill(Qt::darkYellow);
-    toolBar->addAction(ToolIcon, "Yellow");
+    Group->addAction(toolBar->addAction(ToolIcon, "Yellow"))->setCheckable(true);
 
     ToolIcon.fill(QColor(255, 128, 0));
-    toolBar->addAction(ToolIcon, "Orange");
+    Group->addAction(toolBar->addAction(ToolIcon, "Orange"))->setCheckable(true);
 
     ToolIcon.fill(Qt::red);
-    toolBar->addAction(ToolIcon, "Red");
+    Group->addAction(toolBar->addAction(ToolIcon, "Red"));
 
     ToolIcon.fill(Qt::magenta);
-    toolBar->addAction(ToolIcon, "Magenta");
+    Group->addAction(toolBar->addAction(ToolIcon, "Magenta"));
 
     ToolIcon.fill(Qt::black);
-    toolBar->addAction(ToolIcon, "Black");
+    Group->addAction(toolBar->addAction(ToolIcon, "Black"));
+    Group->setExclusive(true);
 
     ToolIcon.fill(Qt::yellow);
     toolBar->addAction(ToolIcon, "MarkerYellow");
@@ -91,6 +94,9 @@ MainWindow::MainWindow()
     IconPainter.drawEllipse(2,2,9,9);
     QAction *LargePen = toolBar->addAction(ToolIcon, "LargePen");
     LargePen->setChecked(true);
+
+    toolBar->addAction("Freeze")->setCheckable(true);
+    toolBar->addAction("Protect")->setCheckable(true);
 
     connect(toolBar, SIGNAL(actionTriggered(QAction *)),
             scribbleArea, SLOT(HandleToolAction(QAction * )));
@@ -153,6 +159,13 @@ void MainWindow::penColor()
         scribbleArea->setPenColor(newColor);
 }
 //! [8]
+void MainWindow::BackGroundColorColor()
+//! [7] //! [8]
+{
+    QColor newColor = QColorDialog::getColor(scribbleArea->GetBackGroundColor());
+    if (newColor.isValid())
+        scribbleArea->setBackGroundColor(newColor);
+}
 
 //! [9]
 void MainWindow::penWidth()
@@ -230,6 +243,9 @@ void MainWindow::createActions()
     penWidthAct = new QAction(tr("Pen &Width..."), this);
     connect(penWidthAct, SIGNAL(triggered()), this, SLOT(penWidth()));
 
+    BackGroundColorAct = new QAction(tr("&bg Color..."), this);
+    connect(BackGroundColorAct, SIGNAL(triggered()), this, SLOT(BackGroundColorColor()));
+
 
     DirectPostitSelectAct = new QAction(tr("&Direct select"), this);
     DirectPostitSelectAct->setCheckable(true);
@@ -271,6 +287,7 @@ void MainWindow::createMenus()
     optionMenu = new QMenu(tr("&Options"), this);
     optionMenu->addAction(penColorAct);
     optionMenu->addAction(penWidthAct);
+    optionMenu->addAction(BackGroundColorAct);
     optionMenu->addAction(DirectPostitSelectAct);
     optionMenu->addSeparator();
     optionMenu->addAction(clearScreenAct);

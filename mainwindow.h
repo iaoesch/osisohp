@@ -54,6 +54,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow();
 
+public slots:
 protected:
     void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
@@ -61,6 +62,7 @@ private slots:
     void open();
     void Export();
     void penColor();
+    void BackGroundColorColor();
     void penWidth();
     void about();
 
@@ -86,6 +88,7 @@ private:
     QList<QAction *> saveAsActs;
     QAction *exitAct;
     QAction *penColorAct;
+    QAction *BackGroundColorAct;
     QAction *penWidthAct;
     QAction *DirectPostitSelectAct;
     QAction *ShowPostitsFrameAct;

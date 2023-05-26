@@ -72,6 +72,9 @@ public:
     void setDirectSelect(bool Mode) {SelectPostitsDirectly = Mode;}
     void setShowPostitsFrame(bool Mode) {ShowPostitsFrame = Mode; update();}
 
+    QColor GetBackGroundColor() const { return BackGroundColor; }
+    void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor;}
+
 
     bool isModified() const { return modified; }
     QColor penColor() const { return myPenColor; }
@@ -107,13 +110,13 @@ private:
        QImage Image;
        QPointF Position;
        BoundingBoxClass Box;
-       PostIt(const QImage &NewImage, const QPoint &Pos, BoundingBoxClass NewBox) : Image(NewImage), Position(Pos), Box(NewBox) {}
+       PostIt(const QImage &NewImage, const QPointF &Pos, BoundingBoxClass NewBox) : Image(NewImage), Position(Pos), Box(NewBox) {}
     };
 
     std::list<PostIt> PostIts;
     struct PostItDescriptor{
        std::list<PostIt>::iterator postit;
-       QPoint StartPosition;
+       QPointF StartPosition;
     } ;
     std::list<PostItDescriptor> SelectedPostit;
     QPoint StartPositionSelectedPostIt;
@@ -149,7 +152,7 @@ private:
 
     QColor TransparentColor;
     QColor BackGroundColor;
-
+    QColor DefaultBackGroundColor;
 
     QPolygonF LastDrawnObjectPoints;
     QImage SelectedImagePart;
