@@ -63,6 +63,8 @@ private slots:
     void Export();
     void penColor();
     void BackGroundColorColor();
+    void BackGroundColorWhiteBoard();
+    void BackGroundColorBlackBoard();
     void penWidth();
     void about();
 
@@ -83,12 +85,23 @@ private:
     QMenu *DebugMenu;
     QMenu *helpMenu;
 
+    static constexpr auto NumberOfPens = 8;
+    struct PenInfo {
+       QAction *SetPenColorAct;
+       QColor  PenColor;
+    };
+
+    PenInfo PenInfo[NumberOfPens];
+    QColor BackgroundColor;
+
     QAction *openAct;
     QAction *saveAct;
     QList<QAction *> saveAsActs;
     QAction *exitAct;
     QAction *penColorAct;
     QAction *BackGroundColorAct;
+    QAction *WhiteBoardColorAct;
+    QAction *BlackBoardColorAct;
     QAction *penWidthAct;
     QAction *DirectPostitSelectAct;
     QAction *ShowPostitsFrameAct;
@@ -96,7 +109,13 @@ private:
     QAction *clearScreenAct;
     QAction *aboutAct;
     QAction *aboutQtAct;
+
     bool SaveFile(const QByteArray &fileFormat);
+    void SetWhiteBoardColors();
+    void readSettings();
+    void writeSettings();
+    void SetBlackBoardColors();
+    void UpdateColors();
 };
 //! [0]
 

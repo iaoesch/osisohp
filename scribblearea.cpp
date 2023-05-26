@@ -215,7 +215,10 @@ void ScribbleArea::setPenColor(const QColor &newColor)
 void ScribbleArea::HandleToolAction(QAction *action)
 {
     myPenWidth = SelectedPenWidth;
-    if (action->iconText() == "Red") {
+
+    if (action->iconText() == "PenColor") {
+        myPenColor = action->data().value<QColor>();
+    } else if(action->iconText() == "Red") {
         myPenColor = Qt::red;
     } else if (action->iconText() == "Blue") {
         myPenColor = Qt::blue;

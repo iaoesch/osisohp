@@ -46,6 +46,8 @@
 //! [0]
 MainWindow::MainWindow()
 {
+    SetWhiteBoardColors();
+    readSettings();
     scribbleArea = new ScribbleArea;
     setCentralWidget(scribbleArea);
 
@@ -54,7 +56,17 @@ MainWindow::MainWindow()
     createMenus();
     QToolBar * toolBar= new QToolBar("Main Window Tool Bar");
   //  toolBar->insertAction(0, new PushButtonAction(QIcon(":/Refresh.gif"), "Refresh"));
+
     QPixmap ToolIcon(15, 15);
+#if 1
+    for (auto &p: PenInfo) {
+       ToolIcon.fill(p.PenColor);
+       p.SetPenColorAct = toolBar->addAction(QIcon(ToolIcon), "PenColor");
+       Group->addAction(p.SetPenColorAct);
+       p.SetPenColorAct->setData(QVariant(p.PenColor));
+    }
+    PenInfo[NumberOfPens-1].SetPenColorAct->setText("MarkerYellow");
+#else
     ToolIcon.fill(Qt::blue);
     toolBar->addAction(QIcon(ToolIcon), "Blue")->setChecked(true);
 
@@ -76,10 +88,12 @@ MainWindow::MainWindow()
 
     ToolIcon.fill(Qt::black);
     Group->addAction(toolBar->addAction(ToolIcon, "Black"));
-    Group->setExclusive(true);
 
     ToolIcon.fill(Qt::yellow);
     toolBar->addAction(ToolIcon, "MarkerYellow");
+#endif
+    Group->setExclusive(true);
+    PenInfo[0].SetPenColorAct->setChecked(true);
 
     ToolIcon.fill(Qt::yellow);
     QPainter IconPainter(&ToolIcon);
@@ -107,19 +121,60 @@ MainWindow::MainWindow()
     setWindowTitle(tr("Osis OHP"));
 
     resize(1500, 1500);
+    UpdateColors();
 }
 //! [0]
+
+void MainWindow::SetWhiteBoardColors(void)
+{
+   PenInfo[0].PenColor = Qt::blue;
+   PenInfo[1].PenColor = Qt::darkGreen;
+   PenInfo[2].PenColor = Qt::darkYellow;
+   PenInfo[3].PenColor = QColor(255, 128, 0);
+   PenInfo[4].PenColor = Qt::red;
+   PenInfo[5].PenColor = Qt::magenta;
+   PenInfo[6].PenColor = Qt::black;
+   PenInfo[7].PenColor = Qt::yellow;
+   BackgroundColor = QColor(230,230, 200,255);
+}
+
+void MainWindow::SetBlackBoardColors(void)
+{
+   PenInfo[0].PenColor = QColor(0x4991FF);
+   PenInfo[1].PenColor = Qt::green;
+   PenInfo[2].PenColor = Qt::yellow;
+   PenInfo[3].PenColor = QColor(255, 128, 0);
+   PenInfo[4].PenColor = Qt::red;
+   PenInfo[5].PenColor = Qt::magenta;
+   PenInfo[6].PenColor = Qt::white;
+   PenInfo[7].PenColor = Qt::yellow;
+   BackgroundColor = QColor(30, 30, 30, 255);
+}
+
+void MainWindow::UpdateColors(void)
+{
+   QPixmap ToolIcon(15, 15);
+
+   for (auto &p: PenInfo) {
+      ToolIcon.fill(p.PenColor);
+      p.SetPenColorAct->setIcon(ToolIcon);
+      p.SetPenColorAct->setData(p.PenColor);
+   }
+   scribbleArea->setBackGroundColor(BackgroundColor);
+}
 
 //! [1]
 void MainWindow::closeEvent(QCloseEvent *event)
 //! [1] //! [2]
 {
     if (maybeSave()) {
+        writeSettings();
         event->accept();
     } else {
         event->ignore();
     }
 }
+
 //! [2]
 
 //! [3]
@@ -164,7 +219,19 @@ void MainWindow::BackGroundColorColor()
 {
     QColor newColor = QColorDialog::getColor(scribbleArea->GetBackGroundColor());
     if (newColor.isValid())
-        scribbleArea->setBackGroundColor(newColor);
+       scribbleArea->setBackGroundColor(newColor);
+}
+
+void MainWindow::BackGroundColorWhiteBoard()
+{
+   SetWhiteBoardColors();
+   UpdateColors();
+}
+
+void MainWindow::BackGroundColorBlackBoard()
+{
+   SetBlackBoardColors();
+   UpdateColors();
 }
 
 //! [9]
@@ -246,6 +313,12 @@ void MainWindow::createActions()
     BackGroundColorAct = new QAction(tr("&bg Color..."), this);
     connect(BackGroundColorAct, SIGNAL(triggered()), this, SLOT(BackGroundColorColor()));
 
+    WhiteBoardColorAct = new QAction(tr("&Whiteboard"), this);
+    connect(WhiteBoardColorAct, SIGNAL(triggered()), this, SLOT(BackGroundColorWhiteBoard()));
+
+    BlackBoardColorAct = new QAction(tr("&Blackboard"), this);
+    connect(BlackBoardColorAct, SIGNAL(triggered()), this, SLOT(BackGroundColorBlackBoard()));
+
 
     DirectPostitSelectAct = new QAction(tr("&Direct select"), this);
     DirectPostitSelectAct->setCheckable(true);
@@ -288,6 +361,8 @@ void MainWindow::createMenus()
     optionMenu->addAction(penColorAct);
     optionMenu->addAction(penWidthAct);
     optionMenu->addAction(BackGroundColorAct);
+    optionMenu->addAction(WhiteBoardColorAct);
+    optionMenu->addAction(BlackBoardColorAct);
     optionMenu->addAction(DirectPostitSelectAct);
     optionMenu->addSeparator();
     optionMenu->addAction(clearScreenAct);
@@ -361,4 +436,44 @@ bool MainWindow::SaveFile(const QByteArray &fileFormat)
         return scribbleArea->SaveImage(fileName);
     }
 }
+
+void MainWindow::writeSettings()
+{
+    QSettings settings("OESCH", "OverheadProjector");
+
+    settings.beginGroup("Drawing");
+    settings.beginWriteArray("Pens");
+    for (qsizetype i = 0; i < NumberOfPens; ++i) {
+        settings.setArrayIndex(i);
+        settings.setValue("Color", PenInfo[i].PenColor);
+    }
+    settings.endArray();
+    settings.setValue("BackgroundColor", scribbleArea->GetBackGroundColor());
+
+    settings.beginGroup("SensorNames");
+    settings.endGroup();
+
+    settings.endGroup();
+}
+
+void MainWindow::readSettings()
+{
+   QSettings settings("OESCH", "OverheadProjector");
+
+    settings.beginGroup("Drawing");
+    int size = settings.beginReadArray("Pens");
+    for (int i = 0; i < size; ++i) {
+        settings.setArrayIndex(i);
+        if (settings.value("Color").canConvert<QString>()) {
+            PenInfo[i].PenColor = settings.value("Color").value<QColor>();
+        }
+    }
+    settings.endArray();
+    BackgroundColor = settings.value("BackgroundColor").value<QColor>();
+    settings.beginGroup("SensorNames");
+    settings.endGroup();
+    settings.endGroup();
+}
+
+
 //! [20]

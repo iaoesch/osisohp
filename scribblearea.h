@@ -73,7 +73,7 @@ public:
     void setShowPostitsFrame(bool Mode) {ShowPostitsFrame = Mode; update();}
 
     QColor GetBackGroundColor() const { return BackGroundColor; }
-    void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor;}
+    void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; update();}
 
 
     bool isModified() const { return modified; }
