@@ -53,6 +53,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
 {
     setAttribute(Qt::WA_StaticContents);
     setTabletTracking(true);
+    QWidget::setAttribute(Qt::WA_AcceptTouchEvents);
     setMouseTracking(true);
     modified = false;
     LastDrawingValid = false;
@@ -314,7 +315,7 @@ void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, 
 
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
-   std::cout << "Mouse: ";
+  // std::cout << "Mouse: ";
 
    HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), false, 0);
 }
@@ -591,6 +592,23 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
     }
 }
 
+bool ScribbleArea::event(QEvent *event)
+{
+   switch (event->type()) {
+      case QEvent::TouchBegin:
+      case QEvent::TouchCancel:
+      case QEvent::TouchEnd:
+      case QEvent::TouchUpdate:
+         event->accept();
+         return true;
+         break;
+      default:
+         return QWidget::event(event);
+
+   }
+
+}
+
 
 void ScribbleArea::timeoutSM()
 {
@@ -849,6 +867,7 @@ void ScribbleArea::drawLineTo(const QPointF &endPoint, double Pressure)
    std::cout << "Drawing ";
    int ModifiedPenWidth = myPenWidth * (1.0 + Pressure*Pressure*4);
     QPainter painter(&LastDrawnObject);
+    painter.setCompositionMode(QPainter::CompositionMode_Source);
     painter.setPen(QPen(myPenColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
     painter.drawLine(lastPoint, endPoint);

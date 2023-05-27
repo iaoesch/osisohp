@@ -50,7 +50,7 @@ MainWindow::MainWindow()
     readSettings();
     scribbleArea = new ScribbleArea;
     setCentralWidget(scribbleArea);
-
+    QWidget::setAttribute(Qt::WA_AcceptTouchEvents);
     QActionGroup *Group = new QActionGroup(this);
     createActions();
     createMenus();
