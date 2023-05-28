@@ -79,6 +79,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
 
 
     RecentlyPastedObjectValid = false;
+    MarkerActive = false;
    // QImage RecentlyMovedObject;
    // BoundingBoxClass RecentlyMovedObjectBoundingBox;
 
@@ -208,8 +209,10 @@ bool ScribbleArea::LoadImage(const QString &fileName)
 void ScribbleArea::setPenColor(const QColor &newColor)
 //! [5] //! [6]
 {
+    auto alpha = myPenColor.alpha();
     myPenColor = newColor;
-    myPenWidth = SelectedPenWidth;
+    myPenColor.setAlpha(alpha);
+    //myPenWidth = SelectedPenWidth;
 }
 //! [6]
 
@@ -219,6 +222,7 @@ void ScribbleArea::HandleToolAction(QAction *action)
 
     if (action->iconText() == "PenColor") {
         myPenColor = action->data().value<QColor>();
+        MarkerActive = false;
     } else if(action->iconText() == "Red") {
         myPenColor = Qt::red;
     } else if (action->iconText() == "Blue") {
@@ -235,8 +239,9 @@ void ScribbleArea::HandleToolAction(QAction *action)
         myPenColor = Qt::magenta;
     } else if (action->iconText() == "MarkerYellow") {
        myPenColor = Qt::yellow;
-       myPenColor.setAlpha(64);
+       myPenColor.setAlpha(64+190);
        myPenWidth = SelectedPenWidth * 5 + 2;
+       MarkerActive = true;
     } else if (action->iconText() == "SmallPen") {
        SelectedPenWidth = 1;
        myPenWidth = SelectedPenWidth;
@@ -271,7 +276,7 @@ void ScribbleArea::clearImage()
 //! [11]
 void ScribbleArea::mousePressEvent(QMouseEvent *event)
 {
-   std::cout << "Mouse: ";
+   std::cout << "Mouse: press";
    HandlePressEventSM(event->button(), event->pos(), event->timestamp());
 
 }
@@ -315,7 +320,7 @@ void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, 
 
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
-  // std::cout << "Mouse: ";
+   std::cout << "Mouse: move" << std::endl;
 
    HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), false, 0);
 }
@@ -548,6 +553,61 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position
    }
 }
 
+void ScribbleArea::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+   SelectedCurrentPosition = MeanPosition;
+   SelectedImagePart =  image.copy();
+   HintSelectedImagePart = SelectedImagePart;
+   HintSelectedImagePart.fill(qRgba(0, 0, 0, 40));
+   //Scrolling = true;
+   ScrollingLastPosition = SelectedCurrentPosition;
+   ScrollingOldOrigin = Origin;
+   //scribbling = false;
+   update();
+   State = WaitingForTouchScrolling;
+}
+
+void ScribbleArea::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+   std::cout << "TM(" << MeanPosition.x() <<":" << MeanPosition.y() << ")";
+
+   switch (State) {
+      case WaitingForTouchScrolling:
+         State = TouchScrollingDrawingArea;
+         [[fallthrough]];
+      case TouchScrollingDrawingArea:
+
+         if (LastDrawingValid) {
+            DrawLastDrawnPicture();
+
+            LastDrawingValid = false;
+            LastDrawnObjectPoints.clear();
+
+
+         }
+         Origin -= MeanPosition- ScrollingLastPosition;
+         ScrollingLastPosition = MeanPosition;
+         update();
+         break;
+      default:
+         std::cout << "Touch move: unexpected state" << std::endl;
+   }
+}
+
+void ScribbleArea::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+   switch (State) {
+   case ScribbleArea::WaitingForTouchScrolling:
+   case ScribbleArea::TouchScrollingDrawingArea:
+      Origin -= MeanPosition - ScrollingLastPosition;
+      resizeScrolledImage();
+      update();
+      State = Idle;
+      break;
+   }
+
+}
+
 void ScribbleArea::tabletEvent(QTabletEvent * event)
 {
   // std::cout << "Tablett Pen Type " << event->pointerType() << std::endl;
@@ -592,6 +652,78 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
     }
 }
 
+bool ScribbleArea::TouchEvent(QTouchEvent *event)
+{
+   double TouchScaling = 4.0;
+   switch (event->type()) {
+      case QEvent::TouchBegin:
+         std::cout << "Got touch begin" << std::endl;
+         {
+         QPointF MeanPosition(0,0);
+         for (auto &p: event->points()) {
+            MeanPosition += p.position();
+         }
+         MeanPosition *= TouchScaling/event->pointCount();
+            HandleTouchPressEventSM(event->pointCount(), MeanPosition);
+         }
+         event->accept();
+         return true;
+         break;
+      case QEvent::TouchCancel:
+         std::cout << "Got touch Cancel" << std::endl;
+         event->accept();
+         return true;
+         break;
+      case QEvent::TouchEnd:
+         std::cout << "Got touch End" << std::endl;
+         {
+         QPointF MeanPosition(0,0);
+         for (auto &p: event->points()) {
+            MeanPosition += p.position();
+         }
+         MeanPosition *= TouchScaling/event->pointCount();
+            HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
+         }
+         event->accept();
+         return true;
+         break;
+      case QEvent::TouchUpdate:
+         std::cout << "Got touch Update" << std::endl;
+         {
+         QPointF MeanPosition(0,0);
+         for (auto &p: event->points()) {
+            MeanPosition += p.position();
+         }
+         MeanPosition *= TouchScaling/event->pointCount();
+         if (event->isBeginEvent()) {
+            HandleTouchPressEventSM(event->pointCount(), MeanPosition);
+         } else if (event->isEndEvent()) {
+            HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
+         } else {
+            HandleTouchMoveEventSM(event->pointCount(), MeanPosition);
+         }
+#if 0
+         {
+
+            for (auto &p: event->points()) {
+               std::cout << "(" << p.position().x() <<":" << p.position().y() << ")";
+            }
+            std::cout << event->isBeginEvent() << event->isEndEvent() << std::endl;
+         }
+#endif
+         }
+         event->accept();
+         return true;
+
+         break;
+      default:
+         return QWidget::event(event);
+
+   }
+
+}
+
+
 bool ScribbleArea::event(QEvent *event)
 {
    switch (event->type()) {
@@ -599,8 +731,14 @@ bool ScribbleArea::event(QEvent *event)
       case QEvent::TouchCancel:
       case QEvent::TouchEnd:
       case QEvent::TouchUpdate:
-         event->accept();
-         return true;
+         {
+         QTouchEvent *te = dynamic_cast<QTouchEvent *>(event);
+         if (te) {
+            return TouchEvent(te);
+         } else {
+            return QWidget::event(event);
+         }
+         }
          break;
       default:
          return QWidget::event(event);
@@ -794,6 +932,11 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
 
     painter.drawRect(dirtyRect);
 
+    // In marker mode, last drawn objec belongs ino background
+    if (MarkerActive) {
+        painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
+    }
+
     // Then draw our current image (Without the currently drawn object)
       painter.drawImage(dirtyRect, image, dirtyRect.translated(Origin.toPoint()));
     //painter.setCompositionMode(QPainter::CompositionMode_Source);
@@ -804,8 +947,10 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
        painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     }
 #endif
-    // Now draw the currently drawn object
-    painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
+    // Now draw the currently drawn object, in marker mode it was already drawn earlier in background
+    if (!MarkerActive) {
+       painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
+    }
 #if 0
     if (EraseLastDrawnObject) {
        painter.setCompositionMode(QPainter::CompositionMode_SourceOut);
@@ -924,6 +1069,10 @@ void ScribbleArea::DrawLastDrawnPicture()
     //painter.setCompositionMode(QPainter::CompositionMode_Source);
     if (EraseLastDrawnObject) {
        painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    }
+    if (MarkerActive) {
+       painter.setCompositionMode(QPainter::CompositionMode_DestinationOver);
+
     }
     painter.drawImage(Origin, LastDrawnObject);
     LastDrawnObject.fill(TransparentColor);

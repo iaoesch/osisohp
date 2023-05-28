@@ -111,6 +111,7 @@ MainWindow::MainWindow()
 
     toolBar->addAction("Freeze")->setCheckable(true);
     toolBar->addAction("Protect")->setCheckable(true);
+    toolBar->addAction("Cut")->setCheckable(true);
 
     connect(toolBar, SIGNAL(actionTriggered(QAction *)),
             scribbleArea, SLOT(HandleToolAction(QAction * )));

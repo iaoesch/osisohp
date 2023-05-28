@@ -47,6 +47,7 @@
 #include <QWidget>
 #include <QTimer>
 #include <QPolygon>
+#include <QTouchEvent>
 #include <list>
 
 #include "box.hpp"
@@ -136,7 +137,9 @@ private:
        MovingSelectionPaused,
        MovingPostit,
        ScrollingDrawingArea,
-};
+       WaitingForTouchScrolling,
+       TouchScrollingDrawingArea
+    };
     enum ScribblingState State;
     bool modified;
     bool SelectPostitsDirectly;
@@ -149,6 +152,7 @@ private:
     QColor myPenColor;
     QImage image;
     QImage LastDrawnObject;
+    bool MarkerActive;
     bool EraseLastDrawnObject;
 
     QColor TransparentColor;
@@ -193,9 +197,13 @@ private:
     void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
     void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
     void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
+    void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
+    void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
+    void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
     bool PostItSelected(QPointF Position);
     void EraseLineTo(const QPointF &endPoint, double Pressure);
     bool IsInsideAnyPostIt(QPointF Position);
+    bool TouchEvent(QTouchEvent *event);
 };
 //! [0]
 
