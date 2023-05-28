@@ -65,10 +65,10 @@ ScribbleArea::ScribbleArea(QWidget *parent)
 
     MyTimer.setSingleShot(true);
 
-    CopyTimeout = 500;
+    /*CopyTimeout = 500;
     GestureTimeout = 500;
     SelectTimeout = 500;
-    PostItTimeout = 1000;
+    PostItTimeout = 1000;*/
     SelectedPostit.clear();
     SelectPostitsDirectly = false;
     ShowPostitsFrame = false;
@@ -76,6 +76,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     TransparentColor = QColor(255, 255, 255, 0);
     BackGroundColor = QColor(230,230, 200,255);
     DefaultBackGroundColor = BackGroundColor;
+    PostItBackgroundColor = QColor(100, 0, 0, 50);
 
 
     RecentlyPastedObjectValid = false;
@@ -303,10 +304,10 @@ void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, 
         if ((SelectPostitsDirectly == true) &&
             (PostItSelected(SelectedCurrentPosition))) {
               DownInsideObject = false;
-              MyTimer.start(10);
+              MyTimer.start(Settings.DirectSelectTimeout);
 
         } else {
-           MyTimer.start(SelectTimeout);
+           MyTimer.start(Settings.SelectTimeout);
 
 
            if (LastPaintedObjectBoundingBox.IsInside(PositionClass(Position.x(), Position.y()))) {
@@ -359,7 +360,7 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position,
                   State = DrawingFillRequested;
                }
                MyTimer.stop();
-               MyTimer.start(GestureTimeout);
+               MyTimer.start(Settings.GestureTimeout);
                if (LastDrawingValid) {
                  DrawLastDrawnPicture();
 
@@ -386,7 +387,7 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position,
            case ScribbleArea::MovingSelection:
               // QPoint Offset = event->pos() - SelectedPoint;
                 MyTimer.stop();
-                MyTimer.start(CopyTimeout);
+                MyTimer.start(Settings.CopyTimeout);
 
                 SelectedCurrentPosition = Position;
                 update();
@@ -654,7 +655,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
 
 bool ScribbleArea::TouchEvent(QTouchEvent *event)
 {
-   double TouchScaling = 4.0;
+   double TouchScaling = Settings.Touchscaling;
    switch (event->type()) {
       case QEvent::TouchBegin:
          std::cout << "Got touch begin" << std::endl;
@@ -798,7 +799,7 @@ void ScribbleArea::timeoutSM()
             //scribbling = false;
             update();
             //WaitForPostIt = true;
-            MyTimer.start(PostItTimeout);
+            MyTimer.start(Settings.PostItTimeout);
             State = WaitingToLeaveJitterProtectionWithSelectedAreaForMoving;
 
          } else {
@@ -834,7 +835,7 @@ void ScribbleArea::timeoutSM()
             // Here we could add a different background for postits
             QPainter painter(&NewPostit);
             painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-            painter.setBrush(QBrush(QColor(100, 0, 0, 50)));
+            painter.setBrush(QBrush(PostItBackgroundColor));
             painter.drawRect(NewPostit.rect());
             painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
             painter.drawImage(0,0,SelectedImagePart);

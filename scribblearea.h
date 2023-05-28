@@ -56,6 +56,16 @@
 //! [0]
 //!
 
+class Settings {
+public:
+   double Touchscaling = 4.0;
+   double DirectSelectTimeout = 10.0;
+   double CopyTimeout = 500;
+   double GestureTimeout = 500;
+   double SelectTimeout = 500;
+   double PostItTimeout = 1000;
+
+};
 
 class ScribbleArea : public QWidget
 {
@@ -75,6 +85,8 @@ public:
 
     QColor GetBackGroundColor() const { return BackGroundColor; }
     void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; update();}
+    void setPostItBackgroundColor(const QColor &newColor) {PostItBackgroundColor = newColor; update();}
+
 
 
     bool isModified() const { return modified; }
@@ -107,6 +119,8 @@ private:
     void DrawLastDrawnPicture();
     void resizeImage(QImage *image, const QSize &newSize);
     void resizeScrolledImage();
+
+    Settings Settings;
 
     struct PostIt {
        QImage Image;
@@ -158,6 +172,7 @@ private:
     QColor TransparentColor;
     QColor BackGroundColor;
     QColor DefaultBackGroundColor;
+    QColor PostItBackgroundColor;
 
     QPolygonF LastDrawnObjectPoints;
     QImage SelectedImagePart;
@@ -174,11 +189,11 @@ private:
     GestureTrackerClass Tracker;
 
     QPointF Origin;
-
+/*
     int CopyTimeout;
     int GestureTimeout;
     int PostItTimeout;
-    int SelectTimeout;
+    int SelectTimeout;*/
 
 
     QPointF LastTablettMovePosition;

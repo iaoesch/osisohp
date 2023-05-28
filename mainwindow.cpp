@@ -162,6 +162,16 @@ void MainWindow::UpdateColors(void)
       p.SetPenColorAct->setData(p.PenColor);
    }
    scribbleArea->setBackGroundColor(BackgroundColor);
+   scribbleArea->setPostItBackgroundColor(QColor(255-BackgroundColor.red(), 255-BackgroundColor.green(), 255-BackgroundColor.blue(), 40));
+//   if (BackgroundColor.value() > 128) {
+//      QColor PostitColor = BackgroundColor.darker();
+//      PostitColor.setAlpha(40);
+//      scribbleArea->setPostItBackgroundColor(PostitColor);
+//   } else {
+//      QColor PostitColor = BackgroundColor.lighter();
+//      PostitColor.setAlpha(40);
+//      scribbleArea->setPostItBackgroundColor(PostitColor);
+//   }
 }
 
 //! [1]
@@ -219,8 +229,22 @@ void MainWindow::BackGroundColorColor()
 //! [7] //! [8]
 {
     QColor newColor = QColorDialog::getColor(scribbleArea->GetBackGroundColor());
-    if (newColor.isValid())
+    if (newColor.isValid()) {
        scribbleArea->setBackGroundColor(newColor);
+       scribbleArea->setPostItBackgroundColor(QColor(255-newColor.red(), 255-newColor.green(), 255-newColor.blue(), 40));
+
+//       if (newColor.value() > 128) {
+//          QColor PostitColor = newColor.darker();
+//          PostitColor.setAlpha(40);
+//          scribbleArea->setPostItBackgroundColor(PostitColor);
+//       } else {
+//          QColor PostitColor = newColor.lighter();
+//          PostitColor.setAlpha(40);
+//          scribbleArea->setPostItBackgroundColor(PostitColor);
+//       }
+
+    }
+
 }
 
 void MainWindow::BackGroundColorWhiteBoard()
