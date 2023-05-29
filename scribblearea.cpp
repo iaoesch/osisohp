@@ -58,6 +58,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     modified = false;
     LastDrawingValid = false;
     EraseLastDrawnObject = false;
+    Frozen = false;
     myPenWidth = 2;
     SelectedPenWidth = myPenWidth;
     myPenColor = Qt::blue;
@@ -101,9 +102,11 @@ bool ScribbleArea::ImportImage(const QString &fileName)
     image = loadedImage;
     modified = false;
     Origin = {0,0};
+    BackgroundImagesOrigin = {0,0};
     modified = false;
     LastDrawingValid = false;
     EraseLastDrawnObject = false;
+    BackgroundImages.clear();
     update();
     return true;
 }
@@ -124,6 +127,8 @@ bool ScribbleArea::ExportImage(const QString &fileName, const char *fileFormat)
 bool ScribbleArea::SaveImage(const QString &fileName)
 //! [3] //! [4]
 {
+   // todo: read and save colors pen and background and backgroundimages
+
    QFile file(fileName);
    file.open(QIODevice::WriteOnly);
    QDataStream out(&file);
@@ -137,6 +142,7 @@ bool ScribbleArea::SaveImage(const QString &fileName)
    // Write the data
    out << image;
    out << Origin;
+   out << BackgroundImagesOrigin;
    // Now save all postits
    out << (qint32)(PostIts.size());
    for (auto &&Picture: PostIts) {
@@ -152,7 +158,7 @@ bool ScribbleArea::LoadImage(const QString &fileName)
 //! [1] //! [2]
 {
 #if 1
-
+   // todo: read and save colors pen and background and backgroundimages
    //Then read it in with:
 
    QFile file(fileName);
@@ -183,6 +189,8 @@ bool ScribbleArea::LoadImage(const QString &fileName)
    // Write the data
    in >> image;
    in >> Origin;
+   in >> BackgroundImagesOrigin;
+
    // Now read all postits
    qint32 NumberOfSavedPostits = 0;
    in >> NumberOfSavedPostits;
@@ -252,7 +260,13 @@ void ScribbleArea::HandleToolAction(QAction *action)
     } else if (action->iconText() == "LargePen") {
        SelectedPenWidth = 4;
        myPenWidth = SelectedPenWidth;
-   }
+    } else if (action->iconText() == "Protect") {
+       MoveImageToProtectedLayer();
+    } else if (action->iconText() == "Freeze") {
+       Freeze(true);
+    }
+
+
 }
 
 //! [7]
@@ -262,6 +276,19 @@ void ScribbleArea::setPenWidth(int newWidth)
     myPenWidth = newWidth;
     SelectedPenWidth = myPenWidth;
 }
+
+void ScribbleArea::MoveImageToProtectedLayer()
+{
+   CompleteImage();
+   BackgroundImages.push_back(std::make_unique<QImage>(image));
+   clearImage();
+
+}
+
+bool ScribbleArea::MoveProtectedLayerToImage()
+{
+
+}
 //! [8]
 
 //! [9]
@@ -270,6 +297,10 @@ void ScribbleArea::clearImage()
 {
     image.fill(TransparentColor);
     modified = true;
+    LastDrawingValid = false;
+    LastDrawnObjectPoints.clear();
+    LastDrawnObject.fill(TransparentColor);
+
     update();
 }
 //! [10]
@@ -326,6 +357,18 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
    HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), false, 0);
 }
 
+
+void ScribbleArea::CompleteImage()
+{
+   if (LastDrawingValid) {
+      DrawLastDrawnPicture();
+
+      LastDrawingValid = false;
+      LastDrawnObjectPoints.clear();
+
+
+   }
+}
 
 void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
@@ -418,15 +461,12 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position,
            case ScribbleArea::WaitingToLeaveJitterProtectionForScrolling:
               State = ScrollingDrawingArea;
            case ScribbleArea::ScrollingDrawingArea:
-              if (LastDrawingValid) {
-                 DrawLastDrawnPicture();
-
-                 LastDrawingValid = false;
-                 LastDrawnObjectPoints.clear();
-
-
-              }
+              CompleteImage();
              Origin -= Position- ScrollingLastPosition;
+             if (!Frozen) {
+                BackgroundImagesOrigin -= Position- ScrollingLastPosition;
+             }
+
              ScrollingLastPosition = Position;
              update();
               break;
@@ -545,6 +585,9 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position
          case ScribbleArea::WaitingToLeaveJitterProtectionForScrolling:
          case ScribbleArea::ScrollingDrawingArea:
             Origin -= Position - ScrollingLastPosition;
+            if (!Frozen) {
+               BackgroundImagesOrigin -= Position- ScrollingLastPosition;
+            }
             resizeScrolledImage();
             update();
             State = Idle;
@@ -578,15 +621,11 @@ void ScribbleArea::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanP
          [[fallthrough]];
       case TouchScrollingDrawingArea:
 
-         if (LastDrawingValid) {
-            DrawLastDrawnPicture();
-
-            LastDrawingValid = false;
-            LastDrawnObjectPoints.clear();
-
-
-         }
+         CompleteImage();
          Origin -= MeanPosition- ScrollingLastPosition;
+         if (!Frozen) {
+            BackgroundImagesOrigin -= MeanPosition- ScrollingLastPosition;
+         }
          ScrollingLastPosition = MeanPosition;
          update();
          break;
@@ -601,6 +640,9 @@ void ScribbleArea::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF Me
    case ScribbleArea::WaitingForTouchScrolling:
    case ScribbleArea::TouchScrollingDrawingArea:
       Origin -= MeanPosition - ScrollingLastPosition;
+      if (!Frozen) {
+         BackgroundImagesOrigin -= MeanPosition- ScrollingLastPosition;
+      }
       resizeScrolledImage();
       update();
       State = Idle;
@@ -933,7 +975,11 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
 
     painter.drawRect(dirtyRect);
 
-    // In marker mode, last drawn objec belongs ino background
+    for (auto &p: BackgroundImages) {
+       painter.drawImage(dirtyRect, *p, dirtyRect.translated(BackgroundImagesOrigin.toPoint()));
+    }
+
+    // In marker mode, last drawn objec belongs into background
     if (MarkerActive) {
         painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
     }
@@ -978,7 +1024,8 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
         painter.drawImage(RecentlyPastedObjectPosition, RecentlyPastedObject);
     }
     // If we are scrolling, draw a 'shadow' nover everting as feedback
-    if ((State == ScrollingDrawingArea)||(State == WaitingToLeaveJitterProtectionForScrolling)) {
+    if ((State == ScrollingDrawingArea)||(State == WaitingToLeaveJitterProtectionForScrolling)
+        ||(State == WaitingForTouchScrolling) ||(State == TouchScrollingDrawingArea)) {
         painter.setPen(QPen(QColor(90, 0, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
                             Qt::RoundJoin));
         painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
@@ -1000,6 +1047,11 @@ void ScribbleArea::resizeEvent(QResizeEvent *event)
         int newHeight = qMax(height() + 128, image.height());
         resizeImage(&image, QSize(newWidth+Origin.x(), newHeight+Origin.y()));
         resizeImage(&LastDrawnObject, QSize(newWidth, newHeight));
+        if (!Frozen) {
+           for (auto &p: BackgroundImages) {
+              resizeImage(&*p, QSize(newWidth+BackgroundImagesOrigin.x(), newHeight+BackgroundImagesOrigin.y()));
+           }
+        }
         update();
     }
     QWidget::resizeEvent(event);
@@ -1098,18 +1150,40 @@ void ScribbleArea::DrawMovedSelection(const QPointF Offset)
 //! [18]
 
 //! [19]
-void ScribbleArea::resizeImage(QImage *image, const QSize &newSize)
+void ScribbleArea::resizeImage(QImage *image, const QSize &newSize, QPoint Offset)
 //! [19] //! [20]
 {
-    if (image->size() == newSize)
+    if (image->size() == newSize && Offset == QPoint(0,0))
         return;
 
     QImage newImage(newSize, QImage::Format_ARGB32);
     newImage.fill(TransparentColor);
     QPainter painter(&newImage);
     //painter.setCompositionMode(QPainter::CompositionMode_Source);
-    painter.drawImage(QPoint(0, 0), *image);
+    painter.drawImage(Offset, *image);
     *image = newImage;
+}
+
+void ScribbleArea::GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size)
+{
+   if (Origin.x() < 0) {
+       Size.setWidth(image.size().width() - Origin.x());
+       Offset.setX(- Origin.x());
+       Origin.setX(0);
+   } else if (Origin.x()+this->width() > image.size().width()){
+       Size.setWidth(Origin.x()+this->width());
+   } else {
+       Size.setWidth(image.size().width());
+   }
+   if (Origin.y() < 0) {
+       Size.setHeight(image.size().height() - Origin.y());
+       Offset.setY(- Origin.y());
+       Origin.setY(0);
+   } else if (Origin.y()+this->height() > image.size().height()){
+       Size.setHeight(Origin.y()+this->height());
+   } else {
+       Size.setHeight(image.size().height());
+   }
 }
 
 void ScribbleArea::resizeScrolledImage()
@@ -1119,30 +1193,27 @@ void ScribbleArea::resizeScrolledImage()
     int NewHeight;
     int OffsetX = 0;
     int OffsetY = 0;
+    QPoint Offset;
+    QSize Size;
 
-    if (Origin.x() < 0) {
-        NewWidth = image.size().width() - Origin.x();
-        OffsetX = - Origin.x();
-        Origin.setX(0);
-    } else if (Origin.x()+this->width() > image.size().width()){
-        NewWidth = Origin.x()+this->width();
-    } else {
-        NewWidth = image.size().width();
-    }
-    if (Origin.y() < 0) {
-        NewHeight = image.size().height() - Origin.y();
-        OffsetY = - Origin.y();
-        Origin.setY(0);
-    } else if (Origin.y()+this->height() > image.size().height()){
-        NewHeight = Origin.y()+this->height();
-    } else {
-        NewHeight = image.size().height();
+    GetOffsetAndAdjustOrigin(image, Origin, Offset, Size);
+#if 1
+    resizeImage(&image, Size, Offset);
+    if (!Frozen && !BackgroundImages.empty()) {
+       GetOffsetAndAdjustOrigin(*BackgroundImages[0], BackgroundImagesOrigin, Offset, Size);
+
+       for (auto &p: BackgroundImages) {
+          resizeImage(&*p, Size, Offset);
+       }
     }
 
+#else
     QImage newImage(QSize(NewWidth ,NewHeight), QImage::Format_ARGB32);
     newImage.fill(TransparentColor);
     QPainter painter(&newImage);
     painter.drawImage(QPoint(OffsetX, OffsetY), image);
+    image = newImage;
+#endif
     // Now adjust all postits
     for (auto &&Picture: PostIts) {
        Picture.Position += QPoint(OffsetX, OffsetY);
@@ -1150,8 +1221,11 @@ void ScribbleArea::resizeScrolledImage()
 
     }
 
-    image = newImage;
 }
+
+
+
+
 
 //! [20]
 

@@ -93,6 +93,10 @@ public:
     QColor penColor() const { return myPenColor; }
     int penWidth() const { return SelectedPenWidth; }
 
+    void Freeze(bool Mode) {Frozen = Mode;}
+    void MoveImageToProtectedLayer();
+    bool MoveProtectedLayerToImage();
+
     bool SaveImage(const QString &fileName);
 public slots:
     void clearImage();
@@ -117,7 +121,7 @@ private:
     void DrawMovedSelection(const QPointF Offset);
 
     void DrawLastDrawnPicture();
-    void resizeImage(QImage *image, const QSize &newSize);
+    void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
     void resizeScrolledImage();
 
     Settings Settings;
@@ -169,6 +173,8 @@ private:
     bool MarkerActive;
     bool EraseLastDrawnObject;
 
+    std::vector<std::unique_ptr<QImage>> BackgroundImages;
+
     QColor TransparentColor;
     QColor BackGroundColor;
     QColor DefaultBackGroundColor;
@@ -189,6 +195,8 @@ private:
     GestureTrackerClass Tracker;
 
     QPointF Origin;
+    bool Frozen;
+    QPointF BackgroundImagesOrigin;
 /*
     int CopyTimeout;
     int GestureTimeout;
@@ -219,6 +227,8 @@ private:
     void EraseLineTo(const QPointF &endPoint, double Pressure);
     bool IsInsideAnyPostIt(QPointF Position);
     bool TouchEvent(QTouchEvent *event);
+    void GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size);
+    void CompleteImage();
 };
 //! [0]
 

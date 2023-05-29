@@ -69,6 +69,7 @@ private slots:
     void about();
 
     void Save();
+    void ProtectImage();
     void DirectSelect();
     void ShowPostitsFrame();
 private:
@@ -116,6 +117,8 @@ private:
     void writeSettings();
     void SetBlackBoardColors();
     void UpdateColors();
+    void SetMatchingPostitColor(QColor &newColor);
+
 };
 //! [0]
 
