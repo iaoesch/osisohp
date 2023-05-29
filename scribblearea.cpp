@@ -260,7 +260,7 @@ void ScribbleArea::HandleToolAction(QAction *action)
     } else if (action->iconText() == "LargePen") {
        SelectedPenWidth = 4;
        myPenWidth = SelectedPenWidth;
-    } else if (action->iconText() == "Protect") {
+    } else if (action->iconText() == "NewPlane") {
        MoveImageToProtectedLayer();
     } else if (action->iconText() == "Freeze") {
        Freeze(true);

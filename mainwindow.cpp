@@ -110,7 +110,8 @@ MainWindow::MainWindow()
     LargePen->setChecked(true);
 
     toolBar->addAction("Freeze")->setCheckable(true);
-    toolBar->addAction("Protect")->setCheckable(true);
+    toolBar->addAction("NewPlane");
+    toolBar->addAction("MergePlane");
     toolBar->addAction("Cut")->setCheckable(true);
 
     connect(toolBar, SIGNAL(actionTriggered(QAction *)),
