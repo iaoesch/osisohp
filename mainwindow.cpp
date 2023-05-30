@@ -219,7 +219,7 @@ void MainWindow::Save()
 
 void MainWindow::ProtectImage()
 {
-   scribbleArea->MoveImageToProtectedLayer();
+   scribbleArea->MoveImageToBackgroundLayer();
 }
 
 //! [7]

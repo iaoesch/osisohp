@@ -94,8 +94,9 @@ public:
     int penWidth() const { return SelectedPenWidth; }
 
     void Freeze(bool Mode) {Frozen = Mode;}
-    void MoveImageToProtectedLayer();
-    bool MoveProtectedLayerToImage();
+    int MoveImageToBackgroundLayer();
+    int MoveTopBackgroundLayerToImage();
+    int CollapseBackgroundLayers();
 
     bool SaveImage(const QString &fileName);
 public slots:
@@ -173,7 +174,21 @@ private:
     bool MarkerActive;
     bool EraseLastDrawnObject;
 
-    std::vector<std::unique_ptr<QImage>> BackgroundImages;
+    class ImageDescriptor {
+       bool Visible;
+       std::unique_ptr<QImage> Image;
+
+       public:
+       ImageDescriptor(std::unique_ptr<QImage> TheImage) : Visible(true), Image(std::move(TheImage)) {}
+       QImage &operator * () {return *Image;}
+       QImage *operator -> () {return Image.operator ->();}
+       bool IsVisible() {return Visible;}
+       void SetVisible(bool v) {Visible = v;}
+
+    };
+
+    //std::vector<std::unique_ptr<QImage>> BackgroundImages;
+    std::vector<ImageDescriptor> BackgroundImages;
 
     QColor TransparentColor;
     QColor BackGroundColor;

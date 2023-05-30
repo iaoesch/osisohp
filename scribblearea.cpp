@@ -261,7 +261,7 @@ void ScribbleArea::HandleToolAction(QAction *action)
        SelectedPenWidth = 4;
        myPenWidth = SelectedPenWidth;
     } else if (action->iconText() == "NewPlane") {
-       MoveImageToProtectedLayer();
+       MoveImageToBackgroundLayer();
     } else if (action->iconText() == "Freeze") {
        Freeze(true);
     }
@@ -277,17 +277,57 @@ void ScribbleArea::setPenWidth(int newWidth)
     SelectedPenWidth = myPenWidth;
 }
 
-void ScribbleArea::MoveImageToProtectedLayer()
+int ScribbleArea::MoveImageToBackgroundLayer()
 {
    CompleteImage();
    BackgroundImages.push_back(std::make_unique<QImage>(image));
    clearImage();
-
+   return BackgroundImages.size();
 }
 
-bool ScribbleArea::MoveProtectedLayerToImage()
+int ScribbleArea::MoveTopBackgroundLayerToImage()
 {
+   if (!BackgroundImages.empty()) {
+      // create empty image
+      QImage newImage(image.size(), QImage::Format_ARGB32);
+      newImage.fill(TransparentColor);
+      QPainter painter(&newImage);
 
+      // draw top bg layer onto it
+      painter.drawImage((BackgroundImagesOrigin-Origin).toPoint(), *BackgroundImages.back());
+      BackgroundImages.pop_back();
+
+      // Then draw our current image (Without the currently drawn object)
+      painter.drawImage(QPoint(0,0), image);
+
+      //Set combined image as new image
+      image = newImage;
+   }
+   return BackgroundImages.size();
+}
+
+int ScribbleArea::CollapseBackgroundLayers()
+{
+   if (!BackgroundImages.empty()) {
+      QImage newImage;
+      QPainter painter;
+      auto it = BackgroundImages.begin();
+      while (it != BackgroundImages.end()) {
+         if (it->IsVisible()) {
+            if (newImage.isNull()) {
+               newImage = **it;
+               painter.begin(&newImage);
+            } else {
+               painter.drawImage(QPoint(0,0), **it);
+            }
+            it = BackgroundImages.erase(it);
+         } else {
+            it++;
+         }
+      }
+      BackgroundImages.push_back(std::make_unique<QImage>(newImage));
+   }
+   return BackgroundImages.size();
 }
 //! [8]
 
@@ -976,7 +1016,9 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
     painter.drawRect(dirtyRect);
 
     for (auto &p: BackgroundImages) {
-       painter.drawImage(dirtyRect, *p, dirtyRect.translated(BackgroundImagesOrigin.toPoint()));
+       if (p.IsVisible()) {
+          painter.drawImage(dirtyRect, *p, dirtyRect.translated(BackgroundImagesOrigin.toPoint()));
+       }
     }
 
     // In marker mode, last drawn objec belongs into background
