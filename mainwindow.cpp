@@ -51,6 +51,8 @@ MainWindow::MainWindow()
     scribbleArea = new ScribbleArea;
     setCentralWidget(scribbleArea);
     QWidget::setAttribute(Qt::WA_AcceptTouchEvents);
+    //QWidget::setAttribute(Qt::WA_TouchPadAcceptSingleTouchEvents);
+    grabGesture(Qt::PanGesture);
     QActionGroup *Group = new QActionGroup(this);
     createActions();
     createMenus();

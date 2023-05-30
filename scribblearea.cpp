@@ -54,6 +54,9 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     setAttribute(Qt::WA_StaticContents);
     setTabletTracking(true);
     QWidget::setAttribute(Qt::WA_AcceptTouchEvents);
+    //QWidget::setAttribute(Qt::WA_TouchPadAcceptSingleTouchEvents);
+    grabGesture(Qt::PanGesture);
+
     setMouseTracking(true);
     modified = false;
     LastDrawingValid = false;
@@ -392,7 +395,7 @@ void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, 
 
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
-   std::cout << "Mouse: move" << std::endl;
+   std::cout << "Mouse: move" << event->pointCount() << std::endl;
 
    HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), false, 0);
 }
@@ -639,6 +642,7 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position
 
 void ScribbleArea::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
+   if(NumberOfTouchpoints == 2) {
    SelectedCurrentPosition = MeanPosition;
    SelectedImagePart =  image.copy();
    HintSelectedImagePart = SelectedImagePart;
@@ -649,10 +653,12 @@ void ScribbleArea::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF Mean
    //scribbling = false;
    update();
    State = WaitingForTouchScrolling;
+   }
 }
 
 void ScribbleArea::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
+   if(NumberOfTouchpoints == 2) {
    std::cout << "TM(" << MeanPosition.x() <<":" << MeanPosition.y() << ")";
 
    switch (State) {
@@ -672,10 +678,13 @@ void ScribbleArea::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanP
       default:
          std::cout << "Touch move: unexpected state" << std::endl;
    }
+   }
 }
 
 void ScribbleArea::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
+   if(NumberOfTouchpoints == 2) {
+
    switch (State) {
    case ScribbleArea::WaitingForTouchScrolling:
    case ScribbleArea::TouchScrollingDrawingArea:
@@ -688,6 +697,8 @@ void ScribbleArea::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF Me
       State = Idle;
       break;
    }
+
+}
 
 }
 
@@ -823,7 +834,29 @@ bool ScribbleArea::event(QEvent *event)
          }
          }
          break;
+      case QEvent::Gesture:
+         std::cout << "Gesrture" << std::endl;
+         return QWidget::event(event);
+      case QEvent::Scroll:
+         std::cout << "Scroll" << std::endl;
+         return QWidget::event(event);
+      case QEvent::Wheel:
+         std::cout << "Wheel" << static_cast<QWheelEvent*>(event)->angleDelta().x() << ":" << static_cast<QWheelEvent*>(event)->angleDelta().y() << std::endl;
+         {
+            QPointF Delta (static_cast<QWheelEvent*>(event)->angleDelta());
+
+            CompleteImage();
+            Origin += Delta/20.0;
+            if (!Frozen) {
+               BackgroundImagesOrigin += Delta/20.0;
+            }
+            resizeScrolledImage();
+
+            update();
+
+         }
       default:
+         //std::cout << "<" << event->type() << ">";
          return QWidget::event(event);
 
    }
