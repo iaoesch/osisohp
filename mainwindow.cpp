@@ -121,6 +121,21 @@ MainWindow::MainWindow()
     //  toolBar->insertAction(0, new PushButtonAction(QIcon(":/Search.gif"), "Search"));
 
     addToolBar(Qt::TopToolBarArea, toolBar);
+    LayerToolBar= new QToolBar("Layer Tool Bar");
+    LayerToolBar->addAction("L1");
+    LayerToolBar->addAction("L2");
+    LayerToolBar->addAction("L3");
+    LayerToolBar->addAction("L4");
+    addToolBar(Qt::TopToolBarArea, LayerToolBar);
+    connect(LayerToolBar, &QToolBar::actionTriggered,
+            scribbleArea, &ScribbleArea::HandleLayerVisibilityAction);
+    connect(scribbleArea, &ScribbleArea::NumberOfLayerChanged,
+            this, &MainWindow::createLayerActions);
+    connect(scribbleArea, &ScribbleArea::SetVisibilityIndicatorOfLayer,
+            this, &MainWindow::SetVisibilityIndicatorOfLayer);
+
+
+  //
 
     setWindowTitle(tr("Osis OHP"));
 
@@ -378,6 +393,27 @@ void MainWindow::createActions()
     connect(aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 }
 //! [14]
+void MainWindow::createLayerActions(int Number)
+{
+   auto Actionlist = LayerToolBar->actions();
+   for (auto &a: Actionlist) {
+      LayerToolBar->removeAction(a);
+      delete a;
+   }
+   for (int i = 0; i < Number; i++) {
+      auto a = LayerToolBar->addAction("L"+QString::number(i));
+      a->setCheckable(true);
+      a->setData(QVariant(i));
+   }
+}
+
+void MainWindow::SetVisibilityIndicatorOfLayer(int Layer, bool Visibility)
+{
+   auto Actionlist = LayerToolBar->actions();
+   if (Layer < Actionlist.size()) {
+      Actionlist.at(Layer)->setChecked(Visibility);
+   }
+}
 
 //! [15]
 void MainWindow::createMenus()

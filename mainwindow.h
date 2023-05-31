@@ -72,6 +72,10 @@ private slots:
     void ProtectImage();
     void DirectSelect();
     void ShowPostitsFrame();
+    void createLayerActions(int Number);
+    void SetVisibilityIndicatorOfLayer(int Layer, bool Visibility);
+
+
 private:
     void createActions();
     void createMenus();
@@ -85,6 +89,8 @@ private:
     QMenu *optionMenu;
     QMenu *DebugMenu;
     QMenu *helpMenu;
+
+    QToolBar * LayerToolBar;
 
     static constexpr auto NumberOfPens = 8;
     struct PenInfo {

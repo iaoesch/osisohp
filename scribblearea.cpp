@@ -119,8 +119,11 @@ bool ScribbleArea::ImportImage(const QString &fileName)
 bool ScribbleArea::ExportImage(const QString &fileName, const char *fileFormat)
 //! [3] //! [4]
 {
+   QImage ImageToSave(image.size(), QImage::Format_ARGB32);
+   QPainter painter(&ImageToSave);
+   PaintVisibleDrawing(painter, image.rect(), {0,0}, BackgroundImagesOrigin-Origin);
 
-    if (image.save(fileName, fileFormat)) {
+    if (ImageToSave.save(fileName, fileFormat)) {
         return true;
     } else {
         return false;
@@ -141,6 +144,7 @@ bool ScribbleArea::SaveImage(const QString &fileName)
    out << (qint32)100;
 
    out.setVersion(QDataStream::Qt_5_0);
+   CompleteImage();
 
    // Write the data
    out << image;
@@ -152,6 +156,11 @@ bool ScribbleArea::SaveImage(const QString &fileName)
       out << Picture.Position;
       out << Picture.Image;
       out << Picture.Box;
+   }
+   out << (qint32)(BackgroundImages.size());
+   for (auto &Picture: BackgroundImages) {
+      out << Picture.IsVisible();
+      out << *Picture;
    }
    return true;
 
@@ -207,6 +216,19 @@ bool ScribbleArea::LoadImage(const QString &fileName)
       in >> NewBox;
       PostIts.push_back(PostIt(NewImage, Position, NewBox));
    }
+   qint32 NumberOfBackgroundLayers = 0;
+   in >> NumberOfBackgroundLayers;
+   BackgroundImages.clear();
+   bool Visible;
+   emit(NumberOfLayerChanged(NumberOfBackgroundLayers));
+   for (int i = 0; i < NumberOfBackgroundLayers; i++) {
+      in >> Visible;
+      in >> NewImage;
+      BackgroundImages.push_back(ImageDescriptor(std::make_unique<QImage>(NewImage), Visible));
+      emit(SetVisibilityIndicatorOfLayer(i, Visible));
+   }
+
+
    modified = false;
    LastDrawingValid = false;
    EraseLastDrawnObject = false;
@@ -264,12 +286,20 @@ void ScribbleArea::HandleToolAction(QAction *action)
        SelectedPenWidth = 4;
        myPenWidth = SelectedPenWidth;
     } else if (action->iconText() == "NewPlane") {
-       MoveImageToBackgroundLayer();
+       int NumberOfLayers = MoveImageToBackgroundLayer();
+       emit(NumberOfLayerChanged(NumberOfLayers));
     } else if (action->iconText() == "Freeze") {
-       Freeze(true);
+       Freeze(action->isChecked());
     }
+}
 
-
+void ScribbleArea::HandleLayerVisibilityAction(QAction *action)
+{
+   unsigned int SelectedLayer = action->data().value<int>();
+   if (SelectedLayer < BackgroundImages.size()) {
+      BackgroundImages[SelectedLayer].SetVisible(!action->isChecked());
+      update();
+   }
 }
 
 //! [7]
@@ -1038,9 +1068,31 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
 //! [13] //! [14]
 {
     QPainter painter(this);
+    PaintVisibleDrawing(painter, event->rect(), Origin, BackgroundImagesOrigin);
+
+    // If we are scrolling, draw a 'shadow' nover everting as feedback
+    if ((State == ScrollingDrawingArea)||(State == WaitingToLeaveJitterProtectionForScrolling)
+        ||(State == WaitingForTouchScrolling) ||(State == TouchScrollingDrawingArea)) {
+        painter.setPen(QPen(QColor(90, 0, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                            Qt::RoundJoin));
+        painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
+
+        painter.drawRect(0,0,this->width(), this->height());
+
+    }
+
+
+}
+
+
+
+void ScribbleArea::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRect, QPointF const &Origin, QPointF const &BackgroundImagesOrigin)
+//! [13] //! [14]
+{
+    //QPainter painter(this);
 
     // First draw the background
-    QRect dirtyRect = event->rect();
+    //QRect dirtyRect = event->rect();
     painter.setPen(QPen(QColor(50,0,0,0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
     painter.setBrush(QBrush(BackGroundColor));
@@ -1098,17 +1150,6 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
     if (RecentlyPastedObjectValid == true) {
         painter.drawImage(RecentlyPastedObjectPosition, RecentlyPastedObject);
     }
-    // If we are scrolling, draw a 'shadow' nover everting as feedback
-    if ((State == ScrollingDrawingArea)||(State == WaitingToLeaveJitterProtectionForScrolling)
-        ||(State == WaitingForTouchScrolling) ||(State == TouchScrollingDrawingArea)) {
-        painter.setPen(QPen(QColor(90, 0, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                            Qt::RoundJoin));
-        painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
-
-        painter.drawRect(0,0,this->width(), this->height());
-
-    }
-
 
 }
 //! [14]

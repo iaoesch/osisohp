@@ -103,7 +103,13 @@ public slots:
     void clearImage();
     void print();
     void HandleToolAction(QAction *action);
+    void HandleLayerVisibilityAction(QAction *action);
+
     void timeoutSM();
+
+signals:
+    void NumberOfLayerChanged(int NumberOfLayers);
+    void SetVisibilityIndicatorOfLayer(int Layer, bool Visibility);
 
 protected:
     void mousePressEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
@@ -180,6 +186,7 @@ private:
 
        public:
        ImageDescriptor(std::unique_ptr<QImage> TheImage) : Visible(true), Image(std::move(TheImage)) {}
+       ImageDescriptor(std::unique_ptr<QImage> TheImage, bool v) : Visible(v), Image(std::move(TheImage)) {}
        QImage &operator * () {return *Image;}
        QImage *operator -> () {return Image.operator ->();}
        bool IsVisible() {return Visible;}
@@ -244,6 +251,7 @@ private:
     bool TouchEvent(QTouchEvent *event);
     void GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size);
     void CompleteImage();
+    void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundImagesOrigin);
 };
 //! [0]
 
