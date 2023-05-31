@@ -141,9 +141,9 @@ bool ScribbleArea::SaveImage(const QString &fileName)
 
    // Write a header with a "magic number" and a version
    out << (quint32)0x139A1A7F;
-   out << (qint32)100;
+   out << (qint32)110;
 
-   out.setVersion(QDataStream::Qt_5_0);
+   out.setVersion(QDataStream::Qt_6_0);
    CompleteImage();
 
    // Write the data
@@ -188,14 +188,14 @@ bool ScribbleArea::LoadImage(const QString &fileName)
    in >> version;
    if (version < 90)
        return false; // too old
-   if (version > 100)
+   if (version > 110)
        return false; // too new
 
    if (version <= 100) {
        in.setVersion(QDataStream::Qt_5_0);
    }
    else {
-      // in.setVersion(QDataStream::Qt_6_0);
+       in.setVersion(QDataStream::Qt_6_0);
    }
 
    // Write the data
@@ -250,6 +250,14 @@ void ScribbleArea::setPenColor(const QColor &newColor)
 }
 //! [6]
 
+void ScribbleArea::UpdateGUI(int NumberOfLayers)
+{
+   (NumberOfLayerChanged(NumberOfLayers));
+          for (int i = 0; i < NumberOfLayers; i++) {
+            emit(SetVisibilityIndicatorOfLayer(i, BackgroundImages[i].IsVisible()));
+          }
+   }
+
 void ScribbleArea::HandleToolAction(QAction *action)
 {
     myPenWidth = SelectedPenWidth;
@@ -287,10 +295,13 @@ void ScribbleArea::HandleToolAction(QAction *action)
        myPenWidth = SelectedPenWidth;
     } else if (action->iconText() == "NewPlane") {
        int NumberOfLayers = MoveImageToBackgroundLayer();
-       emit(NumberOfLayerChanged(NumberOfLayers));
-       for (int i = 0; i < NumberOfLayers; i++) {
-         emit(SetVisibilityIndicatorOfLayer(i, BackgroundImages[i].IsVisible()));
-       }
+       UpdateGUI(NumberOfLayers);
+    } else if (action->iconText() == "Merge") {
+       int NumberOfLayers = CollapseBackgroundLayers();
+       UpdateGUI(NumberOfLayers);
+    } else if (action->iconText() == "ToTop") {
+       int NumberOfLayers = CollapseAllVisibleLayersToTop();
+       UpdateGUI(NumberOfLayers);
     } else if (action->iconText() == "Freeze") {
        Freeze(action->isChecked());
     }
@@ -300,7 +311,7 @@ void ScribbleArea::HandleLayerVisibilityAction(QAction *action)
 {
    unsigned int SelectedLayer = action->data().value<int>();
    if (SelectedLayer < BackgroundImages.size()) {
-      BackgroundImages[SelectedLayer].SetVisible(!action->isChecked());
+      BackgroundImages[SelectedLayer].SetVisible(action->isChecked());
       update();
    }
 }
@@ -311,6 +322,25 @@ void ScribbleArea::setPenWidth(int newWidth)
 {
     myPenWidth = newWidth;
     SelectedPenWidth = myPenWidth;
+}
+
+void ScribbleArea::PasteImage(QImage ImageToPaste)
+{
+    QSize RequiredSize = image.size().expandedTo(ImageToPaste.size() + QSize(Origin.x(), Origin.y()));
+    resizeImage(&image, RequiredSize);
+    QPainter painter(&image);
+    painter.drawImage(Origin, ImageToPaste);
+    update();
+}
+
+
+void ScribbleArea::CopyImageToClipboard()
+{
+   QImage ImageToSave(image.size(), QImage::Format_ARGB32);
+   QPainter painter(&ImageToSave);
+   PaintVisibleDrawing(painter, image.rect(), {0,0}, BackgroundImagesOrigin-Origin);
+
+   QApplication::clipboard()->setImage(ImageToSave);
 }
 
 int ScribbleArea::MoveImageToBackgroundLayer()
@@ -362,6 +392,27 @@ int ScribbleArea::CollapseBackgroundLayers()
          }
       }
       BackgroundImages.push_back(std::make_unique<QImage>(newImage));
+   }
+   return BackgroundImages.size();
+}
+
+int ScribbleArea::CollapseAllVisibleLayersToTop()
+{
+   if (!BackgroundImages.empty()) {
+      QImage newImage(image.size(), QImage::Format_ARGB32);
+      newImage.fill(TransparentColor);
+      QPainter painter(&newImage);
+      auto it = BackgroundImages.begin();
+      while (it != BackgroundImages.end()) {
+         if (it->IsVisible()) {
+            painter.drawImage(BackgroundImagesOrigin-Origin, **it);
+            it = BackgroundImages.erase(it);
+         } else {
+            it++;
+         }
+      }
+      painter.drawImage(QPoint(0,0), image);
+      image = newImage;
    }
    return BackgroundImages.size();
 }

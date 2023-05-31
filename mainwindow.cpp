@@ -43,6 +43,7 @@
 #include "mainwindow.h"
 #include "scribblearea.h"
 
+
 //! [0]
 MainWindow::MainWindow()
 {
@@ -113,7 +114,8 @@ MainWindow::MainWindow()
 
     toolBar->addAction("Freeze")->setCheckable(true);
     toolBar->addAction("NewPlane");
-    toolBar->addAction("MergePlane");
+    toolBar->addAction("Merge")->setToolTip("Merge visible Background");
+    toolBar->addAction("ToTop")->setToolTip("Merge all visible to editable");
     toolBar->addAction("Cut")->setCheckable(true);
 
     connect(toolBar, SIGNAL(actionTriggered(QAction *)),
@@ -316,6 +318,16 @@ void MainWindow::ShowPostitsFrame()
     scribbleArea->setShowPostitsFrame(ShowPostitsFrameAct->isChecked());
 }
 
+void MainWindow::Paste()
+//! [9] //! [10]
+{
+    QImage ImageToPaste = QGuiApplication::clipboard()->image();
+    if (!ImageToPaste.isNull()) {
+       scribbleArea->PasteImage(ImageToPaste);
+    }
+}
+
+
 //! [11]
 void MainWindow::about()
 //! [11] //! [12]
@@ -352,6 +364,15 @@ void MainWindow::createActions()
 
     printAct = new QAction(tr("&Print..."), this);
     connect(printAct, SIGNAL(triggered()), scribbleArea, SLOT(print()));
+
+
+    PasteAct = new QAction(tr("Paste"), this);
+    PasteAct->setShortcuts(QKeySequence::Paste);
+    connect(PasteAct, &QAction::triggered, this, &MainWindow::Paste);
+
+    CopyAct = new QAction(tr("Copy"), this);
+    CopyAct->setShortcuts(QKeySequence::Copy);
+    connect(CopyAct, &QAction::triggered, scribbleArea, &ScribbleArea::CopyImageToClipboard);
 
     exitAct = new QAction(tr("E&xit"), this);
     exitAct->setShortcuts(QKeySequence::Quit);
@@ -416,6 +437,16 @@ void MainWindow::SetVisibilityIndicatorOfLayer(int Layer, bool Visibility)
 }
 
 //! [15]
+void MainWindow::UpdatePasteState()
+{
+   if (QGuiApplication::clipboard()->mimeData()->hasImage()) {
+      PasteAct->setEnabled(true);
+   } else {
+      PasteAct->setEnabled(false);
+   }
+}
+
+
 void MainWindow::createMenus()
 //! [15] //! [16]
 {
@@ -428,8 +459,12 @@ void MainWindow::createMenus()
     fileMenu->addAction(saveAct);
     fileMenu->addMenu(saveAsMenu);
     fileMenu->addAction(printAct);
+    fileMenu->addAction(CopyAct);
+    fileMenu->addAction(PasteAct);
     fileMenu->addSeparator();
     fileMenu->addAction(exitAct);
+
+    connect(fileMenu, &QMenu::aboutToShow, this, &MainWindow::UpdatePasteState);
 
     optionMenu = new QMenu(tr("&Options"), this);
     optionMenu->addAction(penColorAct);
@@ -440,6 +475,7 @@ void MainWindow::createMenus()
     optionMenu->addAction(DirectPostitSelectAct);
     optionMenu->addSeparator();
     optionMenu->addAction(clearScreenAct);
+
 
     DebugMenu = new QMenu(tr("&Debug"), this);
     DebugMenu->addAction(ShowPostitsFrameAct);

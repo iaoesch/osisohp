@@ -76,6 +76,8 @@ private slots:
     void SetVisibilityIndicatorOfLayer(int Layer, bool Visibility);
 
 
+    void UpdatePasteState();
+    void Paste();
 private:
     void createActions();
     void createMenus();
@@ -104,6 +106,8 @@ private:
     QAction *openAct;
     QAction *saveAct;
     QList<QAction *> saveAsActs;
+    QAction *PasteAct;
+    QAction *CopyAct;
     QAction *exitAct;
     QAction *penColorAct;
     QAction *BackGroundColorAct;

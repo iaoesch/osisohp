@@ -87,7 +87,7 @@ public:
     void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; update();}
     void setPostItBackgroundColor(const QColor &newColor) {PostItBackgroundColor = newColor; update();}
 
-
+    void PasteImage(QImage ImageToPaste);
 
     bool isModified() const { return modified; }
     QColor penColor() const { return myPenColor; }
@@ -107,6 +107,7 @@ public slots:
 
     void timeoutSM();
 
+    void CopyImageToClipboard();
 signals:
     void NumberOfLayerChanged(int NumberOfLayers);
     void SetVisibilityIndicatorOfLayer(int Layer, bool Visibility);
@@ -252,6 +253,8 @@ private:
     void GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size);
     void CompleteImage();
     void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundImagesOrigin);
+    int CollapseAllVisibleLayersToTop();
+    void UpdateGUI(int NumberOfLayers);
 };
 //! [0]
 
