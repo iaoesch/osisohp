@@ -122,10 +122,10 @@ MainWindow::MainWindow()
 
     addToolBar(Qt::TopToolBarArea, toolBar);
     LayerToolBar= new QToolBar("Layer Tool Bar");
-    LayerToolBar->addAction("L1");
-    LayerToolBar->addAction("L2");
-    LayerToolBar->addAction("L3");
-    LayerToolBar->addAction("L4");
+//    LayerToolBar->addAction("L1");
+//    LayerToolBar->addAction("L2");
+//    LayerToolBar->addAction("L3");
+//    LayerToolBar->addAction("L4");
     addToolBar(Qt::TopToolBarArea, LayerToolBar);
     connect(LayerToolBar, &QToolBar::actionTriggered,
             scribbleArea, &ScribbleArea::HandleLayerVisibilityAction);

@@ -288,6 +288,9 @@ void ScribbleArea::HandleToolAction(QAction *action)
     } else if (action->iconText() == "NewPlane") {
        int NumberOfLayers = MoveImageToBackgroundLayer();
        emit(NumberOfLayerChanged(NumberOfLayers));
+       for (int i = 0; i < NumberOfLayers; i++) {
+         emit(SetVisibilityIndicatorOfLayer(i, BackgroundImages[i].IsVisible()));
+       }
     } else if (action->iconText() == "Freeze") {
        Freeze(action->isChecked());
     }
@@ -1112,8 +1115,17 @@ void ScribbleArea::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRect
     }
 
     // Then draw our current image (Without the currently drawn object)
+    if (EraseLastDrawnObject) {
+       QImage ModifiedImage(image);
+       QPainter MIpainter(&ModifiedImage);
+       MIpainter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+       MIpainter.drawImage(Origin, LastDrawnObject);
+       painter.drawImage(dirtyRect, ModifiedImage, dirtyRect.translated(Origin.toPoint()));
+
+    } else {
       painter.drawImage(dirtyRect, image, dirtyRect.translated(Origin.toPoint()));
     //painter.setCompositionMode(QPainter::CompositionMode_Source);
+    }
 #if 0
     // Probably nonsense, as widget cannot be transparent ???
     if (EraseLastDrawnObject) {
@@ -1122,7 +1134,7 @@ void ScribbleArea::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRect
     }
 #endif
     // Now draw the currently drawn object, in marker mode it was already drawn earlier in background
-    if (!MarkerActive) {
+    if (!MarkerActive && !EraseLastDrawnObject) {
        painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
     }
 #if 0
