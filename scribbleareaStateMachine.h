@@ -55,7 +55,17 @@
 
 //! [0]
 //!
+class Settings {
+public:
+   double Touchscaling = 4.0;
+   double DirectSelectTimeout = 10.0;
+   double CopyTimeout = 500;
+   double GestureTimeout = 500;
+   double SelectTimeout = 500;
+   double PostItTimeout = 1000;
+   double PointerHoldon = 250;
 
+};
 #define MakeStateObject(S) StateClass<State::ScribblingState::S> S
 
 class StateBaseClass;
@@ -122,6 +132,44 @@ private:
 
    GestureTrackerClass Tracker;
 
+   QTimer MyTimer;
+   QTimer PointerTimer;
+
+
+   struct Context {
+      QPointF lastPoint;
+      QPointF ButtonDownPosition;
+      QPointF SelectedPoint;
+      QPointF SelectedOffset;
+      QPointF SelectedCurrentPosition;
+      QPointF ScrollingLastPosition;
+      QPointF ScrollingOldOrigin;
+      QPointF FillPolygonStartPosition;
+
+      QPointF LastPointerPosition;
+      bool    ShowPointer;
+      bool    Showeraser;
+      bool    DownInsideObject;
+      bool    DiscardSelection;
+      bool    LastDrawingValid;
+      int     myPenWidth;
+
+      QPolygonF LastDrawnObjectPoints;
+
+      QPointF Origin;
+      bool Frozen;
+      QPointF BackgroundImagesOrigin;
+
+
+
+      BoundingBoxClass RecentlyPastedObjectBoundingBox;
+
+      BoundingBoxClass LastPaintedObjectBoundingBox;
+      BoundingBoxClass CurrentPaintedObjectBoundingBox;
+
+
+   } Context;
+   Settings Settings;
 
    StateBaseClass *CurrentState;
 
@@ -152,6 +200,7 @@ public:
    void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
+   ControllingStateMachine();
 public slots:
    void timeoutSM();
 
