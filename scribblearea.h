@@ -95,6 +95,7 @@ public:
     int penWidth() const { return SelectedPenWidth; }
 
     void Freeze(bool Mode) {Frozen = Mode;}
+    void ToggleShowOverview(bool Mode) {ShowOverview = Mode; update();}
     int MoveImageToBackgroundLayer();
     int MoveTopBackgroundLayerToImage();
     int CollapseBackgroundLayers();
@@ -184,6 +185,7 @@ private:
     QImage PointerShape;
     QImage EraserShape;
     QImage SpongeShape;
+    bool ShowOverview;
     bool Showeraser;
     bool MarkerActive;
     bool EraseLastDrawnObject;

@@ -62,6 +62,8 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     EraserShape = QImage(":/images/HandWithEraser.png");
     ShowPointer = false;
 
+    ShowOverview = false;
+
     setMouseTracking(true);
     modified = false;
     LastDrawingValid = false;
@@ -313,6 +315,8 @@ void ScribbleArea::HandleToolAction(QAction *action)
        UpdateGUI(NumberOfLayers);
     } else if (action->iconText() == "Freeze") {
        Freeze(action->isChecked());
+    } else if (action->iconText() == "ShowOverview") {
+       ToggleShowOverview(action->isChecked());
     }
 }
 
@@ -1151,6 +1155,18 @@ bool ScribbleArea::IsInsideAnyPostIt(QPointF Position)
 void ScribbleArea::paintEvent(QPaintEvent *event)
 //! [13] //! [14]
 {
+    if (ShowOverview) {
+       QImage Overview(image.size(), QImage::Format_ARGB32);
+       QPainter painter(&Overview);
+       PaintVisibleDrawing(painter, Overview.rect(), {0,0}, BackgroundImagesOrigin-Origin);
+       painter.setPen(QPen(QColor(90, 0, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                           Qt::RoundJoin));
+       painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
+
+       painter.drawRect(Origin.x(), Origin.y(), this->width(), this->height());
+       QPainter p(this);
+       p.drawImage(QPointF(0,0), Overview.scaled(QSize(this->width(), this->height()), Qt::KeepAspectRatio));
+    } else {
     QPainter painter(this);
     PaintVisibleDrawing(painter, event->rect(), Origin, BackgroundImagesOrigin);
 
@@ -1172,6 +1188,7 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
        } else {
           painter.drawImage(LastPointerPosition - QPointF(0, 36), PointerShape);
        }
+    }
     }
 
 }
