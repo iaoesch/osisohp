@@ -6,14 +6,16 @@ HEADERS       = mainwindow.h \
                 scribblearea.h \
     box.hpp \
     position.hpp \
-    PaintingArea.h
+    PaintingArea.h \
+   scribbleareaStateMachine.h
 SOURCES       = main.cpp \
    gesturetracker.cpp \
                 mainwindow.cpp \
                 scribblearea.cpp \
     Box.cpp \
     position.cpp \
-    PaintingArea.cpp
+    PaintingArea.cpp \
+   scribbleareaStateMachine.cpp
 
 resources.files = \
     images/HandWithPen.png \

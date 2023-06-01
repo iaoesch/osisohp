@@ -68,68 +68,7 @@ public:
 
 };
 
-class ControllingStateMachine;
-
-class StateBaseClass {
-   ControllingStateMachine &StateMachine;
-public:
-   StateBaseClass(ControllingStateMachine &sm) : StateMachine(sm) {}
-   virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
-   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
-   virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
-   virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
-   virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
-   virtual void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
-   virtual void timeoutSM();
-   virtual ~StateBaseClass();
-};
-
-template<int State>
-class IdleStateClass : public StateBaseClass {
-public:
-   IdleStateClass(ControllingStateMachine &sm) : StateBaseClass(sm) {}
-   virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp) override;
-   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure) override;
-   virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure) override;
-   virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
-   virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
-   virtual void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
-   virtual void timeoutSM() override;
-   virtual ~IdleStateClass() override;
-};
-
-
-class ControllingStateMachine {
-   enum ScribblingState {
-      Idle,
-      WaitingToLeaveJitterProtectionForDrawing,
-      WaitingToLeaveJitterProtectionWithSelectedAreaForMoving,
-      WaitingToLeaveJitterProtectionForScrolling,
-      WaitingToLeaveJitterProtectionWithCreatedPostitForMoving,
-      WaitingToLeaveJitterProtectionWithSelectedPostitForMoving,
-      Drawing,
-      DrawingPaused,
-      DrawingFillRequested,
-      MovingSelection,
-      MovingSelectionPaused,
-      MovingPostit,
-      ScrollingDrawingArea,
-      WaitingForTouchScrolling,
-      TouchScrollingDrawingArea
-   };
-   enum ScribblingState State;
-
-public:
-   void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
-   void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
-   void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
-   void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
-   void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
-   void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
-public slots:
-    void timeoutSM();
-
-};
+#include "scribbleareaStateMachine.h"
 
 class ScribbleArea : public QWidget
 {

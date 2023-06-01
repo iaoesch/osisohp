@@ -104,370 +104,27 @@ ScribbleArea::ScribbleArea(QWidget *parent)
 //! [0]
 
 //! [1]
-bool ScribbleArea::ImportImage(const QString &fileName)
-//! [1] //! [2]
-{
-    QImage loadedImage;
-    if (!loadedImage.load(fileName))
-        return false;
 
-    QSize newSize = loadedImage.size().expandedTo(size());
-    resizeImage(&loadedImage, newSize);
-    image = loadedImage;
-    modified = false;
-    Origin = {0,0};
-    BackgroundImagesOrigin = {0,0};
-    modified = false;
-    LastDrawingValid = false;
-    EraseLastDrawnObject = false;
-    BackgroundImages.clear();
-    update();
-    return true;
-}
 //! [2]
 
 //! [3]
-bool ScribbleArea::ExportImage(const QString &fileName, const char *fileFormat)
-//! [3] //! [4]
+void StateBaseClass::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
-   QImage ImageToSave(image.size(), QImage::Format_ARGB32);
-   QPainter painter(&ImageToSave);
-   PaintVisibleDrawing(painter, image.rect(), {0,0}, BackgroundImagesOrigin-Origin);
-
-    if (ImageToSave.save(fileName, fileFormat)) {
-        return true;
-    } else {
-        return false;
-    }
+   std::cout << "HandlePressEventSM: unexpected State: " << StateId()  << std::endl;
+   StateMachine.Idle.HandlePressEventSM(Button, Position, Timestamp);
 }
 
-bool ScribbleArea::SaveImage(const QString &fileName)
-//! [3] //! [4]
-{
-   // todo: read and save colors pen and background and backgroundimages
-
-   QFile file(fileName);
-   file.open(QIODevice::WriteOnly);
-   QDataStream out(&file);
-
-   // Write a header with a "magic number" and a version
-   out << (quint32)0x139A1A7F;
-   out << (qint32)110;
-
-   out.setVersion(QDataStream::Qt_6_0);
-   CompleteImage();
-
-   // Write the data
-   out << image;
-   out << Origin;
-   out << BackgroundImagesOrigin;
-   // Now save all postits
-   out << (qint32)(PostIts.size());
-   for (auto &&Picture: PostIts) {
-      out << Picture.Position;
-      out << Picture.Image;
-      out << Picture.Box;
-   }
-   out << (qint32)(BackgroundImages.size());
-   for (auto &Picture: BackgroundImages) {
-      out << Picture.IsVisible();
-      out << *Picture;
-   }
-   return true;
-
-
-}
-bool ScribbleArea::LoadImage(const QString &fileName)
-//! [1] //! [2]
-{
-#if 1
-   // todo: read and save colors pen and background and backgroundimages
-   //Then read it in with:
-
-   QFile file(fileName);
-   file.open(QIODevice::ReadOnly);
-   QDataStream in(&file);
-
-   // Read and check the header
-   quint32 magic = 0;
-   in >> magic;
-   if (magic != 0x139A1A7F)
-       return ImportImage(fileName);
-
-   // Read the version
-   qint32 version = 0;
-   in >> version;
-   if (version < 90)
-       return false; // too old
-   if (version > 110)
-       return false; // too new
-
-   if (version <= 100) {
-       in.setVersion(QDataStream::Qt_5_0);
-   }
-   else {
-       in.setVersion(QDataStream::Qt_6_0);
-   }
-
-   // Write the data
-   in >> image;
-   in >> Origin;
-   in >> BackgroundImagesOrigin;
-
-   // Now read all postits
-   qint32 NumberOfSavedPostits = 0;
-   in >> NumberOfSavedPostits;
-   QImage NewImage;
-   QPoint Position;
-   BoundingBoxClass NewBox;
-   PostIts.clear();
-   for (int i = 0; i < NumberOfSavedPostits; i++) {
-      in >> Position;
-      in >> NewImage;
-      in >> NewBox;
-      PostIts.push_back(PostIt(NewImage, Position, NewBox));
-   }
-   qint32 NumberOfBackgroundLayers = 0;
-   in >> NumberOfBackgroundLayers;
-   BackgroundImages.clear();
-   bool Visible;
-   emit(NumberOfLayerChanged(NumberOfBackgroundLayers));
-   for (int i = 0; i < NumberOfBackgroundLayers; i++) {
-      in >> Visible;
-      in >> NewImage;
-      BackgroundImages.push_back(ImageDescriptor(std::make_unique<QImage>(NewImage), Visible));
-      emit(SetVisibilityIndicatorOfLayer(i, Visible));
-   }
-
-
-   modified = false;
-   LastDrawingValid = false;
-   EraseLastDrawnObject = false;
-
-   update();
-   return true;
-#endif
-}
-//! [4]
-
-//! [5]
-void ScribbleArea::setPenColor(const QColor &newColor)
-//! [5] //! [6]
-{
-    auto alpha = myPenColor.alpha();
-    myPenColor = newColor;
-    myPenColor.setAlpha(alpha);
-    //myPenWidth = SelectedPenWidth;
-}
-//! [6]
-
-void ScribbleArea::UpdateGUI(int NumberOfLayers)
-{
-   (NumberOfLayerChanged(NumberOfLayers));
-          for (int i = 0; i < NumberOfLayers; i++) {
-            emit(SetVisibilityIndicatorOfLayer(i, BackgroundImages[i].IsVisible()));
-          }
-   }
-
-void ScribbleArea::HandleToolAction(QAction *action)
-{
-    myPenWidth = SelectedPenWidth;
-
-    if (action->iconText() == "PenColor") {
-        myPenColor = action->data().value<QColor>();
-        MarkerActive = false;
-    } else if(action->iconText() == "Red") {
-        myPenColor = Qt::red;
-    } else if (action->iconText() == "Blue") {
-        myPenColor = Qt::blue;
-    } else if (action->iconText() == "Green") {
-        myPenColor = Qt::darkGreen;
-    } else if (action->iconText() == "Yellow") {
-        myPenColor = QColor(196,196,0);
-    } else if (action->iconText() == "Black") {
-        myPenColor = Qt::black;
-    } else if (action->iconText() == "Orange") {
-        myPenColor = QColor(255,128,0);
-    } else if (action->iconText() == "Magenta") {
-        myPenColor = Qt::magenta;
-    } else if (action->iconText() == "MarkerYellow") {
-       myPenColor = Qt::yellow;
-       myPenColor.setAlpha(64+190);
-       myPenWidth = SelectedPenWidth * 5 + 2;
-       MarkerActive = true;
-    } else if (action->iconText() == "SmallPen") {
-       SelectedPenWidth = 1;
-       myPenWidth = SelectedPenWidth;
-    } else if (action->iconText() == "MediumPen") {
-       SelectedPenWidth = 2;
-       myPenWidth = SelectedPenWidth;
-    } else if (action->iconText() == "LargePen") {
-       SelectedPenWidth = 4;
-       myPenWidth = SelectedPenWidth;
-    } else if (action->iconText() == "NewPlane") {
-       int NumberOfLayers = MoveImageToBackgroundLayer();
-       UpdateGUI(NumberOfLayers);
-    } else if (action->iconText() == "Merge") {
-       int NumberOfLayers = CollapseBackgroundLayers();
-       UpdateGUI(NumberOfLayers);
-    } else if (action->iconText() == "ToTop") {
-       int NumberOfLayers = CollapseAllVisibleLayersToTop();
-       UpdateGUI(NumberOfLayers);
-    } else if (action->iconText() == "Freeze") {
-       Freeze(action->isChecked());
-    } else if (action->iconText() == "ShowOverview") {
-       ToggleShowOverview(action->isChecked());
-    }
-}
-
-void ScribbleArea::HandleLayerVisibilityAction(QAction *action)
-{
-   unsigned int SelectedLayer = action->data().value<int>();
-   if (SelectedLayer < BackgroundImages.size()) {
-      BackgroundImages[SelectedLayer].SetVisible(action->isChecked());
-      update();
-   }
-}
-
-//! [7]
-void ScribbleArea::setPenWidth(int newWidth)
-//! [7] //! [8]
-{
-    myPenWidth = newWidth;
-    SelectedPenWidth = myPenWidth;
-}
-
-void ScribbleArea::PasteImage(QImage ImageToPaste)
-{
-    QSize RequiredSize = image.size().expandedTo(ImageToPaste.size() + QSize(Origin.x(), Origin.y()));
-    resizeImage(&image, RequiredSize);
-    QPainter painter(&image);
-    painter.drawImage(Origin, ImageToPaste);
-    update();
-}
-
-
-void ScribbleArea::CopyImageToClipboard()
-{
-   QImage ImageToSave(image.size(), QImage::Format_ARGB32);
-   QPainter painter(&ImageToSave);
-   PaintVisibleDrawing(painter, image.rect(), {0,0}, BackgroundImagesOrigin-Origin);
-
-   QApplication::clipboard()->setImage(ImageToSave);
-}
-
-int ScribbleArea::MoveImageToBackgroundLayer()
-{
-   CompleteImage();
-   BackgroundImages.push_back(std::make_unique<QImage>(image));
-   clearImage();
-   return BackgroundImages.size();
-}
-
-int ScribbleArea::MoveTopBackgroundLayerToImage()
-{
-   if (!BackgroundImages.empty()) {
-      // create empty image
-      QImage newImage(image.size(), QImage::Format_ARGB32);
-      newImage.fill(TransparentColor);
-      QPainter painter(&newImage);
-
-      // draw top bg layer onto it
-      painter.drawImage((BackgroundImagesOrigin-Origin).toPoint(), *BackgroundImages.back());
-      BackgroundImages.pop_back();
-
-      // Then draw our current image (Without the currently drawn object)
-      painter.drawImage(QPoint(0,0), image);
-
-      //Set combined image as new image
-      image = newImage;
-   }
-   return BackgroundImages.size();
-}
-
-int ScribbleArea::CollapseBackgroundLayers()
-{
-   if (!BackgroundImages.empty()) {
-      QImage newImage;
-      QPainter painter;
-      auto it = BackgroundImages.begin();
-      while (it != BackgroundImages.end()) {
-         if (it->IsVisible()) {
-            if (newImage.isNull()) {
-               newImage = **it;
-               painter.begin(&newImage);
-            } else {
-               painter.drawImage(QPoint(0,0), **it);
-            }
-            it = BackgroundImages.erase(it);
-         } else {
-            it++;
-         }
-      }
-      BackgroundImages.push_back(std::make_unique<QImage>(newImage));
-   }
-   return BackgroundImages.size();
-}
-
-int ScribbleArea::CollapseAllVisibleLayersToTop()
-{
-   if (!BackgroundImages.empty()) {
-      QImage newImage(image.size(), QImage::Format_ARGB32);
-      newImage.fill(TransparentColor);
-      QPainter painter(&newImage);
-      auto it = BackgroundImages.begin();
-      while (it != BackgroundImages.end()) {
-         if (it->IsVisible()) {
-            painter.drawImage(BackgroundImagesOrigin-Origin, **it);
-            it = BackgroundImages.erase(it);
-         } else {
-            it++;
-         }
-      }
-      painter.drawImage(QPoint(0,0), image);
-      image = newImage;
-   }
-   return BackgroundImages.size();
-}
-//! [8]
-
-//! [9]
-void ScribbleArea::clearImage()
-//! [9] //! [10]
-{
-    image.fill(TransparentColor);
-    modified = true;
-    LastDrawingValid = false;
-    LastDrawnObjectPoints.clear();
-    LastDrawnObject.fill(TransparentColor);
-
-    update();
-}
-//! [10]
-
-//! [11]
-void ScribbleArea::mousePressEvent(QMouseEvent *event)
-{
-   std::cout << "Mouse: press";
-   HandlePressEventSM(event->button(), event->pos(), event->timestamp());
-
-}
 template<>
-void StateClass<4>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
-{
-
-}
-void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
+void StateClass<State::ScribblingState::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
     std::cout << "Button Down: " << Button  << std::endl;
     if (Button == Qt::LeftButton) {
        setCursor(Qt::ArrowCursor);
-        if (State != Idle) {
-           std::cout << "HandlePressEventSM: unexpected State: " << State  << std::endl;
-        }
-        State = WaitingToLeaveJitterProtectionForDrawing;
 
-        Tracker.StartTracking(Position, Timestamp);
+        StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionForDrawing);
+
+
+        StateMachine.Tracker.StartTracking(Position, Timestamp);
 
 
         lastPoint = Position;
@@ -520,23 +177,214 @@ void ScribbleArea::CompleteImage()
    }
 }
 
-
-void ControllingStateMachine::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateBaseClass::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
 
-    Tracker.Trackmovement(Position, Timestamp);
-    //WaitForPostIt = false;
-    Showeraser = Erasing;
-    LastPointerPosition = Position;
-    if (Settings.PointerHoldon >= 0) {
+   StateMachine.Tracker.Trackmovement(Position, Timestamp);
+   //WaitForPostIt = false;
+   Showeraser = Erasing;
+   LastPointerPosition = Position;
+}
+
+void ControllingStateMachine::ShowBigPointer()
+{
+   if (Settings.PointerHoldon >= 0) {
+   ShowPointer = true;
+   PointerTimer.start(Settings.PointerHoldon);
+   update();
+   }
+}
+
+
+template<>
+void StateClass<State::ScribblingState::Idle>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+   StateMachine.ShowBigPointer();
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+   }
+}
+template<>
+void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+   StateMachine.ShowBigPointer();
+
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if (((Position-ButtonDownPosition).manhattanLength() < (myPenWidth*3+2))) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       StateMachine.SetNewState(&StateMachine.Drawing);
+       StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+   }
+}
+
+template<>
+void StateClass<State::ScribblingState::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+   StateMachine.ShowBigPointer();
+
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if (((Position-ButtonDownPosition).manhattanLength() < (myPenWidth*3+2))) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       MyTimer.stop();
+       MyTimer.start(Settings.GestureTimeout);
+       if (LastDrawingValid) {
+         DrawLastDrawnPicture();
+
+         LastDrawingValid = false;
+         LastDrawnObjectPoints.clear();
+         LastDrawnObjectPoints.append(lastPoint);
+
+      }
+      //LastDrawnObject.fill(BackgroundColor);
+      if (Erasing) {
+         EraseLineTo(Position, Pressure);
+      } else {
+         drawLineTo(Position, Pressure);
+      }
+      LastDrawnObjectPoints.append(Position);
+      CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
+
+   }
+}
+
+template<>
+void StateClass<State::ScribblingState::DrawingPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+   StateMachine.ShowBigPointer();
+
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if (((Position-ButtonDownPosition).manhattanLength() < (myPenWidth*3+2))) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       StateMachine.SetNewState(&StateMachine.DrawingFillRequested);
+       StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+   }
+}
+
+template<>
+void StateClass<State::ScribblingState::DrawingFillRequested>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+   StateMachine.ShowBigPointer();
+
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if (((Position-ButtonDownPosition).manhattanLength() < (myPenWidth*3+2))) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if ((Position-FillPolygonStartPosition).manhattanLength() > (myPenWidth*3+2)) {
+          StateMachine.SetNewState(&StateMachine.Drawing);
+          setCursor(Qt::ArrowCursor);
+
+       }
+       StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+   }
+}
+
+template<>
+void StateClass<State::ScribblingState::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+   StateMachine.ShowBigPointer();
+
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if (((Position-ButtonDownPosition).manhattanLength() < (myPenWidth*3+2))) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       // QPoint Offset = event->pos() - SelectedPoint;
+         MyTimer.stop();
+         MyTimer.start(Settings.CopyTimeout);
+
+         SelectedCurrentPosition = Position;
+         update();
+       // DrawMovedSelection(Offset);
+       // BoundingBoxClass MovedRectangle(LastPaintedObjectBoundingBox);
+       // MovedRectangle.Move(PositionClass(Offset.x(), Offset.y()));
+       // drawrectangle(MovedRectangle);
+        //        drawrectangle(BoundingBoxClass(LastPaintedObjectBoundingBox).Move(PositionClass(Offset.x(), Offset.y())));
+
+
+   }
+}
+
+template<>
+void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+   StateMachine.ShowBigPointer();
+
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if (((Position-ButtonDownPosition).manhattanLength() < (myPenWidth*3+2))) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       StateMachine.SetNewState(&StateMachine.MovingSelection);
+       StateMachine.MovingSelection.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+
+   }
+}
+
+
+template<>
+void StateClass<State::ScribblingState::MovingSelectionPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+   StateMachine.ShowBigPointer();
+
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if (((Position-ButtonDownPosition).manhattanLength() < (myPenWidth*3+2))) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       StateMachine.SetNewState(&StateMachine.MovingSelection);
+       StateMachine.MovingSelection.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+
+   }
+}
+
+
+template<>
+void StateClass<State::ScribblingState::Idle>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+     StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+     if (Settings.PointerHoldon >= 0) {
        if (   (State == Idle)
             ||(State == WaitingToLeaveJitterProtectionForDrawing)
               ||(State == DrawingPaused)
               ||(State == Drawing)
               ||(State == DrawingFillRequested)) {
-          ShowPointer = true;
-          PointerTimer.start(Settings.PointerHoldon);
-          update();
+          StateMachine.ShowBigPointer();
        }
     }
 
@@ -545,64 +393,7 @@ void ControllingStateMachine::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint
             return; // ignore small movements (probably use penwidth*2)
         }
         switch (State) {
-           case Idle:
-              break;
-           case WaitingToLeaveJitterProtectionForDrawing:
-              if (((Position-ButtonDownPosition).manhattanLength() < (myPenWidth*3+2))) {
-                  return; // ignore small movements (probably use penwidth*2)
-              }
-              State = Drawing;
-              [[fallthrough]];
-           case DrawingPaused:
-           case Drawing:
-           case DrawingFillRequested:
-               if (State == DrawingFillRequested) {
-                  if ((Position-FillPolygonStartPosition).manhattanLength() > (myPenWidth*3+2)) {
-                     State = Drawing;
-                     setCursor(Qt::ArrowCursor);
 
-                  }
-               } else if (State == DrawingPaused) {
-                  State = DrawingFillRequested;
-               }
-               MyTimer.stop();
-               MyTimer.start(Settings.GestureTimeout);
-               if (LastDrawingValid) {
-                 DrawLastDrawnPicture();
-
-                 LastDrawingValid = false;
-                 LastDrawnObjectPoints.clear();
-                 LastDrawnObjectPoints.append(lastPoint);
-
-              }
-              //LastDrawnObject.fill(BackgroundColor);
-              if (Erasing) {
-                 EraseLineTo(Position, Pressure);
-              } else {
-                 drawLineTo(Position, Pressure);
-              }
-              LastDrawnObjectPoints.append(Position);
-              CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
-              break;
-
-              break;
-              break;
-           case WaitingToLeaveJitterProtectionWithSelectedAreaForMoving:
-           case MovingSelectionPaused:
-              State = MovingSelection;
-           case MovingSelection:
-              // QPoint Offset = event->pos() - SelectedPoint;
-                MyTimer.stop();
-                MyTimer.start(Settings.CopyTimeout);
-
-                SelectedCurrentPosition = Position;
-                update();
-              // DrawMovedSelection(Offset);
-              // BoundingBoxClass MovedRectangle(LastPaintedObjectBoundingBox);
-              // MovedRectangle.Move(PositionClass(Offset.x(), Offset.y()));
-              // drawrectangle(MovedRectangle);
-               //        drawrectangle(BoundingBoxClass(LastPaintedObjectBoundingBox).Move(PositionClass(Offset.x(), Offset.y())));
-              break;
               break;
            case WaitingToLeaveJitterProtectionWithCreatedPostitForMoving:
            case WaitingToLeaveJitterProtectionWithSelectedPostitForMoving:
@@ -645,6 +436,9 @@ void ControllingStateMachine::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint
        setCursor(Qt::ArrowCursor);
     }
 }
+
+template<State::ScribblingState State>
+State::ScribblingState StateClass<State>::StateId() {return TheState;}
 
 void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {
