@@ -195,6 +195,18 @@ void ControllingStateMachine::ShowBigPointer()
    }
 }
 
+void StateBaseClass::HandleMoveNoLeftButtonEvent()
+{
+   if (Buttons == Qt::NoButton) {
+      if (IsInsideAnyPostIt(Position)) {
+         setCursor(Qt::PointingHandCursor);
+      }  else {
+         setCursor(Qt::ArrowCursor);
+      }
+   } else {
+     setCursor(Qt::ArrowCursor);
+   }
+}
 
 template<>
 void StateClass<State::ScribblingState::Idle>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
@@ -205,7 +217,10 @@ void StateClass<State::ScribblingState::Idle>::HandleMoveEventSM(Qt::MouseButton
        if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
            return; // ignore small movements (probably use penwidth*2)
        }
+   }  else {
+      HandleMoveNoLeftButtonEvent();
    }
+
 }
 template<>
 void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
@@ -223,6 +238,8 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing
        StateMachine.SetNewState(&StateMachine.Drawing);
        StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
+   }  else {
+      HandleMoveNoLeftButtonEvent();
    }
 }
 
@@ -258,7 +275,10 @@ void StateClass<State::ScribblingState::Drawing>::HandleMoveEventSM(Qt::MouseBut
       LastDrawnObjectPoints.append(Position);
       CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
 
+   }  else {
+      HandleMoveNoLeftButtonEvent();
    }
+
 }
 
 template<>
@@ -277,7 +297,10 @@ void StateClass<State::ScribblingState::DrawingPaused>::HandleMoveEventSM(Qt::Mo
        StateMachine.SetNewState(&StateMachine.DrawingFillRequested);
        StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
+   }  else {
+      HandleMoveNoLeftButtonEvent();
    }
+
 }
 
 template<>
@@ -300,14 +323,16 @@ void StateClass<State::ScribblingState::DrawingFillRequested>::HandleMoveEventSM
        }
        StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
+   }  else {
+      HandleMoveNoLeftButtonEvent();
    }
+
 }
 
 template<>
 void StateClass<State::ScribblingState::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
-   StateMachine.ShowBigPointer();
 
    if ((Buttons & Qt::LeftButton)) {
        if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
@@ -329,14 +354,16 @@ void StateClass<State::ScribblingState::MovingSelection>::HandleMoveEventSM(Qt::
         //        drawrectangle(BoundingBoxClass(LastPaintedObjectBoundingBox).Move(PositionClass(Offset.x(), Offset.y())));
 
 
+   }  else {
+      HandleMoveNoLeftButtonEvent();
    }
+
 }
 
 template<>
 void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
-   StateMachine.ShowBigPointer();
 
    if ((Buttons & Qt::LeftButton)) {
        if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
@@ -349,7 +376,10 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelect
        StateMachine.MovingSelection.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
 
+   }  else {
+      HandleMoveNoLeftButtonEvent();
    }
+
 }
 
 
@@ -357,7 +387,6 @@ template<>
 void StateClass<State::ScribblingState::MovingSelectionPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
-   StateMachine.ShowBigPointer();
 
    if ((Buttons & Qt::LeftButton)) {
        if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
@@ -370,72 +399,138 @@ void StateClass<State::ScribblingState::MovingSelectionPaused>::HandleMoveEventS
        StateMachine.MovingSelection.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
 
+   }  else {
+      HandleMoveNoLeftButtonEvent();
    }
-}
 
+}
 
 template<>
-void StateClass<State::ScribblingState::Idle>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::ScribblingState::MovingPostit>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
-     StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
-     if (Settings.PointerHoldon >= 0) {
-       if (   (State == Idle)
-            ||(State == WaitingToLeaveJitterProtectionForDrawing)
-              ||(State == DrawingPaused)
-              ||(State == Drawing)
-              ||(State == DrawingFillRequested)) {
-          StateMachine.ShowBigPointer();
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
        }
-    }
+       if (((Position-ButtonDownPosition).manhattanLength() < (myPenWidth*3+2))) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if (!SelectedPostit.empty()) {
+          std::cout << "Moving postit " << std::endl;
+          for(auto &r: SelectedPostit) {
+             //SelectedPostit->Position = Position;
+             QPointF LastPosition = r.postit->Position;
+             r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
 
-    if ((Buttons & Qt::LeftButton)) {
-        if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
-            return; // ignore small movements (probably use penwidth*2)
-        }
-        switch (State) {
+             r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
+         //  SelectedPostit->Position = SelectedPostit->Position  Origin + Position;
+          }
+          update();
+       }
 
-              break;
-           case WaitingToLeaveJitterProtectionWithCreatedPostitForMoving:
-           case WaitingToLeaveJitterProtectionWithSelectedPostitForMoving:
-              State = MovingPostit;
-           case MovingPostit:
-              if (!SelectedPostit.empty()) {
-                 std::cout << "Moving postit " << std::endl;
-                 for(auto &r: SelectedPostit) {
-                    //SelectedPostit->Position = Position;
-                    QPointF LastPosition = r.postit->Position;
-                    r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
+   }  else {
+      HandleMoveNoLeftButtonEvent();
+   }
 
-                    r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
-                //  SelectedPostit->Position = SelectedPostit->Position  Origin + Position;
-                 }
-                 update();
-              }
-              break;
-           case WaitingToLeaveJitterProtectionForScrolling:
-              State = ScrollingDrawingArea;
-           case ScrollingDrawingArea:
-              CompleteImage();
-             Origin -= Position- ScrollingLastPosition;
-             if (!Frozen) {
-                BackgroundImagesOrigin -= Position- ScrollingLastPosition;
-             }
-
-             ScrollingLastPosition = Position;
-             update();
-              break;
-
-        }
-    } else if (Buttons == Qt::NoButton) {
-        if (IsInsideAnyPostIt(Position)) {
-           setCursor(Qt::PointingHandCursor);
-        }  else {
-           setCursor(Qt::ArrowCursor);
-        }
-    } else {
-       setCursor(Qt::ArrowCursor);
-    }
 }
+
+template<>
+void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if (((Position-ButtonDownPosition).manhattanLength() < (myPenWidth*3+2))) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       StateMachine.SetNewState(&StateMachine.MovingPostit);
+       StateMachine.MovingPostit.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+
+   }  else {
+      HandleMoveNoLeftButtonEvent();
+   }
+
+}
+
+template<>
+void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if (((Position-ButtonDownPosition).manhattanLength() < (myPenWidth*3+2))) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       StateMachine.SetNewState(&StateMachine.MovingPostit);
+       StateMachine.MovingPostit.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+
+   }  else {
+      HandleMoveNoLeftButtonEvent();
+   }
+
+}
+
+template<>
+void StateClass<State::ScribblingState::ScrollingDrawingArea>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if (((Position-ButtonDownPosition).manhattanLength() < (myPenWidth*3+2))) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       CompleteImage();
+      Origin -= Position- ScrollingLastPosition;
+      if (!Frozen) {
+         BackgroundImagesOrigin -= Position- ScrollingLastPosition;
+      }
+
+      ScrollingLastPosition = Position;
+      update();
+
+   }  else {
+      HandleMoveNoLeftButtonEvent();
+   }
+
+}
+
+template<>
+void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForScrolling>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if (((Position-ButtonDownPosition).manhattanLength() < (myPenWidth*3+2))) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       StateMachine.SetNewState(&StateMachine.ScrollingDrawingArea);
+       StateMachine.ScrollingDrawingArea.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+
+   }  else {
+      HandleMoveNoLeftButtonEvent();
+   }
+
+}
+
+
+
 
 template<State::ScribblingState State>
 State::ScribblingState StateClass<State>::StateId() {return TheState;}

@@ -95,6 +95,7 @@ public:
    virtual void timeoutSM();
    virtual State::ScribblingState StateId() = 0;
    virtual ~StateBaseClass();
+   void    HandleMoveNoLeftButtonEvent();
 };
 
 template<State::ScribblingState State>
