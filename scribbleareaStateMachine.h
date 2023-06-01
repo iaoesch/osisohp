@@ -41,6 +41,8 @@
 #ifndef SCRIBBLEAREASTATEMACHINE_H
 #define SCRIBBLEAREASTATEMACHINE_H
 
+#ifdef USE_NEW_STATEMACHINE
+
 #include <QColor>
 #include <QImage>
 #include <QPoint>
@@ -205,7 +207,7 @@ public slots:
    void timeoutSM();
 
 };
-
+#endif
 
 
 #endif

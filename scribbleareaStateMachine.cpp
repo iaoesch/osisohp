@@ -44,7 +44,8 @@
 #include <QPrintDialog>
 #endif
 
-#include "scribblearea.h"
+#include "scribbleareaStateMachine.h"
+#ifdef USE_NEW_STATEMACHINE
 
 
 //! [0]
@@ -835,7 +836,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing
       SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.QRectangle().translated(StateMachine.Context.Origin.toPoint()));
       HintSelectedImagePart = SelectedImagePart;
       HintSelectedImagePart.fill(qRgba(0, 0, 0, 0));
-      DiscardSelection = false;
+      StateMachine.Context.DiscardSelection = false;
 
       QPainter painter2(&image);
       painter2.setPen(QPen(QColor(0, 0, 0, 0), StateMachine.Context.myPenWidth, Qt::SolidLine, Qt::RoundCap,
@@ -868,7 +869,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing
       //MoveSelected = true;
       //NewDrawingStarted = false;
       StateMachine.Context.SelectedPoint = StateMachine.Context.lastPoint;
-      StateMachine.Context.SelectedOffset = QPoint(LastPaintedObjectBoundingBox.GetLeft(), LastPaintedObjectBoundingBox.GetTop()) - StateMachine.Context.lastPoint;
+      StateMachine.Context.SelectedOffset = QPoint(StateMachine.Context.LastPaintedObjectBoundingBox.GetLeft(), StateMachine.Context.LastPaintedObjectBoundingBox.GetTop()) - StateMachine.Context.lastPoint;
       //scribbling = false;
       update();
       //WaitForPostIt = true;
@@ -955,4 +956,6 @@ void StateClass<State::ScribblingState::MovingSelection>::timeoutSM()
    }
 
 }
+
+#endif
 

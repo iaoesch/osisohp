@@ -155,6 +155,24 @@ private:
     std::list<PostItDescriptor> SelectedPostit;
     QPoint StartPositionSelectedPostIt;
 
+    enum ScribblingState {
+       Idle,
+       WaitingToLeaveJitterProtectionForDrawing,
+       WaitingToLeaveJitterProtectionWithSelectedAreaForMoving,
+       WaitingToLeaveJitterProtectionForScrolling,
+       WaitingToLeaveJitterProtectionWithCreatedPostitForMoving,
+       WaitingToLeaveJitterProtectionWithSelectedPostitForMoving,
+       Drawing,
+       DrawingPaused,
+       DrawingFillRequested,
+       MovingSelection,
+       MovingSelectionPaused,
+       MovingPostit,
+       ScrollingDrawingArea,
+       WaitingForTouchScrolling,
+       TouchScrollingDrawingArea
+    };
+    enum ScribblingState State;
     bool modified;
     bool SelectPostitsDirectly;
     bool ShowPostitsFrame;
@@ -237,6 +255,12 @@ private:
 
     BoundingBoxClass LastPaintedObjectBoundingBox;
     BoundingBoxClass CurrentPaintedObjectBoundingBox;
+    void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
+    void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
+    void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
+    void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
+    void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
+    void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
     bool PostItSelected(QPointF Position);
     void EraseLineTo(const QPointF &endPoint, double Pressure);
     bool IsInsideAnyPostIt(QPointF Position);

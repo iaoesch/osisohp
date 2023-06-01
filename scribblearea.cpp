@@ -452,11 +452,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
    HandlePressEventSM(event->button(), event->pos(), event->timestamp());
 
 }
-template<>
-void StateClass<4>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
-{
 
-}
 void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
     std::cout << "Button Down: " << Button  << std::endl;
@@ -521,7 +517,7 @@ void ScribbleArea::CompleteImage()
 }
 
 
-void ControllingStateMachine::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
 
     Tracker.Trackmovement(Position, Timestamp);
@@ -653,7 +649,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 }
 
 
-void ControllingStateMachine::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
+void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 {
    std::cout << "Button Up: " << Button  << std::endl;
 
@@ -760,7 +756,7 @@ void ControllingStateMachine::HandleReleaseEventSM(Qt::MouseButton Button, QPoin
    }
 }
 
-void ControllingStateMachine::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+void ScribbleArea::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
    if(NumberOfTouchpoints == 2) {
    SelectedCurrentPosition = MeanPosition;
@@ -776,7 +772,7 @@ void ControllingStateMachine::HandleTouchPressEventSM(int NumberOfTouchpoints, Q
    }
 }
 
-void ControllingStateMachine::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+void ScribbleArea::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
    if(NumberOfTouchpoints == 2) {
    std::cout << "TM(" << MeanPosition.x() <<":" << MeanPosition.y() << ")";
@@ -801,7 +797,7 @@ void ControllingStateMachine::HandleTouchMoveEventSM(int NumberOfTouchpoints, QP
    }
 }
 
-void ControllingStateMachine::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+void ScribbleArea::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
    if(NumberOfTouchpoints == 2) {
 
@@ -987,7 +983,7 @@ bool ScribbleArea::event(QEvent *event)
 }
 
 
-void ControllingStateMachine::timeoutSM()
+void ScribbleArea::timeoutSM()
 {
     /* Copying on long move pauses */
    std::cout << "timeout " << std::endl;
