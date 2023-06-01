@@ -16,7 +16,12 @@ SOURCES       = main.cpp \
     PaintingArea.cpp
 
 resources.files = \
-    images/HandWithPen \
+    images/HandWithPen.png \
+    images/HandWithEraser.png \
+    images/HandWithSponge.png
+
+
+
 resources.prefix = /
 
 RESOURCES = resources
