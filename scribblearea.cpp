@@ -57,6 +57,13 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     //QWidget::setAttribute(Qt::WA_TouchPadAcceptSingleTouchEvents);
     grabGesture(Qt::PanGesture);
 
+    PointerShape = QImage(":/images/HandWithPen.png");
+    SpongeShape = QImage(":/images/HandWithSponge.png");
+    EraserShape = QImage(":/images/HandWithEraser.png");
+    ShowPointer = false;
+
+    ShowOverview = false;
+
     setMouseTracking(true);
     modified = false;
     LastDrawingValid = false;
@@ -65,9 +72,13 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     myPenWidth = 2;
     SelectedPenWidth = myPenWidth;
     myPenColor = Qt::blue;
+
     connect(&MyTimer, SIGNAL(timeout()), this, SLOT(timeoutSM()));
 
     MyTimer.setSingleShot(true);
+
+    connect(&PointerTimer, &QTimer::timeout, this, &ScribbleArea::PointerTimeout);
+    PointerTimer.setSingleShot(true);
 
     /*CopyTimeout = 500;
     GestureTimeout = 500;
@@ -304,6 +315,8 @@ void ScribbleArea::HandleToolAction(QAction *action)
        UpdateGUI(NumberOfLayers);
     } else if (action->iconText() == "Freeze") {
        Freeze(action->isChecked());
+    } else if (action->iconText() == "ShowOverview") {
+       ToggleShowOverview(action->isChecked());
     }
 }
 
@@ -481,6 +494,12 @@ void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, 
     }
 }
 
+void ScribbleArea::PointerTimeout()
+{
+   ShowPointer = false;
+   update();
+}
+
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
    std::cout << "Mouse: move" << event->pointCount() << std::endl;
@@ -506,7 +525,19 @@ void ControllingStateMachine::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint
 
     Tracker.Trackmovement(Position, Timestamp);
     //WaitForPostIt = false;
-
+    Showeraser = Erasing;
+    LastPointerPosition = Position;
+    if (Settings.PointerHoldon >= 0) {
+       if (   (State == Idle)
+            ||(State == WaitingToLeaveJitterProtectionForDrawing)
+              ||(State == DrawingPaused)
+              ||(State == Drawing)
+              ||(State == DrawingFillRequested)) {
+          ShowPointer = true;
+          PointerTimer.start(Settings.PointerHoldon);
+          update();
+       }
+    }
 
     if ((Buttons & Qt::LeftButton)) {
         if ((Position-lastPoint).manhattanLength() < myPenWidth+2) {
@@ -797,6 +828,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
        case QEvent::TabletRelease:
           std::cout << "Tablett up " << event->type() << "/"<< event->button() << std::endl;
           HandleReleaseEventSM(event->button(), event->position(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
+          event->accept();
           break;
 
        case QEvent::TabletPress:
@@ -821,6 +853,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
               break;
 
         }
+        event->accept();
         break;
        case QEvent::TabletMove:
           // Tablett move also called on pressure or tilt changes
@@ -829,6 +862,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
              HandleMoveEventSM(event->buttons(), event->position(), event->timestamp(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
              LastTablettMovePosition = event->position();
           }
+          event->accept();
         break;
        default: event->ignore();
     }
@@ -1125,6 +1159,18 @@ bool ScribbleArea::IsInsideAnyPostIt(QPointF Position)
 void ScribbleArea::paintEvent(QPaintEvent *event)
 //! [13] //! [14]
 {
+    if (ShowOverview) {
+       QImage Overview(image.size(), QImage::Format_ARGB32);
+       QPainter painter(&Overview);
+       PaintVisibleDrawing(painter, Overview.rect(), {0,0}, BackgroundImagesOrigin-Origin);
+       painter.setPen(QPen(QColor(90, 0, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                           Qt::RoundJoin));
+       painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
+
+       painter.drawRect(Origin.x(), Origin.y(), this->width(), this->height());
+       QPainter p(this);
+       p.drawImage(QPointF(0,0), Overview.scaled(QSize(this->width(), this->height()), Qt::KeepAspectRatio));
+    } else {
     QPainter painter(this);
     PaintVisibleDrawing(painter, event->rect(), Origin, BackgroundImagesOrigin);
 
@@ -1138,7 +1184,16 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
         painter.drawRect(0,0,this->width(), this->height());
 
     }
+    if (ShowPointer) {
+       if (Showeraser) {
+          painter.drawImage(LastPointerPosition - QPointF(0, 36), EraserShape);
+         // painter.drawImage(LastPointerPosition - QPointF(0, 36), SpongeShape);
 
+       } else {
+          painter.drawImage(LastPointerPosition - QPointF(0, 36), PointerShape);
+       }
+    }
+    }
 
 }
 

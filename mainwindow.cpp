@@ -117,6 +117,7 @@ MainWindow::MainWindow()
     toolBar->addAction("Merge")->setToolTip("Merge visible Background");
     toolBar->addAction("ToTop")->setToolTip("Merge all visible to editable");
     toolBar->addAction("Cut")->setCheckable(true);
+    toolBar->addAction("ShowOverview")->setCheckable(true);
 
     connect(toolBar, SIGNAL(actionTriggered(QAction *)),
             scribbleArea, SLOT(HandleToolAction(QAction * )));

@@ -15,6 +15,20 @@ SOURCES       = main.cpp \
     position.cpp \
     PaintingArea.cpp
 
+resources.files = \
+    images/HandWithPen.png \
+    images/HandWithEraser.png \
+    images/HandWithSponge.png
+
+
+
+resources.prefix = /
+
+RESOURCES = resources
+
 # install
 target.path = $$[QT_INSTALL_EXAMPLES]/widgets/widgets/scribble
 INSTALLS += target
+
+DISTFILES += \
+   HandWithPen.png

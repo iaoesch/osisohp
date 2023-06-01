@@ -64,6 +64,7 @@ public:
    double GestureTimeout = 500;
    double SelectTimeout = 500;
    double PostItTimeout = 1000;
+   double PointerHoldon = 250;
 
 };
 
@@ -157,6 +158,7 @@ public:
     int penWidth() const { return SelectedPenWidth; }
 
     void Freeze(bool Mode) {Frozen = Mode;}
+    void ToggleShowOverview(bool Mode) {ShowOverview = Mode; update();}
     int MoveImageToBackgroundLayer();
     int MoveTopBackgroundLayerToImage();
     int CollapseBackgroundLayers();
@@ -184,6 +186,8 @@ protected:
     void tabletEvent(QTabletEvent * event) Q_DECL_OVERRIDE;
     bool event(QEvent *event) Q_DECL_OVERRIDE;
 
+private slots:
+    void PointerTimeout();
 private:
 
 
@@ -223,6 +227,11 @@ private:
     QColor myPenColor;
     QImage image;
     QImage LastDrawnObject;
+    QImage PointerShape;
+    QImage EraserShape;
+    QImage SpongeShape;
+    bool ShowOverview;
+    bool Showeraser;
     bool MarkerActive;
     bool EraseLastDrawnObject;
 
@@ -260,6 +269,9 @@ private:
     QPointF ScrollingOldOrigin;
     QPointF FillPolygonStartPosition;
 
+    QPointF LastPointerPosition;
+    bool    ShowPointer;
+
     GestureTrackerClass Tracker;
 
     QPointF Origin;
@@ -277,6 +289,7 @@ private:
 
 
     QTimer MyTimer;
+    QTimer PointerTimer;
 
     bool RecentlyPastedObjectValid;
     QPointF RecentlyPastedObjectPosition;
