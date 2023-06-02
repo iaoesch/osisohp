@@ -59,6 +59,39 @@
 
 //! [0]
 //!
+//!
+//!
+
+class GuiInterface
+{
+public:
+   void UpdateRequest();
+   void modified(); //modified = True;
+   void drawLineTo(const QPointF &endPoint, double Pressure);
+   void drawrectangle(const BoundingBoxClass &Region);
+   void DrawMovedSelection(const QPointF Offset);
+
+   void DrawLastDrawnPicture();
+   void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
+   void resizeScrolledImage();
+   bool PostItSelected(QPointF Position);
+   void EraseLineTo(const QPointF &endPoint, double Pressure);
+   bool IsInsideAnyPostIt(QPointF Position);
+   void MoveSelectedPostits(QPointF Position);
+   void FinishMovingSelectedPostits(QPointF Position);
+   bool AreAnyPostitsSelected(); // !SelectedPostit.empty()
+   void ClearSelectedPostits(); // SelectedPostit.clear();
+
+   void CompleteImage();
+   void FilllastDrawnShape();
+   void MakeSreenMoveHint();
+   void MakeSelectionFromLastDrawnObject();
+   void CreeatePostitFromSelection();
+   void setCursor(QCursor Cursor);
+
+
+};
+
 class Settings {
 public:
    double Touchscaling = 4.0;
@@ -109,7 +142,8 @@ public:
    virtual void timeoutSM();
    virtual State::ScribblingState StateId() = 0;
    virtual ~StateBaseClass();
-   void    HandleMoveNoLeftButtonEvent();
+
+   void HandleMoveNoLeftButtonEvent(Qt::MouseButtons Buttons, QPointF Position);
 };
 
 template<State::ScribblingState State>
@@ -129,6 +163,7 @@ public:
 };
 
 class ControllingStateMachine {
+   Q_OBJECT
 private:
    template<State::ScribblingState S> friend  class StateClass;
    friend  class StateBaseClass;
@@ -157,6 +192,7 @@ private:
       bool    DiscardSelection;
       bool    LastDrawingValid;
       int     myPenWidth;
+      bool    SelectPostitsDirectly;
 
       QPolygonF LastDrawnObjectPoints;
 
@@ -175,6 +211,7 @@ private:
    } Context;
    Settings Settings;
 
+   GuiInterface Interface;
    StateBaseClass *CurrentState;
 
    MakeStateObject(Idle);
@@ -208,6 +245,9 @@ public:
 public slots:
    void timeoutSM();
 
+private slots:
+   void PointerTimeout();
+   void Timeout();
 };
 #endif
 

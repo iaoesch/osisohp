@@ -274,6 +274,8 @@ private:
     void MakeSreenMoveHint();
     void MakeSelectionFromLastDrawnObject();
     void CreeatePostitFromSelection();
+    void MoveSelectedPostits(QPointF Position);
+    void FinishMovingSelectedPostits(QPointF Position);
 };
 //! [0]
 

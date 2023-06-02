@@ -50,32 +50,46 @@
 
 //! [0]
 ControllingStateMachine::ControllingStateMachine()
-
+   :   Idle(*this),
+       WaitingToLeaveJitterProtectionForDrawing(*this),
+       WaitingToLeaveJitterProtectionWithSelectedAreaForMoving(*this),
+       WaitingToLeaveJitterProtectionForScrolling(*this),
+       WaitingToLeaveJitterProtectionWithCreatedPostitForMoving(*this),
+       WaitingToLeaveJitterProtectionWithSelectedPostitForMoving(*this),
+       Drawing(*this),
+       DrawingPaused(*this),
+       DrawingFillRequested(*this),
+       MovingSelection(*this),
+       MovingSelectionPaused(*this),
+       MovingPostit(*this),
+       ScrollingDrawingArea(*this),
+       WaitingForTouchScrolling(*this),
+       TouchScrollingDrawingArea(*this)
 {
     Context.ShowPointer = false;
 
-    Context.ShowOverview = false;
+    //Context.ShowOverview = false;
 
     Context.LastDrawingValid = false;
-    Context.EraseLastDrawnObject = false;
+    //Context.EraseLastDrawnObject = false;
     Context.Frozen = false;
-    Context.StateMachine.Context.myPenWidth = 2;
-    Context.SelectedPenWidth = StateMachine.Context.myPenWidth;
+    Context.myPenWidth = 2;
+    //Context.SelectedPenWidth = StateMachine.Context.myPenWidth;
 
-    connect(&MyTimer, SIGNAL(timeout()), this, SLOT(timeoutSM()));
+    QObject::connect(&MyTimer, &QTimer::timeout, this, &ControllingStateMachine::Timeout);
     MyTimer.setSingleShot(true);
 
-    connect(&PointerTimer, &QTimer::timeout, this, &ScribbleArea::PointerTimeout);
+    QObject::connect(&PointerTimer, &QTimer::timeout, this, &ControllingStateMachine::PointerTimeout);
     PointerTimer.setSingleShot(true);
 
-    Context.SelectedPostit.clear();
+    //Context.SelectedPostit.clear();
     Context.SelectPostitsDirectly = false;
-    Context.ShowPostitsFrame = false;
+    //Context.ShowPostitsFrame = false;
 
 
 
-    Context.RecentlyPastedObjectValid = false;
-    Context.MarkerActive = false;
+    //Context.RecentlyPastedObjectValid = false;
+    //Context.MarkerActive = false;
    // QImage RecentlyMovedObject;
    // BoundingBoxClass RecentlyMovedObjectBoundingBox;
 
@@ -90,18 +104,13 @@ ControllingStateMachine::ControllingStateMachine()
 //! [2]
 
 //! [3]
-void StateBaseClass::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
-{
-   std::cout << "HandlePressEventSM: unexpected State: " << StateId()  << std::endl;
-   StateMachine.Idle.HandlePressEventSM(Button, Position, Timestamp);
-}
 
 template<>
 void StateClass<State::ScribblingState::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
     std::cout << "Button Down: " << Button  << std::endl;
     if (Button == Qt::LeftButton) {
-       setCursor(Qt::ArrowCursor);
+       StateMachine.Interface.setCursor(Qt::ArrowCursor);
 
         StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionForDrawing);
 
@@ -116,7 +125,7 @@ void StateClass<State::ScribblingState::Idle>::HandlePressEventSM(Qt::MouseButto
         StateMachine.Context.SelectedCurrentPosition = Position;
 
         if ((StateMachine.Context.SelectPostitsDirectly == true) &&
-            (StateMachine.PostItSelected(StateMachine.Context.SelectedCurrentPosition))) {
+            (StateMachine.Interface.PostItSelected(StateMachine.Context.SelectedCurrentPosition))) {
               StateMachine.Context.DownInsideObject = false;
               StateMachine.MyTimer.start(StateMachine.Settings.DirectSelectTimeout);
 
@@ -133,18 +142,22 @@ void StateClass<State::ScribblingState::Idle>::HandlePressEventSM(Qt::MouseButto
     }
 }
 
-void ScribbleArea::PointerTimeout()
+void StateBaseClass::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
-   ShowPointer = false;
-   update();
+   std::cout << "HandlePressEventSM: unexpected State: " << StateId()  << std::endl;
+   StateMachine.Idle.HandlePressEventSM(Button, Position, Timestamp);
 }
 
-void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
+void ControllingStateMachine::PointerTimeout()
 {
-   std::cout << "Mouse: move" << event->pointCount() << std::endl;
-
-   HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), false, 0);
+   Context.ShowPointer = false;
+   Interface.UpdateRequest();
 }
+
+void ControllingStateMachine::Timeout()
+{
+}
+
 
 
 
@@ -163,20 +176,20 @@ void ControllingStateMachine::ShowBigPointer()
    if (Settings.PointerHoldon >= 0) {
    Context.ShowPointer = true;
    PointerTimer.start(Settings.PointerHoldon);
-   update();
+   Interface.UpdateRequest();
    }
 }
 
-void StateBaseClass::HandleMoveNoLeftButtonEvent(Qt::MouseButtons Buttons)
+void StateBaseClass::HandleMoveNoLeftButtonEvent(Qt::MouseButtons Buttons, QPointF Position)
 {
    if (Buttons == Qt::NoButton) {
-      if (IsInsideAnyPostIt(Position)) {
-         setCursor(Qt::PointingHandCursor);
+      if (StateMachine.Interface.IsInsideAnyPostIt(Position)) {
+         StateMachine.Interface.setCursor(Qt::PointingHandCursor);
       }  else {
-         setCursor(Qt::ArrowCursor);
+         StateMachine.Interface.setCursor(Qt::ArrowCursor);
       }
    } else {
-     setCursor(Qt::ArrowCursor);
+     StateMachine.Interface.setCursor(Qt::ArrowCursor);
    }
 }
 
@@ -190,29 +203,9 @@ void StateClass<State::ScribblingState::Idle>::HandleMoveEventSM(Qt::MouseButton
            return; // ignore small movements (probably use penwidth*2)
        }
    }  else {
-      HandleMoveNoLeftButtonEvent();
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
    }
 
-}
-template<>
-void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
-{
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
-   StateMachine.ShowBigPointer();
-
-   if ((Buttons & Qt::LeftButton)) {
-       if ((Position-StateMachine.Context.lastPoint).manhattanLength() < StateMachine.Context.myPenWidth+2) {
-           return; // ignore small movements (probably use penwidth*2)
-       }
-       if (((Position-StateMachine.Context.ButtonDownPosition).manhattanLength() < (StateMachine.Context.myPenWidth*3+2))) {
-           return; // ignore small movements (probably use penwidth*2)
-       }
-       StateMachine.SetNewState(&StateMachine.Drawing);
-       StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
-
-   }  else {
-      HandleMoveNoLeftButtonEvent();
-   }
 }
 
 template<>
@@ -231,7 +224,7 @@ void StateClass<State::ScribblingState::Drawing>::HandleMoveEventSM(Qt::MouseBut
        StateMachine.MyTimer.stop();
        StateMachine.MyTimer.start(StateMachine.Settings.GestureTimeout);
        if (StateMachine.Context.LastDrawingValid) {
-         DrawLastDrawnPicture();
+         StateMachine.Interface.DrawLastDrawnPicture();
 
          StateMachine.Context.LastDrawingValid = false;
          StateMachine.Context.LastDrawnObjectPoints.clear();
@@ -240,17 +233,38 @@ void StateClass<State::ScribblingState::Drawing>::HandleMoveEventSM(Qt::MouseBut
       }
       //LastDrawnObject.fill(BackgroundColor);
       if (Erasing) {
-         EraseLineTo(Position, Pressure);
+         StateMachine.Interface.EraseLineTo(Position, Pressure);
       } else {
-         drawLineTo(Position, Pressure);
+         StateMachine.Interface.drawLineTo(Position, Pressure);
       }
       StateMachine.Context.LastDrawnObjectPoints.append(Position);
       StateMachine.Context.CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
 
    }  else {
-      HandleMoveNoLeftButtonEvent();
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
    }
 
+}
+
+template<>
+void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+   StateMachine.ShowBigPointer();
+
+   if ((Buttons & Qt::LeftButton)) {
+       if ((Position-StateMachine.Context.lastPoint).manhattanLength() < StateMachine.Context.myPenWidth+2) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       if (((Position-StateMachine.Context.ButtonDownPosition).manhattanLength() < (StateMachine.Context.myPenWidth*3+2))) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+       StateMachine.SetNewState(&StateMachine.Drawing);
+       StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+   }  else {
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
+   }
 }
 
 template<>
@@ -270,7 +284,7 @@ void StateClass<State::ScribblingState::DrawingPaused>::HandleMoveEventSM(Qt::Mo
        StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
    }  else {
-      HandleMoveNoLeftButtonEvent();
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
    }
 
 }
@@ -290,13 +304,13 @@ void StateClass<State::ScribblingState::DrawingFillRequested>::HandleMoveEventSM
        }
        if ((Position-StateMachine.Context.FillPolygonStartPosition).manhattanLength() > (StateMachine.Context.myPenWidth*3+2)) {
           StateMachine.SetNewState(&StateMachine.Drawing);
-          setCursor(Qt::ArrowCursor);
+          StateMachine.Interface.setCursor(Qt::ArrowCursor);
 
        }
        StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
    }  else {
-      HandleMoveNoLeftButtonEvent();
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
    }
 
 }
@@ -318,7 +332,7 @@ void StateClass<State::ScribblingState::MovingSelection>::HandleMoveEventSM(Qt::
          StateMachine.MyTimer.start(StateMachine.Settings.CopyTimeout);
 
          StateMachine.Context.SelectedCurrentPosition = Position;
-         update();
+         StateMachine.Interface.UpdateRequest();
        // DrawMovedSelection(Offset);
        // BoundingBoxClass MovedRectangle(LastPaintedObjectBoundingBox);
        // MovedRectangle.Move(PositionClass(Offset.x(), Offset.y()));
@@ -327,7 +341,7 @@ void StateClass<State::ScribblingState::MovingSelection>::HandleMoveEventSM(Qt::
 
 
    }  else {
-      HandleMoveNoLeftButtonEvent();
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
    }
 
 }
@@ -349,7 +363,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelect
 
 
    }  else {
-      HandleMoveNoLeftButtonEvent();
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
    }
 
 }
@@ -372,7 +386,7 @@ void StateClass<State::ScribblingState::MovingSelectionPaused>::HandleMoveEventS
 
 
    }  else {
-      HandleMoveNoLeftButtonEvent();
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
    }
 
 }
@@ -389,21 +403,14 @@ void StateClass<State::ScribblingState::MovingPostit>::HandleMoveEventSM(Qt::Mou
        if (((Position-StateMachine.Context.ButtonDownPosition).manhattanLength() < (StateMachine.Context.myPenWidth*3+2))) {
            return; // ignore small movements (probably use penwidth*2)
        }
-       if (!SelectedPostit.empty()) {
+       if (StateMachine.Interface.AreAnyPostitsSelected()) {
           std::cout << "Moving postit " << std::endl;
-          for(auto &r: SelectedPostit) {
-             //SelectedPostit->Position = Position;
-             QPointF LastPosition = r.postit->Position;
-             r.postit->Position = r.StartPosition + (Position - StateMachine.Context.ButtonDownPosition);
-
-             r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
-         //  SelectedPostit->Position = SelectedPostit->Position  Origin + Position;
-          }
-          update();
+          StateMachine.Interface.MoveSelectedPostits(Position);
+          StateMachine.Interface.UpdateRequest();
        }
 
    }  else {
-      HandleMoveNoLeftButtonEvent();
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
    }
 
 }
@@ -425,7 +432,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithCreate
 
 
    }  else {
-      HandleMoveNoLeftButtonEvent();
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
    }
 
 }
@@ -447,7 +454,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelect
 
 
    }  else {
-      HandleMoveNoLeftButtonEvent();
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
    }
 
 }
@@ -464,17 +471,17 @@ void StateClass<State::ScribblingState::ScrollingDrawingArea>::HandleMoveEventSM
        if (((Position-StateMachine.Context.ButtonDownPosition).manhattanLength() < (StateMachine.Context.myPenWidth*3+2))) {
            return; // ignore small movements (probably use penwidth*2)
        }
-       CompleteImage();
+       StateMachine.Interface.CompleteImage();
       StateMachine.Context.Origin -= Position- StateMachine.Context.ScrollingLastPosition;
       if (!StateMachine.Context.Frozen) {
          StateMachine.Context.BackgroundImagesOrigin -= Position- StateMachine.Context.ScrollingLastPosition;
       }
 
       StateMachine.Context.ScrollingLastPosition = Position;
-      update();
+      StateMachine.Interface.UpdateRequest();
 
    }  else {
-      HandleMoveNoLeftButtonEvent();
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
    }
 
 }
@@ -496,7 +503,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForScrolli
 
 
    }  else {
-      HandleMoveNoLeftButtonEvent();
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
    }
 
 }
@@ -507,11 +514,6 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForScrolli
 template<State::ScribblingState State>
 State::ScribblingState StateClass<State>::StateId() {return TheState;}
 
-void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
-{
-   std::cout << "Mouse: ";
-   HandleReleaseEventSM(event->button(), event->pos(), false, 0);
-}
 
 template<>
 void StateClass<State::ScribblingState::Idle>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
@@ -543,9 +545,9 @@ void StateClass<State::ScribblingState::Drawing>::HandleReleaseEventSM(Qt::Mouse
    if (Button == Qt::LeftButton) {
       StateMachine.MyTimer.stop();
       if (Erasing) {
-         EraseLineTo(Position, Pressure);
+         StateMachine.Interface.EraseLineTo(Position, Pressure);
       } else {
-         drawLineTo(Position, Pressure);
+         StateMachine.Interface.drawLineTo(Position, Pressure);
       }
       StateMachine.Context.LastDrawnObjectPoints.append(Position);
       StateMachine.Context.LastDrawingValid = true;
@@ -570,11 +572,11 @@ void StateClass<State::ScribblingState::DrawingFillRequested>::HandleReleaseEven
 {
    if (Button == Qt::LeftButton) {
       StateMachine.Drawing.HandleReleaseEventSM(Button, Position, Erasing, Pressure);
-      FilllastDrawnShape();
-      setCursor(Qt::ArrowCursor);
+      StateMachine.Interface.FilllastDrawnShape();
+      StateMachine.Interface.setCursor(Qt::ArrowCursor);
       //FillPolygon = false;
 
-      update();
+      StateMachine.Interface.UpdateRequest();
    }
 }
 
@@ -595,13 +597,13 @@ void StateClass<State::ScribblingState::MovingSelection>::HandleReleaseEventSM(Q
        if (StateMachine.Tracker.GetCurrentSpeed() > 0.25f) {
            std::cout << "LeavingSpeed " << StateMachine.Tracker.GetCurrentSpeed() << std::endl;
            StateMachine.Context.DiscardSelection = true;
-           update();
+           StateMachine.Interface.UpdateRequest();
        }
        //std::cout << "LeavingSpeed " << (LastDistance + CurrentDistance) << " / " << (DeltaTLastDistance + DeltaTCurrentDistance) << " = " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
            ;
      // QPoint Offset =  - SelectedPoint;
        if (StateMachine.Context.DiscardSelection == false) {
-          DrawMovedSelection(Position);
+          StateMachine.Interface.DrawMovedSelection(Position);
        }
      // BoundingBoxClass MovedRectangle(LastPaintedObjectBoundingBox);
     //  MovedRectangle.Move(PositionClass(Offset.x(), Offset.y()));
@@ -624,21 +626,15 @@ template<>
 void StateClass<State::ScribblingState::MovingPostit>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 {
    if (Button == Qt::LeftButton) {
-      if ((!SelectedPostit.empty())) {
+      if ((StateMachine.Interface.AreAnyPostitsSelected())) {
          std::cout << "Fixing postit " << std::endl;
-         for (auto &r: SelectedPostit) {
-            QPointF LastPosition = r.postit->Position;
-            r.postit->Position = r.StartPosition + (Position - StateMachine.Context.ButtonDownPosition);
+         StateMachine.Interface.FinishMovingSelectedPostits(Position);
 
-            r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
-            // Place moved postits on top of each other
-            PostIts.splice( PostIts.end(), PostIts, r.postit);
-         }
          //  MoveSelected = false;
          StateMachine.Context.LastDrawingValid = false;
-         SelectedPostit.clear();
-         setCursor(Qt::ArrowCursor);
-         update();
+         StateMachine.Interface.ClearSelectedPostits();
+         StateMachine.Interface.setCursor(Qt::ArrowCursor);
+         StateMachine.Interface.UpdateRequest();
       }
       StateMachine.SetNewState(&StateMachine.Idle);
    }
@@ -648,8 +644,8 @@ template<>
 void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 {
    if (Button == Qt::LeftButton) {
-      SelectedPostit.clear();
-      setCursor(Qt::ArrowCursor);
+      StateMachine.Interface.ClearSelectedPostits();
+      StateMachine.Interface.setCursor(Qt::ArrowCursor);
 
       StateMachine.SetNewState(&StateMachine.Idle);
 
@@ -664,8 +660,8 @@ void StateClass<State::ScribblingState::ScrollingDrawingArea>::HandleReleaseEven
       if (!StateMachine.Context.Frozen) {
          StateMachine.Context.BackgroundImagesOrigin -= Position- StateMachine.Context.ScrollingLastPosition;
       }
-      resizeScrolledImage();
-      update();
+      StateMachine.Interface.resizeScrolledImage();
+      StateMachine.Interface.UpdateRequest();
 
       StateMachine.SetNewState(&StateMachine.Idle);
 
@@ -692,12 +688,12 @@ void StateBaseClass::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF Me
 {
    if(NumberOfTouchpoints == 2) {
    StateMachine.Context.SelectedCurrentPosition = MeanPosition;
-   MakeSreenMoveHint();
+   StateMachine.Interface.MakeSreenMoveHint();
    //Scrolling = true;
    StateMachine.Context.ScrollingLastPosition = StateMachine.Context.SelectedCurrentPosition;
    StateMachine.Context.ScrollingOldOrigin = StateMachine.Context.Origin;
    //scribbling = false;
-   update();
+   StateMachine.Interface.UpdateRequest();
    StateMachine.SetNewState(&StateMachine.WaitingForTouchScrolling);
    }
 
@@ -712,13 +708,13 @@ void StateClass<State::ScribblingState::TouchScrollingDrawingArea>::HandleTouchM
    if(NumberOfTouchpoints == 2) {
    std::cout << "TM(" << MeanPosition.x() <<":" << MeanPosition.y() << ")";
 
-         CompleteImage();
+         StateMachine.Interface.CompleteImage();
          StateMachine.Context.Origin -= MeanPosition- StateMachine.Context.ScrollingLastPosition;
-         if (!Frozen) {
+         if (!StateMachine.Context.Frozen) {
             StateMachine.Context.BackgroundImagesOrigin -= MeanPosition- StateMachine.Context.ScrollingLastPosition;
          }
          StateMachine.Context.ScrollingLastPosition = MeanPosition;
-         update();
+         StateMachine.Interface.UpdateRequest();
    }
 
 }
@@ -743,11 +739,11 @@ void StateClass<State::ScribblingState::TouchScrollingDrawingArea>::HandleTouchR
 {
    if(NumberOfTouchpoints == 2) {
       StateMachine.Context.Origin -= MeanPosition - StateMachine.Context.ScrollingLastPosition;
-      if (!Frozen) {
+      if (!StateMachine.Context.Frozen) {
          StateMachine.Context.BackgroundImagesOrigin -= MeanPosition- StateMachine.Context.ScrollingLastPosition;
       }
-      resizeScrolledImage();
-      update();
+      StateMachine.Interface.resizeScrolledImage();
+      StateMachine.Interface.UpdateRequest();
 
       StateMachine.SetNewState(&StateMachine.Idle);
    }
@@ -769,51 +765,6 @@ void ControllingStateMachine::HandleTouchReleaseEventSM(int NumberOfTouchpoints,
 
 
 
-bool ScribbleArea::event(QEvent *event)
-{
-   switch (event->type()) {
-      case QEvent::TouchBegin:
-      case QEvent::TouchCancel:
-      case QEvent::TouchEnd:
-      case QEvent::TouchUpdate:
-         {
-         QTouchEvent *te = dynamic_cast<QTouchEvent *>(event);
-         if (te) {
-            return TouchEvent(te);
-         } else {
-            return QWidget::event(event);
-         }
-         }
-         break;
-      case QEvent::Gesture:
-         std::cout << "Gesrture" << std::endl;
-         return QWidget::event(event);
-      case QEvent::Scroll:
-         std::cout << "Scroll" << std::endl;
-         return QWidget::event(event);
-      case QEvent::Wheel:
-         std::cout << "Wheel" << static_cast<QWheelEvent*>(event)->angleDelta().x() << ":" << static_cast<QWheelEvent*>(event)->angleDelta().y() << std::endl;
-         {
-            QPointF Delta (static_cast<QWheelEvent*>(event)->angleDelta());
-
-            CompleteImage();
-            StateMachine.Context.Origin += Delta/20.0;
-            if (!Frozen) {
-               StateMachine.Context.BackgroundImagesOrigin += Delta/20.0;
-            }
-            resizeScrolledImage();
-
-            update();
-
-         }
-      default:
-         //std::cout << "<" << event->type() << ">";
-         return QWidget::event(event);
-
-   }
-
-}
-
 void StateBaseClass::timeoutSM()
 {
    // Default does nothing
@@ -825,38 +776,38 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing
 {
    if (StateMachine.Context.DownInsideObject) {
 
-      MakeSelectionFromLastDrawnObject();
+      StateMachine.Interface.MakeSelectionFromLastDrawnObject();
 
       StateMachine.Context.LastDrawnObjectPoints.clear();
-      modified = true;
+      StateMachine.Interface.modified();
 
       //MoveSelected = true;
       //NewDrawingStarted = false;
       StateMachine.Context.SelectedPoint = StateMachine.Context.lastPoint;
       StateMachine.Context.SelectedOffset = QPoint(StateMachine.Context.LastPaintedObjectBoundingBox.GetLeft(), StateMachine.Context.LastPaintedObjectBoundingBox.GetTop()) - StateMachine.Context.lastPoint;
       //scribbling = false;
-      update();
+      StateMachine.Interface.UpdateRequest();
       //WaitForPostIt = true;
       StateMachine.MyTimer.start(StateMachine.Settings.PostItTimeout);
       StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithSelectedAreaForMoving);
 
    } else {
 
-      if (PostItSelected(StateMachine.Context.SelectedCurrentPosition)) {
+      if (StateMachine.Interface.PostItSelected(StateMachine.Context.SelectedCurrentPosition)) {
          //scribbling = false;
          //NewDrawingStarted = false;
-         setCursor(Qt::ClosedHandCursor);
+         StateMachine.Interface.setCursor(Qt::ClosedHandCursor);
          std::cout << "Selected postit " << std::endl;
          StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithSelectedPostitForMoving);
 
 
       } else {
-         MakeSreenMoveHint();
+         StateMachine.Interface.MakeSreenMoveHint();
          //Scrolling = true;
          StateMachine.Context.ScrollingLastPosition = StateMachine.Context.SelectedCurrentPosition;
          StateMachine.Context.ScrollingOldOrigin = StateMachine.Context.Origin;
          //scribbling = false;
-         update();
+         StateMachine.Interface.UpdateRequest();
          StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionForScrolling);
       }
    }
@@ -870,9 +821,9 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelect
       std::cout << "Creating postit " << std::endl;
 
       //WaitForPostIt = false;
-      CreeatePostitFromSelection();
+      StateMachine.Interface.CreeatePostitFromSelection();
       StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithCreatedPostitForMoving);
-      update();
+      StateMachine.Interface.UpdateRequest();
    }
 
 }
@@ -884,8 +835,8 @@ void StateClass<State::ScribblingState::Drawing>::timeoutSM()
 
    //FillPolygon = true;
    StateMachine.Context.FillPolygonStartPosition = StateMachine.Context.lastPoint;
-   setCursor(Qt::BusyCursor);
-   update();
+   StateMachine.Interface.setCursor(Qt::BusyCursor);
+   StateMachine.Interface.UpdateRequest();
    StateMachine.SetNewState(&StateMachine.DrawingPaused);
 
 }
@@ -897,11 +848,11 @@ void StateClass<State::ScribblingState::MovingSelection>::timeoutSM()
       // Fast shaking followed by a pause means throw away selection
       if (StateMachine.Tracker.IsFastShaking()) {
          StateMachine.Context.DiscardSelection = true;
-         update();
+         StateMachine.Interface.UpdateRequest();
       } else {
          QPointF CopyPos(StateMachine.Context.SelectedCurrentPosition);
          StateMachine.Context.SelectedCurrentPosition += QPointF(3,3);
-         DrawMovedSelection(CopyPos);
+         StateMachine.Interface.DrawMovedSelection(CopyPos);
       }
       StateMachine.SetNewState(&StateMachine.MovingSelectionPaused);
    }

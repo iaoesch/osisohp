@@ -517,6 +517,29 @@ void ScribbleArea::CompleteImage()
 }
 
 
+void ScribbleArea::MoveSelectedPostits(QPointF Position)
+{
+   for(auto &r: SelectedPostit) {
+      //SelectedPostit->Position = Position;
+      QPointF LastPosition = r.postit->Position;
+      r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
+
+      r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
+  //  SelectedPostit->Position = SelectedPostit->Position  Origin + Position;
+   }
+}
+void ScribbleArea::FinishMovingSelectedPostits(QPointF Position)
+{
+   for (auto &r: SelectedPostit) {
+      QPointF LastPosition = r.postit->Position;
+      r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
+
+      r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
+      // Place moved postits on top of each other
+      PostIts.splice( PostIts.end(), PostIts, r.postit);
+   }
+}
+
 void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
 
@@ -606,14 +629,7 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position,
            case MovingPostit:
               if (!SelectedPostit.empty()) {
                  std::cout << "Moving postit " << std::endl;
-                 for(auto &r: SelectedPostit) {
-                    //SelectedPostit->Position = Position;
-                    QPointF LastPosition = r.postit->Position;
-                    r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
-
-                    r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
-                //  SelectedPostit->Position = SelectedPostit->Position  Origin + Position;
-                 }
+                 MoveSelectedPostits(Position);
                  update();
               }
               break;
@@ -659,6 +675,8 @@ void ScribbleArea::FilllastDrawnShape()
    // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
    painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
 }
+
+
 
 void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 {
@@ -722,14 +740,7 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position
          case MovingPostit:
             if ((!SelectedPostit.empty())) {
                std::cout << "Fixing postit " << std::endl;
-               for (auto &r: SelectedPostit) {
-                  QPointF LastPosition = r.postit->Position;
-                  r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
-
-                  r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
-                  // Place moved postits on top of each other
-                  PostIts.splice( PostIts.end(), PostIts, r.postit);
-               }
+               FinishMovingSelectedPostits(Position);
                //  MoveSelected = false;
                LastDrawingValid = false;
                SelectedPostit.clear();
