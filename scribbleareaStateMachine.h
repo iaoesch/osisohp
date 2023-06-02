@@ -55,54 +55,17 @@
 #include <list>
 
 #include "box.hpp"
+#include "Settings.hpp"
 #include "gesturetracker.hpp"
+#include "interface.hpp"
 
 //! [0]
 //!
 //!
 //!
 
-class GuiInterface
-{
-public:
-   void UpdateRequest();
-   void modified(); //modified = True;
-   void drawLineTo(const QPointF &endPoint, double Pressure);
-   void drawrectangle(const BoundingBoxClass &Region);
-   void DrawMovedSelection(const QPointF Offset);
-
-   void DrawLastDrawnPicture();
-   void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
-   void resizeScrolledImage();
-   bool PostItSelected(QPointF Position);
-   void EraseLineTo(const QPointF &endPoint, double Pressure);
-   bool IsInsideAnyPostIt(QPointF Position);
-   void MoveSelectedPostits(QPointF Position);
-   void FinishMovingSelectedPostits(QPointF Position);
-   bool AreAnyPostitsSelected(); // !SelectedPostit.empty()
-   void ClearSelectedPostits(); // SelectedPostit.clear();
-
-   void CompleteImage();
-   void FilllastDrawnShape();
-   void MakeSreenMoveHint();
-   void MakeSelectionFromLastDrawnObject();
-   void CreeatePostitFromSelection();
-   void setCursor(QCursor Cursor);
 
 
-};
-
-class Settings {
-public:
-   double Touchscaling = 4.0;
-   double DirectSelectTimeout = 10.0;
-   double CopyTimeout = 500;
-   double GestureTimeout = 500;
-   double SelectTimeout = 500;
-   double PostItTimeout = 1000;
-   double PointerHoldon = 250;
-
-};
 #define MakeStateObject(S) StateClass<State::ScribblingState::S> S
 
 class StateBaseClass;
@@ -141,7 +104,7 @@ public:
    virtual void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    virtual void timeoutSM();
    virtual State::ScribblingState StateId() = 0;
-   virtual ~StateBaseClass();
+   virtual ~StateBaseClass() {}
 
    void HandleMoveNoLeftButtonEvent(Qt::MouseButtons Buttons, QPointF Position);
 };
@@ -158,11 +121,11 @@ public:
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void timeoutSM() override;
-   virtual ~StateClass() override;
+   virtual ~StateClass() override {}
    virtual State::ScribblingState StateId() override;
 };
 
-class ControllingStateMachine {
+class ControllingStateMachine : public QObject {
    Q_OBJECT
 private:
    template<State::ScribblingState S> friend  class StateClass;

@@ -2,7 +2,9 @@ QT += widgets
 qtHaveModule(printsupport): QT += printsupport
 
 HEADERS       = mainwindow.h \
+   Settings.hpp \
    gesturetracker.hpp \
+   interface.hpp \
                 scribblearea.h \
     box.hpp \
     position.hpp \
@@ -15,7 +17,8 @@ SOURCES       = main.cpp \
     Box.cpp \
     position.cpp \
     PaintingArea.cpp \
-   scribbleareaStateMachine.cpp
+   scribbleareaStateMachine.cpp\
+   interface.cpp
 
 resources.files = \
     images/HandWithPen.png \

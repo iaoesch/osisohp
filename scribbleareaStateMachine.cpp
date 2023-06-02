@@ -47,64 +47,53 @@
 #include "scribbleareaStateMachine.h"
 #ifdef USE_NEW_STATEMACHINE
 
-
-//! [0]
-ControllingStateMachine::ControllingStateMachine()
-   :   Idle(*this),
-       WaitingToLeaveJitterProtectionForDrawing(*this),
-       WaitingToLeaveJitterProtectionWithSelectedAreaForMoving(*this),
-       WaitingToLeaveJitterProtectionForScrolling(*this),
-       WaitingToLeaveJitterProtectionWithCreatedPostitForMoving(*this),
-       WaitingToLeaveJitterProtectionWithSelectedPostitForMoving(*this),
-       Drawing(*this),
-       DrawingPaused(*this),
-       DrawingFillRequested(*this),
-       MovingSelection(*this),
-       MovingSelectionPaused(*this),
-       MovingPostit(*this),
-       ScrollingDrawingArea(*this),
-       WaitingForTouchScrolling(*this),
-       TouchScrollingDrawingArea(*this)
+template<State::ScribblingState State>
+void StateClass<State>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
-    Context.ShowPointer = false;
-
-    //Context.ShowOverview = false;
-
-    Context.LastDrawingValid = false;
-    //Context.EraseLastDrawnObject = false;
-    Context.Frozen = false;
-    Context.myPenWidth = 2;
-    //Context.SelectedPenWidth = StateMachine.Context.myPenWidth;
-
-    QObject::connect(&MyTimer, &QTimer::timeout, this, &ControllingStateMachine::Timeout);
-    MyTimer.setSingleShot(true);
-
-    QObject::connect(&PointerTimer, &QTimer::timeout, this, &ControllingStateMachine::PointerTimeout);
-    PointerTimer.setSingleShot(true);
-
-    //Context.SelectedPostit.clear();
-    Context.SelectPostitsDirectly = false;
-    //Context.ShowPostitsFrame = false;
-
-
-
-    //Context.RecentlyPastedObjectValid = false;
-    //Context.MarkerActive = false;
-   // QImage RecentlyMovedObject;
-   // BoundingBoxClass RecentlyMovedObjectBoundingBox;
-
-
+   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
 }
 
+template<State::ScribblingState State>
+void StateClass<State>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+}
+
+template<State::ScribblingState State>
+void StateClass<State>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
+
+{
+   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+}
+
+   template<State::ScribblingState State>
+   void StateClass<State>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+}
+
+   template<State::ScribblingState State>
+   void StateClass<State>::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+}
+
+   template<State::ScribblingState State>
+   void StateClass<State>::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+}
+
+   template<State::ScribblingState State>
+   void StateClass<State>::timeoutSM()
+{
+   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+}
+
+
+
+
 //! [0]
-//! [0]
-
-//! [1]
-
-//! [2]
-
-//! [3]
-
 template<>
 void StateClass<State::ScribblingState::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
@@ -171,6 +160,11 @@ void StateBaseClass::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Positio
    StateMachine.Context.LastPointerPosition = Position;
 }
 
+void StateBaseClass::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
+{
+
+}
+
 void ControllingStateMachine::ShowBigPointer()
 {
    if (Settings.PointerHoldon >= 0) {
@@ -178,6 +172,21 @@ void ControllingStateMachine::ShowBigPointer()
    PointerTimer.start(Settings.PointerHoldon);
    Interface.UpdateRequest();
    }
+}
+
+void ControllingStateMachine::SetNewState(StateBaseClass *NewState)
+{
+
+}
+
+void ControllingStateMachine::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
+{
+
+}
+
+void ControllingStateMachine::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+
 }
 
 void StateBaseClass::HandleMoveNoLeftButtonEvent(Qt::MouseButtons Buttons, QPointF Position)
@@ -698,6 +707,16 @@ void StateBaseClass::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF Me
    }
 
 }
+
+void StateBaseClass::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+
+}
+
+void StateBaseClass::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+
+}
 void ControllingStateMachine::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
 }
@@ -858,6 +877,70 @@ void StateClass<State::ScribblingState::MovingSelection>::timeoutSM()
    }
 
 }
+
+
+ControllingStateMachine::ControllingStateMachine()
+   :   Interface(nullptr),
+       Idle(*this),
+       WaitingToLeaveJitterProtectionForDrawing(*this),
+       WaitingToLeaveJitterProtectionWithSelectedAreaForMoving(*this),
+       WaitingToLeaveJitterProtectionForScrolling(*this),
+       WaitingToLeaveJitterProtectionWithCreatedPostitForMoving(*this),
+       WaitingToLeaveJitterProtectionWithSelectedPostitForMoving(*this),
+       Drawing(*this),
+       DrawingPaused(*this),
+       DrawingFillRequested(*this),
+       MovingSelection(*this),
+       MovingSelectionPaused(*this),
+       MovingPostit(*this),
+       ScrollingDrawingArea(*this),
+       WaitingForTouchScrolling(*this),
+       TouchScrollingDrawingArea(*this)
+{
+    Context.ShowPointer = false;
+
+    //Context.ShowOverview = false;
+
+    Context.LastDrawingValid = false;
+    //Context.EraseLastDrawnObject = false;
+    Context.Frozen = false;
+    Context.myPenWidth = 2;
+    //Context.SelectedPenWidth = StateMachine.Context.myPenWidth;
+
+    QObject::connect(&MyTimer, &QTimer::timeout, this, &ControllingStateMachine::Timeout);
+    MyTimer.setSingleShot(true);
+
+    QObject::connect(&PointerTimer, &QTimer::timeout, this, &ControllingStateMachine::PointerTimeout);
+    PointerTimer.setSingleShot(true);
+
+    //Context.SelectedPostit.clear();
+    Context.SelectPostitsDirectly = false;
+    //Context.ShowPostitsFrame = false;
+
+
+
+    //Context.RecentlyPastedObjectValid = false;
+    //Context.MarkerActive = false;
+   // QImage RecentlyMovedObject;
+   // BoundingBoxClass RecentlyMovedObjectBoundingBox;
+
+
+}
+
+void ControllingStateMachine::timeoutSM()
+{
+
+}
+
+//! [0]
+//! [0]
+
+//! [1]
+
+//! [2]
+
+//! [3]
+
 
 #endif
 

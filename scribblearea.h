@@ -51,28 +51,22 @@
 #include <list>
 
 #include "box.hpp"
+#include "Settings.hpp"
+
 #include "gesturetracker.hpp"
 
 //! [0]
 //!
 
-class Settings {
-public:
-   double Touchscaling = 4.0;
-   double DirectSelectTimeout = 10.0;
-   double CopyTimeout = 500;
-   double GestureTimeout = 500;
-   double SelectTimeout = 500;
-   double PostItTimeout = 1000;
-   double PointerHoldon = 250;
 
-};
 
 #include "scribbleareaStateMachine.h"
 
 class ScribbleArea : public QWidget
 {
     Q_OBJECT
+
+    friend class GuiInterface;
 
 public:
     ScribbleArea(QWidget *parent = 0);
