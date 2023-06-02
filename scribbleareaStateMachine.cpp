@@ -570,13 +570,7 @@ void StateClass<State::ScribblingState::DrawingFillRequested>::HandleReleaseEven
 {
    if (Button == Qt::LeftButton) {
       StateMachine.Drawing.HandleReleaseEventSM(Button, Position, Erasing, Pressure);
-      QPainter painter2(&image);
-      painter2.setPen(QPen(QColor(0, 0, 0, 0), StateMachine.Context.myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                           Qt::RoundJoin));
-      painter2.setBrush(QBrush(myPenColor));
-      painter2.setCompositionMode(QPainter::CompositionMode_Source);
-      // StateMachine.Context.LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
-      painter2.drawPolygon(StateMachine.Context.LastDrawnObjectPoints.translated(StateMachine.Context.Origin));
+      FilllastDrawnShape();
       setCursor(Qt::ArrowCursor);
       //FillPolygon = false;
 
@@ -698,9 +692,7 @@ void StateBaseClass::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF Me
 {
    if(NumberOfTouchpoints == 2) {
    StateMachine.Context.SelectedCurrentPosition = MeanPosition;
-   SelectedImagePart =  image.copy();
-   HintSelectedImagePart = SelectedImagePart;
-   HintSelectedImagePart.fill(qRgba(0, 0, 0, 40));
+   MakeSreenMoveHint();
    //Scrolling = true;
    StateMachine.Context.ScrollingLastPosition = StateMachine.Context.SelectedCurrentPosition;
    StateMachine.Context.ScrollingOldOrigin = StateMachine.Context.Origin;
@@ -833,38 +825,10 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing
 {
    if (StateMachine.Context.DownInsideObject) {
 
-      SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.QRectangle().translated(StateMachine.Context.Origin.toPoint()));
-      HintSelectedImagePart = SelectedImagePart;
-      HintSelectedImagePart.fill(qRgba(0, 0, 0, 0));
-      StateMachine.Context.DiscardSelection = false;
-
-      QPainter painter2(&image);
-      painter2.setPen(QPen(QColor(0, 0, 0, 0), StateMachine.Context.myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                           Qt::RoundJoin));
-      painter2.setBrush(QBrush(QColor(0, 0, 0, 0)));
-      painter2.setCompositionMode(QPainter::CompositionMode_Source);
-      // StateMachine.Context.LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
-      painter2.drawPolygon(StateMachine.Context.LastDrawnObjectPoints.translated(StateMachine.Context.Origin));
-
-      QPainter painter(&HintSelectedImagePart);
-      painter.setPen(QPen(QColor(0, 30, 0, 50), StateMachine.Context.myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                          Qt::RoundJoin));
-      painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
-      StateMachine.Context.LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetLeft(), -LastPaintedObjectBoundingBox.GetTop());
-      painter.drawPolygon(StateMachine.Context.LastDrawnObjectPoints);
-      QPainterPath Path;
-      Path.addPolygon(StateMachine.Context.LastDrawnObjectPoints);
-      QImage MaskedSelectedImagePart = SelectedImagePart;
-      MaskedSelectedImagePart.fill(qRgba(0, 0, 0, 0));
-      QPainter painter3(&MaskedSelectedImagePart);
-      painter3.setClipPath(Path);
-      painter3.drawImage(QPoint(0,0), SelectedImagePart);
-      SelectedImagePart = MaskedSelectedImagePart;
+      MakeSelectionFromLastDrawnObject();
 
       StateMachine.Context.LastDrawnObjectPoints.clear();
       modified = true;
-      LastDrawnObject.fill(qRgba(0, 0, 0, 0));
-
 
       //MoveSelected = true;
       //NewDrawingStarted = false;
@@ -887,9 +851,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing
 
 
       } else {
-         SelectedImagePart =  image.copy();
-         HintSelectedImagePart = SelectedImagePart;
-         HintSelectedImagePart.fill(qRgba(0, 0, 0, 40));
+         MakeSreenMoveHint();
          //Scrolling = true;
          StateMachine.Context.ScrollingLastPosition = StateMachine.Context.SelectedCurrentPosition;
          StateMachine.Context.ScrollingOldOrigin = StateMachine.Context.Origin;
@@ -908,18 +870,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelect
       std::cout << "Creating postit " << std::endl;
 
       //WaitForPostIt = false;
-      QImage NewPostit(HintSelectedImagePart);
-      // Here we could add a different background for postits
-      QPainter painter(&NewPostit);
-      painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-      painter.setBrush(QBrush(PostItBackgroundColor));
-      painter.drawRect(NewPostit.rect());
-      painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-      painter.drawImage(0,0,SelectedImagePart);
-      BoundingBoxClass TranslatedBoundingBox (LastPaintedObjectBoundingBox);
-      TranslatedBoundingBox.Move(PositionClass(StateMachine.Context.Origin.x(), StateMachine.Context.Origin.y()));
-      PostIts.push_back(PostIt(NewPostit, StateMachine.Context.Origin + StateMachine.Context.SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox));
-      SelectedPostit.push_back({std::prev(PostIts.end()), PostIts.back().Position});
+      CreeatePostitFromSelection();
       StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithCreatedPostitForMoving);
       update();
    }

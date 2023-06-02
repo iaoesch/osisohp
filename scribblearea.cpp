@@ -649,6 +649,17 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 }
 
 
+void ScribbleArea::FilllastDrawnShape()
+{
+   QPainter painter2(&image);
+   painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                        Qt::RoundJoin));
+   painter2.setBrush(QBrush(myPenColor));
+   painter2.setCompositionMode(QPainter::CompositionMode_Source);
+   // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
+   painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+}
+
 void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 {
    std::cout << "Button Up: " << Button  << std::endl;
@@ -678,13 +689,7 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position
             LastPaintedObjectBoundingBox = CurrentPaintedObjectBoundingBox;
             CurrentPaintedObjectBoundingBox.Clear();
             if ((State == DrawingFillRequested)||(State == DrawingPaused)) {
-               QPainter painter2(&image);
-               painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                                    Qt::RoundJoin));
-               painter2.setBrush(QBrush(myPenColor));
-               painter2.setCompositionMode(QPainter::CompositionMode_Source);
-               // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
-               painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+               FilllastDrawnShape();
                setCursor(Qt::ArrowCursor);
                //FillPolygon = false;
 
@@ -756,13 +761,18 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position
    }
 }
 
+void ScribbleArea::MakeSreenMoveHint()
+{
+   SelectedImagePart =  image.copy();
+   HintSelectedImagePart = SelectedImagePart;
+   HintSelectedImagePart.fill(qRgba(0, 0, 0, 40));
+}
+
 void ScribbleArea::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
    if(NumberOfTouchpoints == 2) {
    SelectedCurrentPosition = MeanPosition;
-   SelectedImagePart =  image.copy();
-   HintSelectedImagePart = SelectedImagePart;
-   HintSelectedImagePart.fill(qRgba(0, 0, 0, 40));
+   MakeSreenMoveHint();
    //Scrolling = true;
    ScrollingLastPosition = SelectedCurrentPosition;
    ScrollingOldOrigin = Origin;
@@ -983,6 +993,54 @@ bool ScribbleArea::event(QEvent *event)
 }
 
 
+void ScribbleArea::MakeSelectionFromLastDrawnObject()
+{
+   SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.QRectangle().translated(Origin.toPoint()));
+   HintSelectedImagePart = SelectedImagePart;
+   HintSelectedImagePart.fill(qRgba(0, 0, 0, 0));
+   DiscardSelection = false;
+
+   QPainter painter2(&image);
+   painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                        Qt::RoundJoin));
+   painter2.setBrush(QBrush(QColor(0, 0, 0, 0)));
+   painter2.setCompositionMode(QPainter::CompositionMode_Source);
+   // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
+   painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+
+   QPainter painter(&HintSelectedImagePart);
+   painter.setPen(QPen(QColor(0, 30, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                       Qt::RoundJoin));
+   painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
+   LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetLeft(), -LastPaintedObjectBoundingBox.GetTop());
+   painter.drawPolygon(LastDrawnObjectPoints);
+   QPainterPath Path;
+   Path.addPolygon(LastDrawnObjectPoints);
+   QImage MaskedSelectedImagePart = SelectedImagePart;
+   MaskedSelectedImagePart.fill(qRgba(0, 0, 0, 0));
+   QPainter painter3(&MaskedSelectedImagePart);
+   painter3.setClipPath(Path);
+   painter3.drawImage(QPoint(0,0), SelectedImagePart);
+   SelectedImagePart = MaskedSelectedImagePart;
+   LastDrawnObject.fill(qRgba(0, 0, 0, 0));
+}
+
+void ScribbleArea::CreeatePostitFromSelection()
+{
+   QImage NewPostit(HintSelectedImagePart);
+   // Here we could add a different background for postits
+   QPainter painter(&NewPostit);
+   painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+   painter.setBrush(QBrush(PostItBackgroundColor));
+   painter.drawRect(NewPostit.rect());
+   painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+   painter.drawImage(0,0,SelectedImagePart);
+   BoundingBoxClass TranslatedBoundingBox (LastPaintedObjectBoundingBox);
+   TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
+   PostIts.push_back(PostIt(NewPostit, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox));
+   SelectedPostit.push_back({std::prev(PostIts.end()), PostIts.back().Position});
+}
+
 void ScribbleArea::timeoutSM()
 {
     /* Copying on long move pauses */
@@ -993,37 +1051,11 @@ void ScribbleArea::timeoutSM()
       case WaitingToLeaveJitterProtectionForDrawing:
          if (DownInsideObject) {
 
-            SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.QRectangle().translated(Origin.toPoint()));
-            HintSelectedImagePart = SelectedImagePart;
-            HintSelectedImagePart.fill(qRgba(0, 0, 0, 0));
-            DiscardSelection = false;
-
-            QPainter painter2(&image);
-            painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                                 Qt::RoundJoin));
-            painter2.setBrush(QBrush(QColor(0, 0, 0, 0)));
-            painter2.setCompositionMode(QPainter::CompositionMode_Source);
-            // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
-            painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
-
-            QPainter painter(&HintSelectedImagePart);
-            painter.setPen(QPen(QColor(0, 30, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                                Qt::RoundJoin));
-            painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
-            LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetLeft(), -LastPaintedObjectBoundingBox.GetTop());
-            painter.drawPolygon(LastDrawnObjectPoints);
-            QPainterPath Path;
-            Path.addPolygon(LastDrawnObjectPoints);
-            QImage MaskedSelectedImagePart = SelectedImagePart;
-            MaskedSelectedImagePart.fill(qRgba(0, 0, 0, 0));
-            QPainter painter3(&MaskedSelectedImagePart);
-            painter3.setClipPath(Path);
-            painter3.drawImage(QPoint(0,0), SelectedImagePart);
-            SelectedImagePart = MaskedSelectedImagePart;
+            MakeSelectionFromLastDrawnObject();
 
             LastDrawnObjectPoints.clear();
             modified = true;
-            LastDrawnObject.fill(qRgba(0, 0, 0, 0));
+
 
 
             //MoveSelected = true;
@@ -1047,9 +1079,7 @@ void ScribbleArea::timeoutSM()
 
 
             } else {
-               SelectedImagePart =  image.copy();
-               HintSelectedImagePart = SelectedImagePart;
-               HintSelectedImagePart.fill(qRgba(0, 0, 0, 40));
+               MakeSreenMoveHint();
                //Scrolling = true;
                ScrollingLastPosition = SelectedCurrentPosition;
                ScrollingOldOrigin = Origin;
@@ -1065,18 +1095,7 @@ void ScribbleArea::timeoutSM()
             std::cout << "Creating postit " << std::endl;
 
             //WaitForPostIt = false;
-            QImage NewPostit(HintSelectedImagePart);
-            // Here we could add a different background for postits
-            QPainter painter(&NewPostit);
-            painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-            painter.setBrush(QBrush(PostItBackgroundColor));
-            painter.drawRect(NewPostit.rect());
-            painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-            painter.drawImage(0,0,SelectedImagePart);
-            BoundingBoxClass TranslatedBoundingBox (LastPaintedObjectBoundingBox);
-            TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
-            PostIts.push_back(PostIt(NewPostit, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox));
-            SelectedPostit.push_back({std::prev(PostIts.end()), PostIts.back().Position});
+            CreeatePostitFromSelection();
             State = WaitingToLeaveJitterProtectionWithCreatedPostitForMoving;
             update();
          }

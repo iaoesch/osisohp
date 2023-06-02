@@ -270,6 +270,10 @@ private:
     void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundImagesOrigin);
     int CollapseAllVisibleLayersToTop();
     void UpdateGUI(int NumberOfLayers);
+    void FilllastDrawnShape();
+    void MakeSreenMoveHint();
+    void MakeSelectionFromLastDrawnObject();
+    void CreeatePostitFromSelection();
 };
 //! [0]
 
