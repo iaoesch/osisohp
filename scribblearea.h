@@ -83,25 +83,25 @@ public:
     void setDirectSelect(bool Mode) {SelectPostitsDirectly = Mode;}
     void setShowPostitsFrame(bool Mode) {ShowPostitsFrame = Mode; update();}
 
-    QColor GetBackGroundColor() const { return BackGroundColor; }
-    void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; update();}
-    void setPostItBackgroundColor(const QColor &newColor) {PostItBackgroundColor = newColor; update();}
+    QColor GetBackGroundColor() const { return MyDatas.GetBackGroundColor(); }
+    void setBackGroundColor(const QColor &newColor) {MyDatas.setBackGroundColor(newColor);}
+    void setPostItBackgroundColor(const QColor &newColor) {MyDatas.setPostItBackgroundColor(newColor);}
 
     void PasteImage(QImage ImageToPaste);
 
-    bool isModified() const { return modified; }
-    QColor penColor() const { return myPenColor; }
-    int penWidth() const { return SelectedPenWidth; }
+    bool isModified() const { return MyDatas.isModified();}
+    QColor penColor() const { return MyDatas.penColor();}
+    int penWidth() const { return MyDatas.penWidth();}
 
-    void Freeze(bool Mode) {Frozen = Mode;}
+    void Freeze(bool Mode) {MyDatas.Freeze(Mode);}
     void ToggleShowOverview(bool Mode) {ShowOverview = Mode; update();}
-    int MoveImageToBackgroundLayer();
-    int MoveTopBackgroundLayerToImage();
-    int CollapseBackgroundLayers();
+    int MoveImageToBackgroundLayer() {MyDatas.MoveImageToBackgroundLayer();}
+    int MoveTopBackgroundLayerToImage() {MyDatas.MoveTopBackgroundLayerToImage();}
+    int CollapseBackgroundLayers() {MyDatas.CollapseBackgroundLayers();}
 
     bool SaveImage(const QString &fileName);
 public slots:
-    void clearImage();
+    void clearImage()  {MyDatas.clearImage();}
     void print();
     void HandleToolAction(QAction *action);
     void HandleLayerVisibilityAction(QAction *action);
@@ -151,7 +151,6 @@ private:
     };
     enum ScribblingState State;
     bool SelectPostitsDirectly;
-    bool ShowPostitsFrame;
     bool DownInsideObject;
     bool ShowOverview;
     bool Showeraser;
@@ -191,14 +190,10 @@ private:
     void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
     void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
     void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
-    bool PostItSelected(QPointF Position);
-    bool IsInsideAnyPostIt(QPointF Position);
     bool TouchEvent(QTouchEvent *event);
     void CompleteImage();
-    void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundImagesOrigin);
     int CollapseAllVisibleLayersToTop();
     void FilllastDrawnShape();
-    void MakeSreenMoveHint();
     void MoveSelectedPostits(QPointF Position);
     void FinishMovingSelectedPostits(QPointF Position);
 

@@ -58,6 +58,8 @@ class DatabaseClass
    bool LastDrawingValid;
    bool DiscardSelection;
    bool MarkerActive;
+   bool ShowPostitsFrame;
+
 
    QPointF SelectedOffset;
    QPointF SelectedCurrentPosition;
@@ -90,6 +92,7 @@ public:
    void EraseLineTo(const QPointF &endPoint, double Pressure);
    void drawrectangle(const BoundingBoxClass &Region);
    void DrawMovedSelection(const QPointF Offset);
+   void MakeSreenMoveHint();
 
    void DrawLastDrawnPicture();
    void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
@@ -106,6 +109,31 @@ public:
    bool LoadDatabase(const QString &fileName);
    void setPenColor(const QColor &newColor);
    bool SetLayerVisibility(int SelectedLayer, bool Visibility);
+   void setPenWidth(int newWidth);
+   void PasteImage(QImage ImageToPaste);
+   void CopyImageToClipboard();
+
+   int MoveImageToBackgroundLayer();
+   int MoveTopBackgroundLayerToImage();
+   int CollapseBackgroundLayers();
+   void clearImage();
+
+   bool isModified() const { return modified; }
+   QColor penColor() const { return myPenColor; }
+   int penWidth() const { return SelectedPenWidth; }
+   void Freeze(bool Mode) {Frozen = Mode;}
+
+   QColor GetBackGroundColor() const { return BackGroundColor; }
+   void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; update();}
+   void setPostItBackgroundColor(const QColor &newColor) {PostItBackgroundColor = newColor; update();}
+
+   bool PostItSelected(QPointF Position);
+   bool IsInsideAnyPostIt(QPointF Position);
+
+   void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundImagesOrigin);
+
+
+
 private:
    void update();
    void update(const QRect &r);

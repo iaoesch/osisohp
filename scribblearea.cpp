@@ -185,117 +185,21 @@ void ScribbleArea::HandleLayerVisibilityAction(QAction *action)
 void ScribbleArea::setPenWidth(int newWidth)
 //! [7] //! [8]
 {
-    myPenWidth = newWidth;
-    SelectedPenWidth = myPenWidth;
+    MyDatas.setPenWidth(newWidth);
 }
+
+
 
 void ScribbleArea::PasteImage(QImage ImageToPaste)
 {
-    QSize RequiredSize = image.size().expandedTo(ImageToPaste.size() + QSize(Origin.x(), Origin.y()));
-    resizeImage(&image, RequiredSize);
-    QPainter painter(&image);
-    painter.drawImage(Origin, ImageToPaste);
-    update();
+    MyDatas.PasteImage(ImageToPaste);
 }
 
 
 void ScribbleArea::CopyImageToClipboard()
 {
-   QImage ImageToSave(image.size(), QImage::Format_ARGB32);
-   QPainter painter(&ImageToSave);
-   PaintVisibleDrawing(painter, image.rect(), {0,0}, BackgroundImagesOrigin-Origin);
-
-   QApplication::clipboard()->setImage(ImageToSave);
+   MyDatas.CopyImageToClipboard();
 }
-
-int ScribbleArea::MoveImageToBackgroundLayer()
-{
-   CompleteImage();
-   BackgroundImages.push_back(std::make_unique<QImage>(image));
-   clearImage();
-   return BackgroundImages.size();
-}
-
-int ScribbleArea::MoveTopBackgroundLayerToImage()
-{
-   if (!BackgroundImages.empty()) {
-      // create empty image
-      QImage newImage(image.size(), QImage::Format_ARGB32);
-      newImage.fill(TransparentColor);
-      QPainter painter(&newImage);
-
-      // draw top bg layer onto it
-      painter.drawImage((BackgroundImagesOrigin-Origin).toPoint(), *BackgroundImages.back());
-      BackgroundImages.pop_back();
-
-      // Then draw our current image (Without the currently drawn object)
-      painter.drawImage(QPoint(0,0), image);
-
-      //Set combined image as new image
-      image = newImage;
-   }
-   return BackgroundImages.size();
-}
-
-int ScribbleArea::CollapseBackgroundLayers()
-{
-   if (!BackgroundImages.empty()) {
-      QImage newImage;
-      QPainter painter;
-      auto it = BackgroundImages.begin();
-      while (it != BackgroundImages.end()) {
-         if (it->IsVisible()) {
-            if (newImage.isNull()) {
-               newImage = **it;
-               painter.begin(&newImage);
-            } else {
-               painter.drawImage(QPoint(0,0), **it);
-            }
-            it = BackgroundImages.erase(it);
-         } else {
-            it++;
-         }
-      }
-      BackgroundImages.push_back(std::make_unique<QImage>(newImage));
-   }
-   return BackgroundImages.size();
-}
-
-int ScribbleArea::CollapseAllVisibleLayersToTop()
-{
-   if (!BackgroundImages.empty()) {
-      QImage newImage(image.size(), QImage::Format_ARGB32);
-      newImage.fill(TransparentColor);
-      QPainter painter(&newImage);
-      auto it = BackgroundImages.begin();
-      while (it != BackgroundImages.end()) {
-         if (it->IsVisible()) {
-            painter.drawImage(BackgroundImagesOrigin-Origin, **it);
-            it = BackgroundImages.erase(it);
-         } else {
-            it++;
-         }
-      }
-      painter.drawImage(QPoint(0,0), image);
-      image = newImage;
-   }
-   return BackgroundImages.size();
-}
-//! [8]
-
-//! [9]
-void ScribbleArea::clearImage()
-//! [9] //! [10]
-{
-    image.fill(TransparentColor);
-    modified = true;
-    LastDrawingValid = false;
-    LastDrawnObjectPoints.clear();
-    LastDrawnObject.fill(TransparentColor);
-
-    update();
-}
-//! [10]
 
 //! [11]
 void ScribbleArea::mousePressEvent(QMouseEvent *event)
@@ -622,13 +526,6 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position
 
       }
    }
-}
-
-void ScribbleArea::MakeSreenMoveHint()
-{
-   SelectedImagePart =  image.copy();
-   HintSelectedImagePart = SelectedImagePart;
-   HintSelectedImagePart.fill(qRgba(0, 0, 0, 40));
 }
 
 void ScribbleArea::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
@@ -961,31 +858,6 @@ void ScribbleArea::timeoutSM()
 
 }
 
-bool ScribbleArea::PostItSelected(QPointF Position)
-{
-   bool Found = false;
-   SelectedPostit.clear();
-   Position += Origin;
-   for (auto PostIt = PostIts.begin(); PostIt != PostIts.end(); PostIt++) {
-     if (PostIt->Box.IsInside(PositionClass(Position.x(), Position.y()))) {
-        SelectedPostit.push_back({PostIt, PostIt->Position});
-        Found = true;
-     }
-   }
-   return Found;
-}
-
-
-bool ScribbleArea::IsInsideAnyPostIt(QPointF Position)
-{
-   Position += Origin;
-   for (auto &&PostIt: PostIts) {
-     if (PostIt.Box.IsInside(PositionClass(Position.x(), Position.y()))) {
-        return true;
-     }
-   }
-   return false;
-}
 //! [12] //! [13]
 void ScribbleArea::paintEvent(QPaintEvent *event)
 //! [13] //! [14]
@@ -1030,83 +902,6 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
 
 
 
-void ScribbleArea::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRect, QPointF const &Origin, QPointF const &BackgroundImagesOrigin)
-//! [13] //! [14]
-{
-    //QPainter painter(this);
-
-    // First draw the background
-    //QRect dirtyRect = event->rect();
-    painter.setPen(QPen(QColor(50,0,0,0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                        Qt::RoundJoin));
-    painter.setBrush(QBrush(BackGroundColor));
-    //painter.setBrush(QBrush(QColor(50,0,0,100)));
-
-    painter.drawRect(dirtyRect);
-
-    for (auto &p: BackgroundImages) {
-       if (p.IsVisible()) {
-          painter.drawImage(dirtyRect, *p, dirtyRect.translated(BackgroundImagesOrigin.toPoint()));
-       }
-    }
-
-    // In marker mode, last drawn objec belongs into background
-    if (MarkerActive) {
-        painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
-    }
-
-    // Then draw our current image (Without the currently drawn object)
-    if (EraseLastDrawnObject) {
-       QImage ModifiedImage(image);
-       QPainter MIpainter(&ModifiedImage);
-       MIpainter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-       MIpainter.drawImage(Origin, LastDrawnObject);
-       painter.drawImage(dirtyRect, ModifiedImage, dirtyRect.translated(Origin.toPoint()));
-
-    } else {
-      painter.drawImage(dirtyRect, image, dirtyRect.translated(Origin.toPoint()));
-    //painter.setCompositionMode(QPainter::CompositionMode_Source);
-    }
-#if 0
-    // Probably nonsense, as widget cannot be transparent ???
-    if (EraseLastDrawnObject) {
-
-       painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    }
-#endif
-    // Now draw the currently drawn object, in marker mode it was already drawn earlier in background
-    if (!MarkerActive && !EraseLastDrawnObject) {
-       painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
-    }
-#if 0
-    if (EraseLastDrawnObject) {
-       painter.setCompositionMode(QPainter::CompositionMode_SourceOut);
-    }
-#endif
-
-    // Now draw all postits
-    for (auto &&Picture: PostIts) {
-       painter.drawImage(Picture.Position-Origin, Picture.Image);
-       if (ShowPostitsFrame == true) {
-          painter.setBrush(QBrush(Qt::NoBrush));
-          painter.setPen(Qt::black);
-          painter.drawRect(Picture.Box.QRectangle().translated(-Origin.toPoint()));
-       }
-    }
-
-    // If we have something selected, draw it
-    if (((State == MovingSelection)||(State == WaitingToLeaveJitterProtectionWithSelectedAreaForMoving)||(State == MovingSelectionPaused)) && (DiscardSelection == false)) {
-       painter.drawImage(SelectedCurrentPosition+SelectedOffset, HintSelectedImagePart);
-       painter.drawImage(SelectedCurrentPosition+SelectedOffset, SelectedImagePart);
-    }
-
-    if (RecentlyPastedObjectValid == true) {
-        painter.drawImage(RecentlyPastedObjectPosition, RecentlyPastedObject);
-    }
-
-}
-//! [14]
-
 //! [15]
 void ScribbleArea::resizeEvent(QResizeEvent *event)
 //! [15] //! [16]
@@ -1128,17 +923,6 @@ void ScribbleArea::resizeEvent(QResizeEvent *event)
 //! [16]
 
 
-void ScribbleArea::DrawMovedSelection(const QPointF Offset)
-{
-    QPainter painter(&image);
-
-
-    painter.drawImage(SelectedOffset+Offset+Origin, SelectedImagePart);
-    modified = true;
-
-    update();
-
-};
 
 //! [18]
 
