@@ -62,11 +62,14 @@
 
 #include "scribbleareaStateMachine.h"
 
+#include "databaseclass.h"
+
 class ScribbleArea : public QWidget
 {
     Q_OBJECT
 
     friend class GuiInterface;
+    DatabaseClass MyDatas;
 
 public:
     ScribbleArea(QWidget *parent = 0);
@@ -194,11 +197,14 @@ private:
     void CompleteImage();
     void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundImagesOrigin);
     int CollapseAllVisibleLayersToTop();
-    void UpdateGUI(int NumberOfLayers);
     void FilllastDrawnShape();
     void MakeSreenMoveHint();
     void MoveSelectedPostits(QPointF Position);
     void FinishMovingSelectedPostits(QPointF Position);
+
+public:
+    void UpdateGUI(const std::vector<bool> &Visibilities);
+
 };
 //! [0]
 

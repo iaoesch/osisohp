@@ -9,10 +9,11 @@
 #include "box.hpp"
 #include "Settings.hpp"
 
+class ScribbleArea;
 
 class DatabaseClass
 {
-   QWidget &Parent;
+   ScribbleArea &Parent;
    struct PostIt {
       QImage Image;
       QPointF Position;
@@ -82,7 +83,7 @@ class DatabaseClass
 
 
 public:
-   DatabaseClass(QWidget &Parent);
+   DatabaseClass(ScribbleArea &Parent);
    bool ImportImage(const QString &fileName);
 
    void drawLineTo(const QPointF &endPoint, double Pressure);
@@ -100,9 +101,15 @@ public:
    void GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size);
 
 
+   bool SaveImage(const QString &fileName, const char *fileFormat);
+   bool SaveDatabase(const QString &fileName);
+   bool LoadDatabase(const QString &fileName);
+   void setPenColor(const QColor &newColor);
+   bool SetLayerVisibility(int SelectedLayer, bool Visibility);
 private:
    void update();
    void update(const QRect &r);
+   void UpdateGUI(int NumberOfLayers);
 };
 
 #endif // DATABASECLASS_H

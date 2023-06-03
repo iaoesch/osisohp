@@ -5,14 +5,14 @@
 #include <QPainterPath>
 #include <QImage>
 #include <QPoint>
-#include <QWidget>
+#include <QFile>
 #include <QTimer>
 #include <QPolygon>
 #include <QTouchEvent>
 #include <list>
+#include "scribblearea.h"
 
-
-DatabaseClass::DatabaseClass(QWidget &Parent)
+DatabaseClass::DatabaseClass(ScribbleArea &Parent)
    : Parent(Parent)
 {
    modified = false;
@@ -31,6 +31,8 @@ DatabaseClass::DatabaseClass(QWidget &Parent)
 
    RecentlyPastedObjectValid = false;
    MarkerActive = false;
+
+   SelectedPostit.clear();
 
 
 }
@@ -269,5 +271,156 @@ void DatabaseClass::resizeImage(QImage *image, const QSize &newSize, QPoint Offs
     painter.drawImage(Offset, *image);
     *image = newImage;
 }
+
+bool DatabaseClass::SaveImage(const QString &fileName, const char *fileFormat)
+{
+   QImage ImageToSave(image.size(), QImage::Format_ARGB32);
+   QPainter painter(&ImageToSave);
+   PaintVisibleDrawing(painter, image.rect(), {0,0}, BackgroundImagesOrigin-Origin);
+
+    if (ImageToSave.save(fileName, fileFormat)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+//! [5] //! [6]
+void DatabaseClass::setPenColor(const QColor &newColor)
+{
+    auto alpha = myPenColor.alpha();
+    myPenColor = newColor;
+    myPenColor.setAlpha(alpha);
+    //myPenWidth = SelectedPenWidth;
+}
+//! [6]
+//!
+
+void DatabaseClass::UpdateGUI(int NumberOfLayers)
+{
+   std::vector<bool> Visibilities;
+   for (int i = 0; i < NumberOfLayers; i++) {
+            Visibilities.push_back( BackgroundImages[i].IsVisible());
+   }
+   Parent.UpdateGUI(Visibilities);
+}
+
+bool DatabaseClass::SetLayerVisibility(int SelectedLayer, bool Visibility)
+{
+   if (SelectedLayer < BackgroundImages.size()) {
+      BackgroundImages[SelectedLayer].SetVisible(Visibility);
+      return true;
+   }
+   return false;
+}
+
+
+bool DatabaseClass::SaveDatabase(const QString &fileName)
+{
+   // todo: read and save colors pen and background and backgroundimages
+
+   QFile file(fileName);
+   file.open(QIODevice::WriteOnly);
+   QDataStream out(&file);
+
+   // Write a header with a "magic number" and a version
+   out << (quint32)0x139A1A7F;
+   out << (qint32)110;
+
+   out.setVersion(QDataStream::Qt_6_0);
+   CompleteImage();
+
+   // Write the data
+   out << image;
+   out << Origin;
+   out << BackgroundImagesOrigin;
+   // Now save all postits
+   out << (qint32)(PostIts.size());
+   for (auto &&Picture: PostIts) {
+      out << Picture.Position;
+      out << Picture.Image;
+      out << Picture.Box;
+   }
+   out << (qint32)(BackgroundImages.size());
+   for (auto &Picture: BackgroundImages) {
+      out << Picture.IsVisible();
+      out << *Picture;
+   }
+   return true;
+
+
+}
+
+bool DatabaseClass::LoadDatabase(const QString &fileName)
+{
+#if 1
+   // todo: read and save colors pen and background and backgroundimages
+   //Then read it in with:
+
+   QFile file(fileName);
+   file.open(QIODevice::ReadOnly);
+   QDataStream in(&file);
+
+   // Read and check the header
+   quint32 magic = 0;
+   in >> magic;
+   if (magic != 0x139A1A7F)
+       return ImportImage(fileName);
+
+   // Read the version
+   qint32 version = 0;
+   in >> version;
+   if (version < 90)
+       return false; // too old
+   if (version > 110)
+       return false; // too new
+
+   if (version <= 100) {
+       in.setVersion(QDataStream::Qt_5_0);
+   }
+   else {
+       in.setVersion(QDataStream::Qt_6_0);
+   }
+
+   // Write the data
+   in >> image;
+   in >> Origin;
+   in >> BackgroundImagesOrigin;
+
+   // Now read all postits
+   qint32 NumberOfSavedPostits = 0;
+   in >> NumberOfSavedPostits;
+   QImage NewImage;
+   QPoint Position;
+   BoundingBoxClass NewBox;
+   PostIts.clear();
+   for (int i = 0; i < NumberOfSavedPostits; i++) {
+      in >> Position;
+      in >> NewImage;
+      in >> NewBox;
+      PostIts.push_back(PostIt(NewImage, Position, NewBox));
+   }
+   qint32 NumberOfBackgroundLayers = 0;
+   in >> NumberOfBackgroundLayers;
+   BackgroundImages.clear();
+   bool Visible;
+   emit(NumberOfLayerChanged(NumberOfBackgroundLayers));
+   for (int i = 0; i < NumberOfBackgroundLayers; i++) {
+      in >> Visible;
+      in >> NewImage;
+      BackgroundImages.push_back(ImageDescriptor(std::make_unique<QImage>(NewImage), Visible));
+      emit(SetVisibilityIndicatorOfLayer(i, Visible));
+   }
+
+
+   modified = false;
+   LastDrawingValid = false;
+   EraseLastDrawnObject = false;
+
+   update();
+   return true;
+#endif
+}
+
 
 //! [2]

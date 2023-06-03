@@ -77,7 +77,6 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     GestureTimeout = 500;
     SelectTimeout = 500;
     PostItTimeout = 1000;*/
-    SelectedPostit.clear();
     SelectPostitsDirectly = false;
     ShowPostitsFrame = false;
 
@@ -93,142 +92,32 @@ ScribbleArea::ScribbleArea(QWidget *parent)
 bool ScribbleArea::ExportImage(const QString &fileName, const char *fileFormat)
 //! [3] //! [4]
 {
-   QImage ImageToSave(image.size(), QImage::Format_ARGB32);
-   QPainter painter(&ImageToSave);
-   PaintVisibleDrawing(painter, image.rect(), {0,0}, BackgroundImagesOrigin-Origin);
-
-    if (ImageToSave.save(fileName, fileFormat)) {
-        return true;
-    } else {
-        return false;
-    }
+   return MyDatas.SaveImage(fileName, fileFormat);
 }
 
 bool ScribbleArea::SaveImage(const QString &fileName)
+{
+   return MyDatas.SaveDatabase(fileName);
+}
 //! [3] //! [4]
-{
-   // todo: read and save colors pen and background and backgroundimages
-
-   QFile file(fileName);
-   file.open(QIODevice::WriteOnly);
-   QDataStream out(&file);
-
-   // Write a header with a "magic number" and a version
-   out << (quint32)0x139A1A7F;
-   out << (qint32)110;
-
-   out.setVersion(QDataStream::Qt_6_0);
-   CompleteImage();
-
-   // Write the data
-   out << image;
-   out << Origin;
-   out << BackgroundImagesOrigin;
-   // Now save all postits
-   out << (qint32)(PostIts.size());
-   for (auto &&Picture: PostIts) {
-      out << Picture.Position;
-      out << Picture.Image;
-      out << Picture.Box;
-   }
-   out << (qint32)(BackgroundImages.size());
-   for (auto &Picture: BackgroundImages) {
-      out << Picture.IsVisible();
-      out << *Picture;
-   }
-   return true;
-
-
-}
 bool ScribbleArea::LoadImage(const QString &fileName)
-//! [1] //! [2]
 {
-#if 1
-   // todo: read and save colors pen and background and backgroundimages
-   //Then read it in with:
-
-   QFile file(fileName);
-   file.open(QIODevice::ReadOnly);
-   QDataStream in(&file);
-
-   // Read and check the header
-   quint32 magic = 0;
-   in >> magic;
-   if (magic != 0x139A1A7F)
-       return ImportImage(fileName);
-
-   // Read the version
-   qint32 version = 0;
-   in >> version;
-   if (version < 90)
-       return false; // too old
-   if (version > 110)
-       return false; // too new
-
-   if (version <= 100) {
-       in.setVersion(QDataStream::Qt_5_0);
-   }
-   else {
-       in.setVersion(QDataStream::Qt_6_0);
-   }
-
-   // Write the data
-   in >> image;
-   in >> Origin;
-   in >> BackgroundImagesOrigin;
-
-   // Now read all postits
-   qint32 NumberOfSavedPostits = 0;
-   in >> NumberOfSavedPostits;
-   QImage NewImage;
-   QPoint Position;
-   BoundingBoxClass NewBox;
-   PostIts.clear();
-   for (int i = 0; i < NumberOfSavedPostits; i++) {
-      in >> Position;
-      in >> NewImage;
-      in >> NewBox;
-      PostIts.push_back(PostIt(NewImage, Position, NewBox));
-   }
-   qint32 NumberOfBackgroundLayers = 0;
-   in >> NumberOfBackgroundLayers;
-   BackgroundImages.clear();
-   bool Visible;
-   emit(NumberOfLayerChanged(NumberOfBackgroundLayers));
-   for (int i = 0; i < NumberOfBackgroundLayers; i++) {
-      in >> Visible;
-      in >> NewImage;
-      BackgroundImages.push_back(ImageDescriptor(std::make_unique<QImage>(NewImage), Visible));
-      emit(SetVisibilityIndicatorOfLayer(i, Visible));
-   }
-
-
-   modified = false;
-   LastDrawingValid = false;
-   EraseLastDrawnObject = false;
-
-   update();
-   return true;
-#endif
+   return MyDatas.LoadDatabase(fileName);
 }
+//! [1] //! [2]
 //! [4]
 
 //! [5]
 void ScribbleArea::setPenColor(const QColor &newColor)
-//! [5] //! [6]
 {
-    auto alpha = myPenColor.alpha();
-    myPenColor = newColor;
-    myPenColor.setAlpha(alpha);
-    //myPenWidth = SelectedPenWidth;
+   return MyDatas.setPenColor(newColor);
 }
-//! [6]
 
-void ScribbleArea::UpdateGUI(int NumberOfLayers)
+void ScribbleArea::UpdateGUI(std::vector<bool> const &Visibilities)
 {
-   (NumberOfLayerChanged(NumberOfLayers));
-          for (int i = 0; i < NumberOfLayers; i++) {
-            emit(SetVisibilityIndicatorOfLayer(i, BackgroundImages[i].IsVisible()));
+   emit (NumberOfLayerChanged(Visibilities.size()));
+          for (int i = 0; i < Visibilities.size(); i++) {
+            emit(SetVisibilityIndicatorOfLayer(i, Visibilities[i]));
           }
    }
 
@@ -286,11 +175,11 @@ void ScribbleArea::HandleToolAction(QAction *action)
 void ScribbleArea::HandleLayerVisibilityAction(QAction *action)
 {
    unsigned int SelectedLayer = action->data().value<int>();
-   if (SelectedLayer < BackgroundImages.size()) {
-      BackgroundImages[SelectedLayer].SetVisible(action->isChecked());
+   if (MyDatas.SetLayerVisibility(SelectedLayer, action->isChecked())) {
       update();
    }
 }
+
 
 //! [7]
 void ScribbleArea::setPenWidth(int newWidth)
