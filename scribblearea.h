@@ -95,9 +95,10 @@ public:
 
     void Freeze(bool Mode) {MyDatas.Freeze(Mode);}
     void ToggleShowOverview(bool Mode) {ShowOverview = Mode; update();}
-    int MoveImageToBackgroundLayer() {MyDatas.MoveImageToBackgroundLayer();}
-    int MoveTopBackgroundLayerToImage() {MyDatas.MoveTopBackgroundLayerToImage();}
-    int CollapseBackgroundLayers() {MyDatas.CollapseBackgroundLayers();}
+    void MoveImageToBackgroundLayer() {MyDatas.MoveImageToBackgroundLayer();}
+    void MoveTopBackgroundLayerToImage() {MyDatas.MoveTopBackgroundLayerToImage();}
+    void CollapseBackgroundLayers() {MyDatas.CollapseBackgroundLayers();}
+    void CollapseAllVisibleLayersToTop() {MyDatas.CollapseAllVisibleLayersToTop();}
 
     bool SaveImage(const QString &fileName);
 public slots:
@@ -155,7 +156,6 @@ private:
     bool ShowOverview;
     bool Showeraser;
 
-    QPointF ButtonDownPosition;
     QPointF SelectedPoint;
     QPointF ScrollingLastPosition;
     QPointF ScrollingOldOrigin;
@@ -191,11 +191,6 @@ private:
     void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
     void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
     bool TouchEvent(QTouchEvent *event);
-    void CompleteImage();
-    int CollapseAllVisibleLayersToTop();
-    void FilllastDrawnShape();
-    void MoveSelectedPostits(QPointF Position);
-    void FinishMovingSelectedPostits(QPointF Position);
 
 public:
     void UpdateGUI(const std::vector<bool> &Visibilities);

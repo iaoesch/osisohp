@@ -14,6 +14,8 @@
 #include <QClipboard>
 #include "scribblearea.h"
 
+
+
 DatabaseClass::DatabaseClass(ScribbleArea &Parent)
    : Parent(Parent)
 {
@@ -33,6 +35,7 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent)
 
    RecentlyPastedObjectValid = false;
    MarkerActive = false;
+   ShowPostitsFrame = false;
 
    SelectedPostit.clear();
 
@@ -311,15 +314,15 @@ void DatabaseClass::setPenWidth(int newWidth)
     SelectedPenWidth = myPenWidth;
 }
 
-int DatabaseClass::MoveImageToBackgroundLayer()
+void DatabaseClass::MoveImageToBackgroundLayer()
 {
    CompleteImage();
    BackgroundImages.push_back(std::make_unique<QImage>(image));
    clearImage();
-   return BackgroundImages.size();
+   UpdateGUI(BackgroundImages.size());
 }
 
-int DatabaseClass::MoveTopBackgroundLayerToImage()
+void DatabaseClass::MoveTopBackgroundLayerToImage()
 {
    if (!BackgroundImages.empty()) {
       // create empty image
@@ -337,10 +340,11 @@ int DatabaseClass::MoveTopBackgroundLayerToImage()
       //Set combined image as new image
       image = newImage;
    }
-   return BackgroundImages.size();
+   UpdateGUI(BackgroundImages.size());
+
 }
 
-int DatabaseClass::CollapseBackgroundLayers()
+void DatabaseClass::CollapseBackgroundLayers()
 {
    if (!BackgroundImages.empty()) {
       QImage newImage;
@@ -361,10 +365,10 @@ int DatabaseClass::CollapseBackgroundLayers()
       }
       BackgroundImages.push_back(std::make_unique<QImage>(newImage));
    }
-   return BackgroundImages.size();
+   UpdateGUI(BackgroundImages.size());
 }
 
-int DatabaseClass::CollapseAllVisibleLayersToTop()
+void DatabaseClass::CollapseAllVisibleLayersToTop()
 {
    if (!BackgroundImages.empty()) {
       QImage newImage(image.size(), QImage::Format_ARGB32);
@@ -382,7 +386,7 @@ int DatabaseClass::CollapseAllVisibleLayersToTop()
       painter.drawImage(QPoint(0,0), image);
       image = newImage;
    }
-   return BackgroundImages.size();
+   UpdateGUI(BackgroundImages.size());
 }
 //! [8]
 
@@ -665,5 +669,55 @@ void DatabaseClass::MakeSreenMoveHint()
    HintSelectedImagePart = SelectedImagePart;
    HintSelectedImagePart.fill(qRgba(0, 0, 0, 40));
 }
+
+
+void DatabaseClass::FilllastDrawnShape()
+{
+   QPainter painter2(&image);
+   painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                        Qt::RoundJoin));
+   painter2.setBrush(QBrush(myPenColor));
+   painter2.setCompositionMode(QPainter::CompositionMode_Source);
+   // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
+   painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+}
+
+void DatabaseClass::CompleteImage()
+{
+   if (LastDrawingValid) {
+      DrawLastDrawnPicture();
+
+      LastDrawingValid = false;
+      LastDrawnObjectPoints.clear();
+
+
+   }
+}
+
+
+void DatabaseClass::MoveSelectedPostits(QPointF Position)
+{
+   for(auto &r: SelectedPostit) {
+      //SelectedPostit->Position = Position;
+      QPointF LastPosition = r.postit->Position;
+      r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
+
+      r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
+  //  SelectedPostit->Position = SelectedPostit->Position  Origin + Position;
+   }
+}
+
+void DatabaseClass::FinishMovingSelectedPostits(QPointF Position)
+{
+   for (auto &r: SelectedPostit) {
+      QPointF LastPosition = r.postit->Position;
+      r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
+
+      r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
+      // Place moved postits on top of each other
+      PostIts.splice( PostIts.end(), PostIts, r.postit);
+   }
+}
+
 
 //! [2]

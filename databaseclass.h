@@ -64,6 +64,7 @@ class DatabaseClass
    QPointF SelectedOffset;
    QPointF SelectedCurrentPosition;
    QPointF lastPoint;
+   QPointF ButtonDownPosition;
 
 
    QColor TransparentColor;
@@ -98,8 +99,12 @@ public:
    void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
    void resizeScrolledImage();
    void MakeSelectionFromLastDrawnObject();
+   void CompleteImage();
+   void FilllastDrawnShape();
 
    void CreeatePostitFromSelection();
+   void MoveSelectedPostits(QPointF Position);
+  void FinishMovingSelectedPostits(QPointF Position);
 
    void GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size);
 
@@ -110,12 +115,15 @@ public:
    void setPenColor(const QColor &newColor);
    bool SetLayerVisibility(int SelectedLayer, bool Visibility);
    void setPenWidth(int newWidth);
+   void RestorePenWidth() {myPenWidth = SelectedPenWidth;}
+   void ExtendPenWidthForMarker() {myPenWidth = SelectedPenWidth * 5 + 2;}
    void PasteImage(QImage ImageToPaste);
    void CopyImageToClipboard();
 
-   int MoveImageToBackgroundLayer();
-   int MoveTopBackgroundLayerToImage();
-   int CollapseBackgroundLayers();
+   void MoveImageToBackgroundLayer();
+   void MoveTopBackgroundLayerToImage();
+   void CollapseBackgroundLayers();
+   void CollapseAllVisibleLayersToTop();
    void clearImage();
 
    bool isModified() const { return modified; }
@@ -133,6 +141,11 @@ public:
    void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundImagesOrigin);
 
 
+
+   void setMarkerActive(bool newMarkerActive)
+   {
+      MarkerActive = newMarkerActive;
+   }
 
 private:
    void update();

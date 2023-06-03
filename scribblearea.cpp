@@ -78,7 +78,6 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     SelectTimeout = 500;
     PostItTimeout = 1000;*/
     SelectPostitsDirectly = false;
-    ShowPostitsFrame = false;
 
      // QImage RecentlyMovedObject;
    // BoundingBoxClass RecentlyMovedObjectBoundingBox;
@@ -123,48 +122,43 @@ void ScribbleArea::UpdateGUI(std::vector<bool> const &Visibilities)
 
 void ScribbleArea::HandleToolAction(QAction *action)
 {
-    myPenWidth = SelectedPenWidth;
+    MyDatas.RestorePenWidth();
 
     if (action->iconText() == "PenColor") {
-        myPenColor = action->data().value<QColor>();
-        MarkerActive = false;
+        MyDatas.setPenColor(action->data().value<QColor>());
+        MyDatas.setMarkerActive(false);
     } else if(action->iconText() == "Red") {
-        myPenColor = Qt::red;
+        MyDatas.setPenColor(Qt::red);
     } else if (action->iconText() == "Blue") {
-        myPenColor = Qt::blue;
+        MyDatas.setPenColor(Qt::blue);
     } else if (action->iconText() == "Green") {
-        myPenColor = Qt::darkGreen;
+        MyDatas.setPenColor(Qt::darkGreen);
     } else if (action->iconText() == "Yellow") {
-        myPenColor = QColor(196,196,0);
+        MyDatas.setPenColor(QColor(196,196,0));
     } else if (action->iconText() == "Black") {
-        myPenColor = Qt::black;
+        MyDatas.setPenColor(Qt::black);
     } else if (action->iconText() == "Orange") {
-        myPenColor = QColor(255,128,0);
+        MyDatas.setPenColor(QColor(255,128,0));
     } else if (action->iconText() == "Magenta") {
-        myPenColor = Qt::magenta;
+        MyDatas.setPenColor(Qt::magenta);
     } else if (action->iconText() == "MarkerYellow") {
-       myPenColor = Qt::yellow;
-       myPenColor.setAlpha(64+190);
-       myPenWidth = SelectedPenWidth * 5 + 2;
-       MarkerActive = true;
+       QColor YellowMarkerColor(Qt::yellow);
+       YellowMarkerColor.setAlpha(64+190);
+       MyDatas.setPenColor(Qt::yellow);
+       MyDatas.ExtendPenWidthForMarker();
+       MyDatas.setMarkerActive(true);
     } else if (action->iconText() == "SmallPen") {
-       SelectedPenWidth = 1;
-       myPenWidth = SelectedPenWidth;
+       MyDatas.setPenWidth(1);
     } else if (action->iconText() == "MediumPen") {
-       SelectedPenWidth = 2;
-       myPenWidth = SelectedPenWidth;
+       MyDatas.setPenWidth(2);
     } else if (action->iconText() == "LargePen") {
-       SelectedPenWidth = 4;
-       myPenWidth = SelectedPenWidth;
+       MyDatas.setPenWidth(4);
     } else if (action->iconText() == "NewPlane") {
-       int NumberOfLayers = MoveImageToBackgroundLayer();
-       UpdateGUI(NumberOfLayers);
+       MoveImageToBackgroundLayer();
     } else if (action->iconText() == "Merge") {
-       int NumberOfLayers = CollapseBackgroundLayers();
-       UpdateGUI(NumberOfLayers);
+       CollapseBackgroundLayers();
     } else if (action->iconText() == "ToTop") {
-       int NumberOfLayers = CollapseAllVisibleLayersToTop();
-       UpdateGUI(NumberOfLayers);
+       CollapseAllVisibleLayersToTop();
     } else if (action->iconText() == "Freeze") {
        Freeze(action->isChecked());
     } else if (action->iconText() == "ShowOverview") {
@@ -259,42 +253,6 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
    HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), false, 0);
 }
 
-
-void ScribbleArea::CompleteImage()
-{
-   if (LastDrawingValid) {
-      DrawLastDrawnPicture();
-
-      LastDrawingValid = false;
-      LastDrawnObjectPoints.clear();
-
-
-   }
-}
-
-
-void ScribbleArea::MoveSelectedPostits(QPointF Position)
-{
-   for(auto &r: SelectedPostit) {
-      //SelectedPostit->Position = Position;
-      QPointF LastPosition = r.postit->Position;
-      r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
-
-      r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
-  //  SelectedPostit->Position = SelectedPostit->Position  Origin + Position;
-   }
-}
-void ScribbleArea::FinishMovingSelectedPostits(QPointF Position)
-{
-   for (auto &r: SelectedPostit) {
-      QPointF LastPosition = r.postit->Position;
-      r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
-
-      r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
-      // Place moved postits on top of each other
-      PostIts.splice( PostIts.end(), PostIts, r.postit);
-   }
-}
 
 void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
@@ -420,17 +378,6 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
    HandleReleaseEventSM(event->button(), event->pos(), false, 0);
 }
 
-
-void ScribbleArea::FilllastDrawnShape()
-{
-   QPainter painter2(&image);
-   painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                        Qt::RoundJoin));
-   painter2.setBrush(QBrush(myPenColor));
-   painter2.setCompositionMode(QPainter::CompositionMode_Source);
-   // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
-   painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
-}
 
 
 
