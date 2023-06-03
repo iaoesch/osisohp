@@ -176,17 +176,17 @@ void ControllingStateMachine::ShowBigPointer()
 
 void ControllingStateMachine::SetNewState(StateBaseClass *NewState)
 {
-
+     CurrentState = NewState;
 }
 
 void ControllingStateMachine::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
-
+    CurrentState->HandlePressEventSM(Button, Position, Timestamp);
 }
 
 void ControllingStateMachine::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
-
+    CurrentState->HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 }
 
 void StateBaseClass::HandleMoveNoLeftButtonEvent(Qt::MouseButtons Buttons, QPointF Position)
@@ -689,7 +689,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForScrolli
 void ControllingStateMachine::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 {
    std::cout << "Button Up: " << Button  << std::endl;
-
+   CurrentState->HandleReleaseEventSM(Button, Position, Erasing, Pressure);
 }
 
 
@@ -715,10 +715,10 @@ void StateBaseClass::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF Mea
 
 void StateBaseClass::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
-
 }
 void ControllingStateMachine::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
+   CurrentState->HandleTouchPressEventSM(NumberOfTouchpoints, MeanPosition);
 }
 
 template<>
@@ -751,6 +751,7 @@ void StateClass<State::ScribblingState::WaitingForTouchScrolling>::HandleTouchMo
 
 void ControllingStateMachine::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
+   CurrentState->HandleTouchMoveEventSM(NumberOfTouchpoints, MeanPosition);
 }
 
 template<>
@@ -779,6 +780,7 @@ void StateClass<State::ScribblingState::WaitingForTouchScrolling>::HandleTouchRe
 
 void ControllingStateMachine::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
+   CurrentState->HandleTouchReleaseEventSM(NumberOfTouchpoints, MeanPosition);
 
 }
 
@@ -929,7 +931,7 @@ ControllingStateMachine::ControllingStateMachine()
 
 void ControllingStateMachine::timeoutSM()
 {
-
+   CurrentState->timeoutSM();
 }
 
 //! [0]
