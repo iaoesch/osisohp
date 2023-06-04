@@ -68,29 +68,30 @@ void StateClass<State>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Pos
    std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
 }
 
+#if 0
    template<State::ScribblingState State>
    void StateClass<State>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
    std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
 }
-
+#endif
    template<State::ScribblingState State>
    void StateClass<State>::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
-{
-   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
-}
+   {
+      std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+   }
 
    template<State::ScribblingState State>
    void StateClass<State>::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
-{
-   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
-}
+   {
+      std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+   }
 
    template<State::ScribblingState State>
    void StateClass<State>::timeoutSM()
-{
-   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
-}
+   {
+      std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+   }
 
 
 
@@ -654,7 +655,7 @@ void StateBaseClass::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF Me
       StateMachine.Context.MyDatas.setSelectedCurrentPosition(MeanPosition);
       StateMachine.Context.MyDatas.MakeSreenMoveHint();
    //Scrolling = true;
-   StateMachine.Context.ScrollingLastPosition = StateMachine.Context.SelectedCurrentPosition;
+   StateMachine.Context.ScrollingLastPosition = StateMachine.Context.MyDatas.getSelectedCurrentPosition();
    StateMachine.Context.ScrollingOldOrigin = StateMachine.Context.MyDatas.GetOrigin();
    //scribbling = false;
    StateMachine.Interface.UpdateRequest();
@@ -755,7 +756,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing
 
       //MoveSelected = true;
       //NewDrawingStarted = false;
-      StateMachine.Context.SelectedPoint = StateMachine.Context.MyDatas.getLastPoint();
+     // StateMachine.Context.MyDatas.SelectedPoint = StateMachine.Context.MyDatas.getLastPoint();
       StateMachine.Context.MyDatas.SetSelectedOffset();
       //scribbling = false;
       StateMachine.Interface.UpdateRequest();
@@ -832,8 +833,9 @@ void StateClass<State::ScribblingState::MovingSelection>::timeoutSM()
 }
 
 
-ControllingStateMachine::ControllingStateMachine()
-   :   Interface(nullptr),
+ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database)
+   :   Context(Database),
+       Interface(nullptr),
        Idle(*this),
        WaitingToLeaveJitterProtectionForDrawing(*this),
        WaitingToLeaveJitterProtectionWithSelectedAreaForMoving(*this),
@@ -854,10 +856,10 @@ ControllingStateMachine::ControllingStateMachine()
 
     //Context.ShowOverview = false;
 
-    Context.LastDrawingValid = false;
+  //  Context.LastDrawingValid = false;
     //Context.EraseLastDrawnObject = false;
-    Context.Frozen = false;
-    Context.myPenWidth = 2;
+ //   Context.Frozen = false;
+ //   Context.myPenWidth = 2;
     //Context.SelectedPenWidth = StateMachine.Context.myPenWidth;
 
     QObject::connect(&MyTimer, &QTimer::timeout, this, &ControllingStateMachine::Timeout);

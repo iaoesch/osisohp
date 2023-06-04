@@ -691,7 +691,7 @@ void ScribbleArea::timeoutSM()
 
             //MoveSelected = true;
             //NewDrawingStarted = false;
-            SelectedPoint = MyDatas.getLastPoint();
+            //SelectedPoint = MyDatas.getLastPoint();
             MyDatas.SetSelectedOffset();
             //scribbling = false;
             update();

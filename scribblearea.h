@@ -158,7 +158,7 @@ private:
     bool ShowOverview;
     bool Showeraser;
 
-    QPointF SelectedPoint;
+    //QPointF SelectedPoint;
     QPointF ScrollingLastPosition;
     QPointF ScrollingOldOrigin;
     QPointF FillPolygonStartPosition;

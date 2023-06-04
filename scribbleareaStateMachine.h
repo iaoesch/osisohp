@@ -141,23 +141,16 @@ private:
    struct Context {
 
       DatabaseClass &MyDatas;
+#if 0
       QPointF lastPoint;
       QPointF ButtonDownPosition;
       QPointF SelectedPoint;
       QPointF SelectedOffset;
       QPointF SelectedCurrentPosition;
-      QPointF ScrollingLastPosition;
-      QPointF ScrollingOldOrigin;
-      QPointF FillPolygonStartPosition;
 
-      QPointF LastPointerPosition;
-      bool    ShowPointer;
-      bool    Showeraser;
-      bool    DownInsideObject;
       bool    DiscardSelection;
       bool    LastDrawingValid;
       int     myPenWidth;
-      bool    SelectPostitsDirectly;
 
       QPolygonF LastDrawnObjectPoints;
 
@@ -171,7 +164,20 @@ private:
 
       BoundingBoxClass LastPaintedObjectBoundingBox;
       BoundingBoxClass CurrentPaintedObjectBoundingBox;
+#endif
+      bool    SelectPostitsDirectly;
+      bool    DownInsideObject;
 
+      QPointF LastPointerPosition;
+      bool    ShowPointer;
+      bool    Showeraser;
+
+      QPointF FillPolygonStartPosition;
+      QPointF ScrollingLastPosition;
+      QPointF ScrollingOldOrigin;
+
+   public:
+      Context(DatabaseClass &db) : MyDatas(db) {}
 
    } Context;
    Settings Settings;
@@ -206,7 +212,7 @@ public:
    void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
-   ControllingStateMachine();
+   ControllingStateMachine(DatabaseClass &Database);
 public slots:
    void timeoutSM();
 
