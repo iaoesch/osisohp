@@ -215,7 +215,6 @@ void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, 
 
         Tracker.StartTracking(Position, Timestamp);
 
-
         MyDatas.setLastPoint(Position);
         MyDatas.setButtonDownPosition(Position);
         MyDatas.RestartCurrentPaintedObjectBoundingBox(Position);

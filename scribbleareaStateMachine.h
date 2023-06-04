@@ -67,9 +67,9 @@
 
 
 #define MakeStateObject(S) StateClass<State::ScribblingState::S> S
-
 class StateBaseClass;
 class ControllingStateMachine;
+class DatabaseClass;
 
 namespace State {
 enum ScribblingState {
@@ -117,7 +117,7 @@ public:
    virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp) override;
    virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure) override;
    virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure) override;
-   virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
+ //  virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void timeoutSM() override;
@@ -139,6 +139,8 @@ private:
 
 
    struct Context {
+
+      DatabaseClass &MyDatas;
       QPointF lastPoint;
       QPointF ButtonDownPosition;
       QPointF SelectedPoint;
