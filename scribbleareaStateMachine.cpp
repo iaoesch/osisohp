@@ -840,6 +840,7 @@ void StateClass<State::ScribblingState::MovingSelection>::timeoutSM()
          QPointF CopyPos(StateMachine.Context.MyDatas.getSelectedCurrentPosition());
          StateMachine.Context.MyDatas.MoveSelectedCurrentPosition ( QPointF(3,3));
          StateMachine.Context.MyDatas.DrawMovedSelection(CopyPos);
+
       }
       StateMachine.SetNewState(&StateMachine.MovingSelectionPaused);
    }

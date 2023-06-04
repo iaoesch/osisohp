@@ -100,11 +100,13 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent)
 void DatabaseClass::update()
 {
    /// @todo propagate
+   Parent.update();
 }
 
 void DatabaseClass::update(QRect const &r)
 {
    /// @todo propagate
+   Parent.update(r);
 }
 //! [1]
 bool DatabaseClass::ImportImage(const QString &fileName)
