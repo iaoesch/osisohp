@@ -3,6 +3,7 @@ qtHaveModule(printsupport): QT += printsupport
 
 HEADERS       = mainwindow.h \
    Settings.hpp \
+   databaseclass.h \
    gesturetracker.hpp \
    interface.hpp \
                 scribblearea.h \
@@ -11,6 +12,7 @@ HEADERS       = mainwindow.h \
     PaintingArea.h \
    scribbleareaStateMachine.h
 SOURCES       = main.cpp \
+   databaseclass.cpp \
    gesturetracker.cpp \
                 mainwindow.cpp \
                 scribblearea.cpp \

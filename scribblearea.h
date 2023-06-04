@@ -62,11 +62,14 @@
 
 #include "scribbleareaStateMachine.h"
 
+#include "databaseclass.h"
+
 class ScribbleArea : public QWidget
 {
     Q_OBJECT
 
     friend class GuiInterface;
+    DatabaseClass MyDatas;
 
 public:
     ScribbleArea(QWidget *parent = 0);
@@ -78,27 +81,28 @@ public:
     void setPenColor(const QColor &newColor);
     void setPenWidth(int newWidth);
     void setDirectSelect(bool Mode) {SelectPostitsDirectly = Mode;}
-    void setShowPostitsFrame(bool Mode) {ShowPostitsFrame = Mode; update();}
+    void setShowPostitsFrame(bool Mode) {MyDatas.setShowPostitsFrame(Mode); update();}
 
-    QColor GetBackGroundColor() const { return BackGroundColor; }
-    void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; update();}
-    void setPostItBackgroundColor(const QColor &newColor) {PostItBackgroundColor = newColor; update();}
+    QColor GetBackGroundColor() const { return MyDatas.GetBackGroundColor(); }
+    void setBackGroundColor(const QColor &newColor) {MyDatas.setBackGroundColor(newColor);}
+    void setPostItBackgroundColor(const QColor &newColor) {MyDatas.setPostItBackgroundColor(newColor);}
 
     void PasteImage(QImage ImageToPaste);
 
-    bool isModified() const { return modified; }
-    QColor penColor() const { return myPenColor; }
-    int penWidth() const { return SelectedPenWidth; }
+    bool isModified() const { return MyDatas.isModified();}
+    QColor penColor() const { return MyDatas.penColor();}
+    int penWidth() const { return MyDatas.penWidth();}
 
-    void Freeze(bool Mode) {Frozen = Mode;}
+    void Freeze(bool Mode) {MyDatas.Freeze(Mode);}
     void ToggleShowOverview(bool Mode) {ShowOverview = Mode; update();}
-    int MoveImageToBackgroundLayer();
-    int MoveTopBackgroundLayerToImage();
-    int CollapseBackgroundLayers();
+    void MoveImageToBackgroundLayer() {MyDatas.MoveImageToBackgroundLayer();}
+    void MoveTopBackgroundLayerToImage() {MyDatas.MoveTopBackgroundLayerToImage();}
+    void CollapseBackgroundLayers() {MyDatas.CollapseBackgroundLayers();}
+    void CollapseAllVisibleLayersToTop() {MyDatas.CollapseAllVisibleLayersToTop();}
 
     bool SaveImage(const QString &fileName);
 public slots:
-    void clearImage();
+    void clearImage()  {MyDatas.clearImage();}
     void print();
     void HandleToolAction(QAction *action);
     void HandleLayerVisibilityAction(QAction *action);
@@ -124,29 +128,9 @@ private slots:
 private:
 
 
-    void drawLineTo(const QPointF &endPoint, double Pressure);
-    void drawrectangle(const BoundingBoxClass &Region);
-    void DrawMovedSelection(const QPointF Offset);
-
-    void DrawLastDrawnPicture();
-    void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
-    void resizeScrolledImage();
 
     Settings Settings;
 
-    struct PostIt {
-       QImage Image;
-       QPointF Position;
-       BoundingBoxClass Box;
-       PostIt(const QImage &NewImage, const QPointF &Pos, BoundingBoxClass NewBox) : Image(NewImage), Position(Pos), Box(NewBox) {}
-    };
-
-    std::list<PostIt> PostIts;
-    struct PostItDescriptor{
-       std::list<PostIt>::iterator postit;
-       QPointF StartPosition;
-    } ;
-    std::list<PostItDescriptor> SelectedPostit;
     QPoint StartPositionSelectedPostIt;
 
     enum ScribblingState {
@@ -167,68 +151,28 @@ private:
        TouchScrollingDrawingArea
     };
     enum ScribblingState State;
-    bool modified;
+
+
     bool SelectPostitsDirectly;
-    bool ShowPostitsFrame;
-    bool LastDrawingValid;
     bool DownInsideObject;
-    bool DiscardSelection;
-    int myPenWidth;
-    int SelectedPenWidth;
-    QColor myPenColor;
-    QImage image;
-    QImage LastDrawnObject;
-    QImage PointerShape;
-    QImage EraserShape;
-    QImage SpongeShape;
     bool ShowOverview;
     bool Showeraser;
-    bool MarkerActive;
-    bool EraseLastDrawnObject;
 
-    class ImageDescriptor {
-       bool Visible;
-       std::unique_ptr<QImage> Image;
-
-       public:
-       ImageDescriptor(std::unique_ptr<QImage> TheImage) : Visible(true), Image(std::move(TheImage)) {}
-       ImageDescriptor(std::unique_ptr<QImage> TheImage, bool v) : Visible(v), Image(std::move(TheImage)) {}
-       QImage &operator * () {return *Image;}
-       QImage *operator -> () {return Image.operator ->();}
-       bool IsVisible() {return Visible;}
-       void SetVisible(bool v) {Visible = v;}
-
-    };
-
-    //std::vector<std::unique_ptr<QImage>> BackgroundImages;
-    std::vector<ImageDescriptor> BackgroundImages;
-
-    QColor TransparentColor;
-    QColor BackGroundColor;
-    QColor DefaultBackGroundColor;
-    QColor PostItBackgroundColor;
-
-    QPolygonF LastDrawnObjectPoints;
-    QImage SelectedImagePart;
-    QImage HintSelectedImagePart;
-    QPointF lastPoint;
-    QPointF ButtonDownPosition;
     QPointF SelectedPoint;
-    QPointF SelectedOffset;
-    QPointF SelectedCurrentPosition;
     QPointF ScrollingLastPosition;
     QPointF ScrollingOldOrigin;
     QPointF FillPolygonStartPosition;
+
+    QImage PointerShape;
+    QImage EraserShape;
+    QImage SpongeShape;
 
     QPointF LastPointerPosition;
     bool    ShowPointer;
 
     GestureTrackerClass Tracker;
 
-    QPointF Origin;
-    bool Frozen;
-    QPointF BackgroundImagesOrigin;
-/*
+ /*
     int CopyTimeout;
     int GestureTimeout;
     int PostItTimeout;
@@ -242,34 +186,18 @@ private:
     QTimer MyTimer;
     QTimer PointerTimer;
 
-    bool RecentlyPastedObjectValid;
-    QPointF RecentlyPastedObjectPosition;
-    QImage RecentlyPastedObject;
-    BoundingBoxClass RecentlyPastedObjectBoundingBox;
-
-    BoundingBoxClass LastPaintedObjectBoundingBox;
-    BoundingBoxClass CurrentPaintedObjectBoundingBox;
-    void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
+     void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
     void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
     void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
     void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
     void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
     void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
-    bool PostItSelected(QPointF Position);
-    void EraseLineTo(const QPointF &endPoint, double Pressure);
-    bool IsInsideAnyPostIt(QPointF Position);
     bool TouchEvent(QTouchEvent *event);
-    void GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size);
-    void CompleteImage();
-    void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundImagesOrigin);
-    int CollapseAllVisibleLayersToTop();
-    void UpdateGUI(int NumberOfLayers);
-    void FilllastDrawnShape();
-    void MakeSreenMoveHint();
-    void MakeSelectionFromLastDrawnObject();
-    void CreeatePostitFromSelection();
-    void MoveSelectedPostits(QPointF Position);
-    void FinishMovingSelectedPostits(QPointF Position);
+
+public:
+    void UpdateGUI(const std::vector<bool> &Visibilities);
+    bool IsInSelectingState() {return ((State == MovingSelection)||(State == WaitingToLeaveJitterProtectionWithSelectedAreaForMoving)||(State == MovingSelectionPaused));}
+
 };
 //! [0]
 
