@@ -52,20 +52,20 @@
 template<State::ScribblingState State>
 void StateClass<State>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
-   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+   std::cout << "Unexpected event HandlePressEventSM() in default<> State " << StateId() << std::endl;
 }
 
 template<State::ScribblingState State>
 void StateClass<State>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
-   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+   std::cout << "Unexpected event HandleMoveEventSM() in default<> State " << StateId() << std::endl;
 }
 
 template<State::ScribblingState State>
 void StateClass<State>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 
 {
-   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+   std::cout << "Unexpected event HandleReleaseEventSM() in default<>  State " << StateId() << std::endl;
 }
 
 #if 0
@@ -78,19 +78,19 @@ void StateClass<State>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Pos
    template<State::ScribblingState State>
    void StateClass<State>::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
    {
-      std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+      std::cout << "Unexpected event HandleTouchMoveEventSM() in default<> State " << StateId() << std::endl;
    }
 
    template<State::ScribblingState State>
    void StateClass<State>::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
    {
-      std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+      std::cout << "Unexpected event HandleTouchRelaseEventSM() in default<> State " << StateId() << std::endl;
    }
 
    template<State::ScribblingState State>
    void StateClass<State>::timeoutSM()
    {
-      std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+      std::cout << "Unexpected event timeoutSM() in default<> State " << StateId() << std::endl;
    }
 
 
@@ -134,7 +134,7 @@ void StateClass<State::ScribblingState::Idle>::HandlePressEventSM(Qt::MouseButto
 
 void StateBaseClass::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
-   std::cout << "HandlePressEventSM: unexpected State: " << StateId()  << std::endl;
+   std::cout << "HandlePressEventSM: unexpected State: (Baseclass)" << StateId()  << std::endl;
    StateMachine.Idle.HandlePressEventSM(Button, Position, Timestamp);
 }
 
@@ -146,6 +146,8 @@ void ControllingStateMachine::PointerTimeout()
 
 void ControllingStateMachine::Timeout()
 {
+   CurrentState->timeoutSM();
+
 }
 
 
@@ -177,7 +179,19 @@ void ControllingStateMachine::ShowBigPointer()
 
 void ControllingStateMachine::SetNewState(StateBaseClass *NewState)
 {
-     CurrentState = NewState;
+   CurrentState = NewState;
+}
+
+ControllingStateMachine::PointerType ControllingStateMachine::PointerTypeToShow()
+{
+   if (Context.ShowPointer) {
+      if (Context.Showeraser) {
+         return ERASER;
+      } else {
+         return DRAWER;
+      }
+   }
+   return NONE;
 }
 
 void ControllingStateMachine::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
@@ -833,9 +847,9 @@ void StateClass<State::ScribblingState::MovingSelection>::timeoutSM()
 }
 
 
-ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database)
+ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database, GuiInterface &NewInterface)
    :   Context(Database),
-       Interface(nullptr),
+       Interface(NewInterface),
        Idle(*this),
        WaitingToLeaveJitterProtectionForDrawing(*this),
        WaitingToLeaveJitterProtectionWithSelectedAreaForMoving(*this),
@@ -852,6 +866,7 @@ ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database)
        WaitingForTouchScrolling(*this),
        TouchScrollingDrawingArea(*this)
 {
+    CurrentState = &Idle;
     Context.ShowPointer = false;
 
     //Context.ShowOverview = false;

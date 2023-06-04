@@ -202,9 +202,17 @@ private:
    MakeStateObject(TouchScrollingDrawingArea);
 
 public:
+
    void ShowBigPointer();
 
    void SetNewState(StateBaseClass *NewState);
+   enum PointerType {NONE, DRAWER, ERASER, WIPER};
+   PointerType  PointerTypeToShow();
+   QPointF getLastPointerPosition() {return Context.LastPointerPosition;}
+   bool IsScrollingState() {return (CurrentState == &ScrollingDrawingArea)||(CurrentState == &WaitingToLeaveJitterProtectionForScrolling)
+   ||(CurrentState == &WaitingForTouchScrolling) ||(CurrentState == &TouchScrollingDrawingArea);}
+
+   bool IsInSelectingState() {return ((CurrentState == &MovingSelection)||(CurrentState == &WaitingToLeaveJitterProtectionWithSelectedAreaForMoving)||(CurrentState == &MovingSelectionPaused));}
 
    void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
    void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
@@ -212,7 +220,7 @@ public:
    void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
-   ControllingStateMachine(DatabaseClass &Database);
+   ControllingStateMachine(DatabaseClass &Database, GuiInterface &Interface);
 public slots:
    void timeoutSM();
 

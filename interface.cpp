@@ -73,6 +73,7 @@ void GuiInterface::UpdateRequest()
    Scribler->update();
 }
 
+#if 0
 void GuiInterface::modified()
 {
    //Scribler->modified = true;
@@ -167,10 +168,10 @@ void GuiInterface::CreeatePostitFromSelection()
 {
 
 }
-
+#endif
 void GuiInterface::setCursor(const QCursor &Cursor)
 {
-
+   Scribler->setCursor(Cursor);
 }
 
 GuiInterface::GuiInterface(ScribbleArea *Scribler) : Scribler(Scribler)

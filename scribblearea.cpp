@@ -49,7 +49,7 @@
 
 //! [0]
 ScribbleArea::ScribbleArea(QWidget *parent)
-    : QWidget(parent), MyDatas(*this)
+    : QWidget(parent), MyDatas(*this), Interface(this), StateMachine(MyDatas, Interface)
 {
     setAttribute(Qt::WA_StaticContents);
     setTabletTracking(true);
@@ -60,7 +60,9 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     PointerShape = QImage(":/images/HandWithPen.png");
     SpongeShape = QImage(":/images/HandWithSponge.png");
     EraserShape = QImage(":/images/HandWithEraser.png");
+#ifndef USE_NEW_STATEMACHINE
     ShowPointer = false;
+#endif
 
     ShowOverview = false;
 
@@ -199,10 +201,14 @@ void ScribbleArea::CopyImageToClipboard()
 void ScribbleArea::mousePressEvent(QMouseEvent *event)
 {
    std::cout << "Mouse: press";
+#ifdef USE_NEW_STATEMACHINE
+   StateMachine.HandlePressEventSM(event->button(), event->pos(), event->timestamp());
+#else
    HandlePressEventSM(event->button(), event->pos(), event->timestamp());
-
+#endif
 }
 
+#ifndef USE_NEW_STATEMACHINE
 void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
     std::cout << "Button Down: " << Button  << std::endl;
@@ -237,21 +243,28 @@ void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, 
         }
     }
 }
+#endif
 
 void ScribbleArea::PointerTimeout()
 {
+#ifndef USE_NEW_STATEMACHINE
+
    ShowPointer = false;
+#endif
    update();
 }
 
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
    std::cout << "Mouse: move" << event->pointCount() << std::endl;
-
+#ifdef USE_NEW_STATEMACHINE
+   StateMachine.HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), false, 0);
+#else
    HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), false, 0);
+#endif
 }
 
-
+#ifndef USE_NEW_STATEMACHINE
 void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
 
@@ -359,16 +372,21 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position,
        setCursor(Qt::ArrowCursor);
     }
 }
+#endif
 
 void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {
    std::cout << "Mouse: ";
+#ifdef USE_NEW_STATEMACHINE
+   StateMachine.HandleReleaseEventSM(event->button(), event->pos(), false, 0);
+#else
    HandleReleaseEventSM(event->button(), event->pos(), false, 0);
+#endif
 }
 
 
 
-
+#ifndef USE_NEW_STATEMACHINE
 void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 {
    std::cout << "Button Up: " << Button  << std::endl;
@@ -509,20 +527,28 @@ void ScribbleArea::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF Me
 }
 
 }
-
+#endif
 void ScribbleArea::tabletEvent(QTabletEvent * event)
 {
   // std::cout << "Tablett Pen Type " << event->pointerType() << std::endl;
     switch(event->type()){
        case QEvent::TabletRelease:
           std::cout << "Tablett up " << event->type() << "/"<< event->button() << std::endl;
+#ifdef USE_NEW_STATEMACHINE
+          StateMachine.HandleReleaseEventSM(event->button(), event->position(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
+#else
           HandleReleaseEventSM(event->button(), event->position(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
+#endif
           event->accept();
           break;
 
        case QEvent::TabletPress:
         std::cout << "Tablett down " << event->type() << "/"<< event->button() << std::endl;
+#ifdef USE_NEW_STATEMACHINE
+        StateMachine.HandlePressEventSM(event->button(), event->position(), event->timestamp());
+#else
         HandlePressEventSM(event->button(), event->position(), event->timestamp());
+#endif
         switch (event->button()) {
            case Qt::NoButton:
               break;
@@ -548,7 +574,11 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
           // Tablett move also called on pressure or tilt changes
           if (LastTablettMovePosition != event->position()) {
              std::cout << "Tablett move " << event->type() << "/"<< event->buttons() << " <" << event->pos().x() << ";" << event->pos().y() << ">:" << event->pressure() << std::endl;
+#ifdef USE_NEW_STATEMACHINE
+             StateMachine.HandleMoveEventSM(event->buttons(), event->position(), event->timestamp(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
+#else
              HandleMoveEventSM(event->buttons(), event->position(), event->timestamp(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
+#endif
              LastTablettMovePosition = event->position();
           }
           event->accept();
@@ -569,7 +599,11 @@ bool ScribbleArea::TouchEvent(QTouchEvent *event)
             MeanPosition += p.position();
          }
          MeanPosition *= TouchScaling/event->pointCount();
-            HandleTouchPressEventSM(event->pointCount(), MeanPosition);
+#ifdef USE_NEW_STATEMACHINE
+         StateMachine.HandleTouchPressEventSM(event->pointCount(), MeanPosition);
+#else
+         HandleTouchPressEventSM(event->pointCount(), MeanPosition);
+#endif
          }
          event->accept();
          return true;
@@ -582,12 +616,16 @@ bool ScribbleArea::TouchEvent(QTouchEvent *event)
       case QEvent::TouchEnd:
          std::cout << "Got touch End" << std::endl;
          {
-         QPointF MeanPosition(0,0);
-         for (auto &p: event->points()) {
-            MeanPosition += p.position();
-         }
-         MeanPosition *= TouchScaling/event->pointCount();
+            QPointF MeanPosition(0,0);
+            for (auto &p: event->points()) {
+               MeanPosition += p.position();
+            }
+            MeanPosition *= TouchScaling/event->pointCount();
+#ifdef USE_NEW_STATEMACHINE
+            StateMachine.HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
+#else
             HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
+#endif
          }
          event->accept();
          return true;
@@ -601,11 +639,23 @@ bool ScribbleArea::TouchEvent(QTouchEvent *event)
          }
          MeanPosition *= TouchScaling/event->pointCount();
          if (event->isBeginEvent()) {
+#ifdef USE_NEW_STATEMACHINE
+            StateMachine.HandleTouchPressEventSM(event->pointCount(), MeanPosition);
+#else
             HandleTouchPressEventSM(event->pointCount(), MeanPosition);
+#endif
          } else if (event->isEndEvent()) {
+#ifdef USE_NEW_STATEMACHINE
+            StateMachine.HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
+#else
             HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
+#endif
          } else {
+#ifdef USE_NEW_STATEMACHINE
+            StateMachine.HandleTouchMoveEventSM(event->pointCount(), MeanPosition);
+#else
             HandleTouchMoveEventSM(event->pointCount(), MeanPosition);
+#endif
          }
 #if 0
          {
@@ -671,6 +721,7 @@ bool ScribbleArea::event(QEvent *event)
 
 }
 
+#ifndef USE_NEW_STATEMACHINE
 
 void ScribbleArea::timeoutSM()
 {
@@ -776,6 +827,7 @@ void ScribbleArea::timeoutSM()
 
 
 }
+#endif
 
 //! [12] //! [13]
 void ScribbleArea::paintEvent(QPaintEvent *event)
@@ -789,23 +841,31 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
       MyDatas.PaintVisibleDrawing(painter, event->rect());
 
       // If we are scrolling, draw a 'shadow' nover everting as feedback
-      if ((State == ScrollingDrawingArea)||(State == WaitingToLeaveJitterProtectionForScrolling)
-          ||(State == WaitingForTouchScrolling) ||(State == TouchScrollingDrawingArea)) {
+      if (StateMachine.IsScrollingState()){
          painter.setPen(QPen(QColor(90, 0, 0, 50), 1, Qt::SolidLine, Qt::RoundCap,
                              Qt::RoundJoin));
          painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
 
          painter.drawRect(0,0,this->width(), this->height());
+       }
+         switch(StateMachine.PointerTypeToShow()) {
+            case ControllingStateMachine::NONE:
+               std::cout << "No Pointer to show" << std::endl;
+               break;
+            case ControllingStateMachine::DRAWER:
+               std::cout << "Draw Pointer to show" << std::endl;
+               painter.drawImage(StateMachine.getLastPointerPosition() - QPointF(0, 36), PointerShape);
+               break;
+            case ControllingStateMachine::ERASER:
+               painter.drawImage(StateMachine.getLastPointerPosition() - QPointF(0, 36), EraserShape);
+               break;
+            case ControllingStateMachine::WIPER:
+               painter.drawImage(StateMachine.getLastPointerPosition() - QPointF(0, 36), SpongeShape);
+               break;
 
-      }
-      if (ShowPointer) {
-         if (Showeraser) {
-            painter.drawImage(LastPointerPosition - QPointF(0, 36), EraserShape);
-            // painter.drawImage(LastPointerPosition - QPointF(0, 36), SpongeShape);
-         } else {
-            painter.drawImage(LastPointerPosition - QPointF(0, 36), PointerShape);
-         }
-      }
+       }
+
+
    }
 }
 

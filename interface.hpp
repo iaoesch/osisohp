@@ -53,6 +53,7 @@ class GuiInterface
 public:
    GuiInterface(ScribbleArea *Scribler);
    void UpdateRequest();
+#if 0
    void modified(); //modified = True;
    void drawLineTo(const QPointF &endPoint, double Pressure);
    void drawrectangle(const BoundingBoxClass &Region);
@@ -74,6 +75,7 @@ public:
    void MakeSreenMoveHint();
    void MakeSelectionFromLastDrawnObject();
    void CreeatePostitFromSelection();
+#endif
    void setCursor(QCursor const &Cursor);
 
 
