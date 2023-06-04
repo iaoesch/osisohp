@@ -66,6 +66,11 @@ int DatabaseClass::getMyPenWidth() const
    return myPenWidth;
 }
 
+void DatabaseClass::setShowPostitsFrame(bool newShowPostitsFrame)
+{
+   ShowPostitsFrame = newShowPostitsFrame;
+}
+
 DatabaseClass::DatabaseClass(ScribbleArea &Parent)
    : Parent(Parent)
 {
@@ -701,7 +706,7 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
     }
 
     // If we have something selected, draw it
-    if (((State == MovingSelection)||(State == WaitingToLeaveJitterProtectionWithSelectedAreaForMoving)||(State == MovingSelectionPaused)) && (DiscardSelection == false)) {
+    if ((Parent.IsInSelectingState()) && (DiscardSelection == false)) {
        painter.drawImage(SelectedCurrentPosition+SelectedOffset, HintSelectedImagePart);
        painter.drawImage(SelectedCurrentPosition+SelectedOffset, SelectedImagePart);
     }

@@ -195,6 +195,8 @@ public:
    int getMyPenWidth() const;
 
    void ExtendBoundingboxAndShape(QPointF Position);
+   void setShowPostitsFrame(bool newShowPostitsFrame);
+
 private:
    void update();
    void update(const QRect &r);

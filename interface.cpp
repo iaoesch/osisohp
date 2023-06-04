@@ -75,7 +75,7 @@ void GuiInterface::UpdateRequest()
 
 void GuiInterface::modified()
 {
-   Scribler->modified = true;
+   //Scribler->modified = true;
 }
 
 void GuiInterface::drawLineTo(const QPointF &endPoint, double Pressure)

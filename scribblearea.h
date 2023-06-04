@@ -81,7 +81,7 @@ public:
     void setPenColor(const QColor &newColor);
     void setPenWidth(int newWidth);
     void setDirectSelect(bool Mode) {SelectPostitsDirectly = Mode;}
-    void setShowPostitsFrame(bool Mode) {ShowPostitsFrame = Mode; update();}
+    void setShowPostitsFrame(bool Mode) {MyDatas.setShowPostitsFrame(Mode); update();}
 
     QColor GetBackGroundColor() const { return MyDatas.GetBackGroundColor(); }
     void setBackGroundColor(const QColor &newColor) {MyDatas.setBackGroundColor(newColor);}
@@ -151,6 +151,8 @@ private:
        TouchScrollingDrawingArea
     };
     enum ScribblingState State;
+
+
     bool SelectPostitsDirectly;
     bool DownInsideObject;
     bool ShowOverview;
@@ -194,6 +196,7 @@ private:
 
 public:
     void UpdateGUI(const std::vector<bool> &Visibilities);
+    bool IsInSelectingState() {return ((State == MovingSelection)||(State == WaitingToLeaveJitterProtectionWithSelectedAreaForMoving)||(State == MovingSelectionPaused));}
 
 };
 //! [0]
