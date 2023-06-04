@@ -16,6 +16,56 @@
 
 
 
+bool DatabaseClass::getLastDrawingValid() const
+{
+   return LastDrawingValid;
+}
+
+void DatabaseClass::setLastDrawingValid(bool newLastDrawingValid)
+{
+   LastDrawingValid = newLastDrawingValid;
+}
+
+void DatabaseClass::setLastPoint(QPointF newLastPoint)
+{
+   lastPoint = newLastPoint;
+}
+
+void DatabaseClass::setButtonDownPosition(QPointF newButtonDownPosition)
+{
+   ButtonDownPosition = newButtonDownPosition;
+}
+
+bool DatabaseClass::getDiscardSelection() const
+{
+   return DiscardSelection;
+}
+
+void DatabaseClass::setDiscardSelection(bool newDiscardSelection)
+{
+   DiscardSelection = newDiscardSelection;
+}
+
+QPointF DatabaseClass::getSelectedCurrentPosition() const
+{
+   return SelectedCurrentPosition;
+}
+
+void DatabaseClass::setSelectedCurrentPosition(QPointF newSelectedCurrentPosition)
+{
+   SelectedCurrentPosition = newSelectedCurrentPosition;
+}
+
+QPointF DatabaseClass::getButtonDownPosition() const
+{
+   return ButtonDownPosition;
+}
+
+int DatabaseClass::getMyPenWidth() const
+{
+   return myPenWidth;
+}
+
 DatabaseClass::DatabaseClass(ScribbleArea &Parent)
    : Parent(Parent)
 {
@@ -573,6 +623,19 @@ bool DatabaseClass::IsInsideAnyPostIt(QPointF Position)
 }
 
 
+void DatabaseClass::PaintOverview(QPainter &p, QSize const &OutputSize)
+{
+   QImage Overview(image.size(), QImage::Format_ARGB32);
+   QPainter painter(&Overview);
+   PaintVisibleDrawing(painter, Overview.rect(), {0,0}, BackgroundImagesOrigin-Origin);
+   painter.setPen(QPen(QColor(90, 0, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                       Qt::RoundJoin));
+   painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
+
+   painter.drawRect(Origin.x(), Origin.y(), OutputSize.width(), OutputSize.height());
+   p.drawImage(QPointF(0,0), Overview.scaled(OutputSize, Qt::KeepAspectRatio));
+}
+
 void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRect, QPointF const &Origin, QPointF const &BackgroundImagesOrigin)
 //! [13] //! [14]
 {
@@ -694,6 +757,35 @@ void DatabaseClass::CompleteImage()
    }
 }
 
+void DatabaseClass::ResizeAll(int width, int height)
+{
+
+   if (width > LastDrawnObject.width() || height > LastDrawnObject.height()) {
+      int newWidth = qMax(width + 128, image.width());
+      int newHeight = qMax(height + 128, image.height());
+      resizeImage(&image, QSize(newWidth+Origin.x(), newHeight+Origin.y()));
+      resizeImage(&LastDrawnObject, QSize(newWidth, newHeight));
+      if (!Frozen) {
+         for (auto &p: BackgroundImages) {
+            resizeImage(&*p, QSize(newWidth+BackgroundImagesOrigin.x(), newHeight+BackgroundImagesOrigin.y()));
+         }
+      }
+      update();
+   }
+}
+
+
+void DatabaseClass::FlushLastDrawnPicture()
+{
+   if (LastDrawingValid) {
+      DrawLastDrawnPicture();
+
+      LastDrawingValid = false;
+      LastDrawnObjectPoints.clear();
+      LastDrawnObjectPoints.append(lastPoint);
+
+   }
+}
 
 void DatabaseClass::MoveSelectedPostits(QPointF Position)
 {
@@ -717,6 +809,21 @@ void DatabaseClass::FinishMovingSelectedPostits(QPointF Position)
       // Place moved postits on top of each other
       PostIts.splice( PostIts.end(), PostIts, r.postit);
    }
+}
+
+void DatabaseClass::ExtendBoundingboxAndShape(QPointF Position)
+{
+LastDrawnObjectPoints.append(Position);
+CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
+}
+
+void DatabaseClass::UpdateBoundingboxesForFinishedShape(QPointF Position)
+{
+   LastDrawnObjectPoints.append(Position);
+   LastDrawingValid = true;
+   CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
+   LastPaintedObjectBoundingBox = CurrentPaintedObjectBoundingBox;
+   CurrentPaintedObjectBoundingBox.Clear();
 }
 
 

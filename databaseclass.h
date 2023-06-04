@@ -53,6 +53,8 @@ class DatabaseClass
    QPointF Origin;
    bool Frozen;
    QPointF BackgroundImagesOrigin;
+
+
    bool EraseLastDrawnObject;
    bool modified;
    bool LastDrawingValid;
@@ -86,6 +88,22 @@ class DatabaseClass
 
 
 public:
+   void SetSelectedOffset() {SelectedOffset = QPoint(LastPaintedObjectBoundingBox.GetLeft(), LastPaintedObjectBoundingBox.GetTop()) - lastPoint;}
+
+   void RestartCurrentPaintedObjectBoundingBox(QPointF const &StartPoint) {  CurrentPaintedObjectBoundingBox.Clear();
+                                                          CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(StartPoint.x(), StartPoint.y()));
+   }
+
+   bool IsInsideLstPaintedObjectBoundingBox(QPointF const &Point) { return LastPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));}
+   void MoveOrigin(QPointF Offset) {
+
+      Origin -= Offset;
+      if (!Frozen) {
+         BackgroundImagesOrigin -= Offset;
+      }
+   }
+   QPointF GetOrigin() {return Origin;}
+
    DatabaseClass(ScribbleArea &Parent);
    bool ImportImage(const QString &fileName);
 
@@ -102,9 +120,11 @@ public:
    void CompleteImage();
    void FilllastDrawnShape();
 
+   bool IsAnySelectedPostit() {return !SelectedPostit.empty();}
+   void ClearSelectedPostit() {SelectedPostit.clear();}
    void CreeatePostitFromSelection();
    void MoveSelectedPostits(QPointF Position);
-  void FinishMovingSelectedPostits(QPointF Position);
+   void FinishMovingSelectedPostits(QPointF Position);
 
    void GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size);
 
@@ -127,6 +147,7 @@ public:
    void clearImage();
 
    bool isModified() const { return modified; }
+   void SetModified() {modified =  true;}
    QColor penColor() const { return myPenColor; }
    int penWidth() const { return SelectedPenWidth; }
    void Freeze(bool Mode) {Frozen = Mode;}
@@ -139,6 +160,7 @@ public:
    bool IsInsideAnyPostIt(QPointF Position);
 
    void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundImagesOrigin);
+   void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect) {PaintVisibleDrawing(painter, dirtyRect, Origin, BackgroundImagesOrigin);}
 
 
 
@@ -147,6 +169,32 @@ public:
       MarkerActive = newMarkerActive;
    }
 
+   void FlushLastDrawnPicture();
+   void ClearLastDrawnObjectPoints() {LastDrawnObjectPoints.clear();}
+
+   void ResizeAll(int width, int height);
+   void UpdateBoundingboxesForFinishedShape(QPointF Position);
+   void PaintOverview(QPainter &p, const QSize &OutputSize);
+   bool getLastDrawingValid() const;
+   void setLastDrawingValid(bool newLastDrawingValid);
+
+   void setLastPoint(QPointF newLastPoint);
+   QPointF getLastPoint() {return lastPoint;}
+
+   void setButtonDownPosition(QPointF newButtonDownPosition);
+
+   bool getDiscardSelection() const;
+   void setDiscardSelection(bool newDiscardSelection);
+
+   QPointF getSelectedCurrentPosition() const;
+   void setSelectedCurrentPosition(QPointF newSelectedCurrentPosition);
+   void MoveSelectedCurrentPosition(QPointF delta) {SelectedCurrentPosition += delta;}
+
+   QPointF getButtonDownPosition() const;
+
+   int getMyPenWidth() const;
+
+   void ExtendBoundingboxAndShape(QPointF Position);
 private:
    void update();
    void update(const QRect &r);
