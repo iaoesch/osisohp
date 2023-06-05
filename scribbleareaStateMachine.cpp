@@ -846,7 +846,11 @@ ControllingStateMachine::PointerType ControllingStateMachine::PointerTypeToShow(
 {
    if (Context.ShowPointer) {
       if (Context.Showeraser) {
-         return ERASER;
+         if (Context.SpongeAsEraser) {
+            return WIPER;
+         } else {
+            return ERASER;
+         }
       } else {
          return DRAWER;
       }
@@ -935,6 +939,7 @@ ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database, GuiInt
 {
     CurrentState = &Idle;
     Context.ShowPointer = false;
+    Context.SpongeAsEraser = false;
 
     //Context.ShowOverview = false;
 

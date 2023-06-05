@@ -79,6 +79,7 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent)
    EraseLastDrawnObject = false;
    Frozen = false;
    myPenWidth = 2;
+   myEraserWidth = Settings.EraserSize;
    SelectedPenWidth = myPenWidth;
    myPenColor = Qt::blue;
 
@@ -203,7 +204,7 @@ void DatabaseClass::EraseLineTo(const QPointF &endPoint, double Pressure)
 {
     std::cout << "Erasing ";
     QPainter painter(&LastDrawnObject);
-    int ModifiedPenWidth = (myPenWidth+2)*3*(1.0 + Pressure*Pressure*10);
+    int ModifiedPenWidth = (myPenWidth+myEraserWidth)*3*(1.0 + Pressure*Pressure*10);
     painter.setPen(QPen(BackGroundColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
    // painter.setCompositionMode(QPainter::CompositionMode_Source);

@@ -14,6 +14,7 @@ class ScribbleArea;
 class DatabaseClass
 {
    ScribbleArea &Parent;
+   Settings Settings;
    struct PostIt {
       QImage Image;
       QPointF Position;
@@ -29,6 +30,7 @@ class DatabaseClass
    std::list<PostItDescriptor> SelectedPostit;
 
    int myPenWidth;
+   int myEraserWidth;
    int SelectedPenWidth;
    QColor myPenColor;
    QImage image;
@@ -135,10 +137,12 @@ public:
    void setPenColor(const QColor &newColor);
    bool SetLayerVisibility(int SelectedLayer, bool Visibility);
    void setPenWidth(int newWidth);
+   void UseSpongeAsEraser(bool UseSponge) {if (UseSponge) {myEraserWidth = Settings.SpongeSize;} else {myEraserWidth = Settings.EraserSize;}}
    void RestorePenWidth() {myPenWidth = SelectedPenWidth;}
    void ExtendPenWidthForMarker() {myPenWidth = SelectedPenWidth * 5 + 2;}
    void PasteImage(QImage ImageToPaste);
    void CopyImageToClipboard();
+
 
    void MoveImageToBackgroundLayer();
    void MoveTopBackgroundLayerToImage();

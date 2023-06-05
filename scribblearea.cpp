@@ -155,6 +155,9 @@ void ScribbleArea::HandleToolAction(QAction *action)
        MyDatas.setPenWidth(2);
     } else if (action->iconText() == "LargePen") {
        MyDatas.setPenWidth(4);
+    } else if (action->iconText() == "Sponge") {
+       MyDatas.UseSpongeAsEraser(action->isChecked());
+       StateMachine.UseSpongeAsEraser(action->isChecked());
     } else if (action->iconText() == "NewPlane") {
        MoveImageToBackgroundLayer();
     } else if (action->iconText() == "Merge") {
@@ -860,7 +863,7 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
                painter.drawImage(StateMachine.getLastPointerPosition() - QPointF(0, 36), EraserShape);
                break;
             case ControllingStateMachine::WIPER:
-               painter.drawImage(StateMachine.getLastPointerPosition() - QPointF(0, 36), SpongeShape);
+               painter.drawImage(StateMachine.getLastPointerPosition() - QPointF(100, 60), SpongeShape);
                break;
 
        }

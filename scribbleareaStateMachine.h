@@ -171,6 +171,7 @@ private:
       QPointF LastPointerPosition;
       bool    ShowPointer;
       bool    Showeraser;
+      bool    SpongeAsEraser;
 
       QPointF FillPolygonStartPosition;
       QPointF ScrollingLastPosition;
@@ -204,6 +205,9 @@ private:
 public:
 
    void ShowBigPointer();
+
+   void UseSpongeAsEraser(bool SpongeMode) {Context.SpongeAsEraser = SpongeMode;}
+
 
    void SetNewState(StateBaseClass *NewState);
    enum PointerType {NONE, DRAWER, ERASER, WIPER};

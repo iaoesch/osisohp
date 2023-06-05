@@ -38,6 +38,8 @@ public:
    double SelectTimeout = 500;
    double PostItTimeout = 1000;
    double PointerHoldon = 250;
+   int    EraserSize = 2;
+   int    SpongeSize = 15;
 
 };
 /*****************************************************************************/

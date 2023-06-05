@@ -111,6 +111,7 @@ MainWindow::MainWindow()
     IconPainter.drawEllipse(2,2,9,9);
     QAction *LargePen = toolBar->addAction(ToolIcon, "LargePen");
     LargePen->setChecked(true);
+    toolBar->addAction("Sponge")->setCheckable(true);
 
     toolBar->addAction("Freeze")->setCheckable(true);
     toolBar->addAction("NewPlane");
