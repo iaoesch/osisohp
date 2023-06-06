@@ -171,6 +171,11 @@ public:
    void setMarkerActive(bool newMarkerActive)
    {
       MarkerActive = newMarkerActive;
+      if (MarkerActive) {
+         ExtendPenWidthForMarker();
+      } else {
+         RestorePenWidth();
+      }
    }
 
    void FlushLastDrawnPicture();

@@ -370,6 +370,9 @@ void DatabaseClass::setPenWidth(int newWidth)
 {
     myPenWidth = newWidth;
     SelectedPenWidth = myPenWidth;
+    if (MarkerActive) {
+       ExtendPenWidthForMarker();
+    }
 }
 
 void DatabaseClass::MoveImageToBackgroundLayer()

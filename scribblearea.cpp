@@ -124,7 +124,7 @@ void ScribbleArea::UpdateGUI(std::vector<bool> const &Visibilities)
 
 void ScribbleArea::HandleToolAction(QAction *action)
 {
-    MyDatas.RestorePenWidth();
+    //MyDatas.RestorePenWidth();
 
     if (action->iconText() == "PenColor") {
         MyDatas.setPenColor(action->data().value<QColor>());
@@ -147,7 +147,7 @@ void ScribbleArea::HandleToolAction(QAction *action)
        QColor YellowMarkerColor(Qt::yellow);
        YellowMarkerColor.setAlpha(64+190);
        MyDatas.setPenColor(Qt::yellow);
-       MyDatas.ExtendPenWidthForMarker();
+//       MyDatas.ExtendPenWidthForMarker();
        MyDatas.setMarkerActive(true);
     } else if (action->iconText() == "SmallPen") {
        MyDatas.setPenWidth(1);

@@ -25,7 +25,8 @@ SOURCES       = main.cpp \
 resources.files = \
     images/HandWithPen.png \
     images/HandWithEraser.png \
-    images/HandWithSponge.png
+    images/HandWithSponge.png \
+    images/spongeicon.png
 
 
 

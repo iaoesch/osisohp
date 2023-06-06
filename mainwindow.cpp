@@ -65,7 +65,7 @@ MainWindow::MainWindow()
     for (auto &p: PenInfo) {
        ToolIcon.fill(p.PenColor);
        p.SetPenColorAct = toolBar->addAction(QIcon(ToolIcon), "PenColor");
-       Group->addAction(p.SetPenColorAct);
+       Group->addAction(p.SetPenColorAct)->setCheckable(true);
        p.SetPenColorAct->setData(QVariant(p.PenColor));
     }
     PenInfo[NumberOfPens-1].SetPenColorAct->setText("MarkerYellow");
@@ -98,20 +98,23 @@ MainWindow::MainWindow()
     Group->setExclusive(true);
     PenInfo[0].SetPenColorAct->setChecked(true);
 
+    Group = new QActionGroup(this);
+    Group->setExclusive(true);
     ToolIcon.fill(Qt::yellow);
     QPainter IconPainter(&ToolIcon);
     IconPainter.setPen(Qt::black);
     IconPainter.setBrush(QBrush(Qt::black));
     IconPainter.drawEllipse(4,4,5,5);
-    toolBar->addAction(ToolIcon, "SmallPen");
+    Group->addAction(toolBar->addAction(ToolIcon, "SmallPen"))->setCheckable(true);
 
     IconPainter.drawEllipse(3,3,7,7);
-    toolBar->addAction(ToolIcon, "MediumPen");
+    Group->addAction(toolBar->addAction(ToolIcon, "MediumPen"))->setCheckable(true);
 
     IconPainter.drawEllipse(2,2,9,9);
-    QAction *LargePen = toolBar->addAction(ToolIcon, "LargePen");
+    QAction *LargePen = Group->addAction(toolBar->addAction(ToolIcon, "LargePen"));
+    LargePen->setCheckable(true);
     LargePen->setChecked(true);
-    toolBar->addAction("Sponge")->setCheckable(true);
+    toolBar->addAction(QIcon(":/images/spongeicon.png"), "Sponge")->setCheckable(true);
 
     toolBar->addAction("Freeze")->setCheckable(true);
     toolBar->addAction("NewPlane");
