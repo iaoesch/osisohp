@@ -121,7 +121,8 @@ MainWindow::MainWindow()
     toolBar->addAction("Merge")->setToolTip("Merge visible Background");
     toolBar->addAction("ToTop")->setToolTip("Merge all visible to editable");
     toolBar->addAction("Cut")->setCheckable(true);
-    toolBar->addAction("ShowOverview")->setCheckable(true);
+    ShowOverviewAct = toolBar->addAction("ShowOverview");
+    ShowOverviewAct->setCheckable(true);
 
     connect(toolBar, SIGNAL(actionTriggered(QAction *)),
             scribbleArea, SLOT(HandleToolAction(QAction * )));
@@ -140,6 +141,9 @@ MainWindow::MainWindow()
             this, &MainWindow::createLayerActions);
     connect(scribbleArea, &ScribbleArea::SetVisibilityIndicatorOfLayer,
             this, &MainWindow::SetVisibilityIndicatorOfLayer);
+    connect(scribbleArea, &ScribbleArea::ShowOverviewChanged,
+            this, &MainWindow::ShowOverviewChanged);
+
 
 
   //
@@ -439,6 +443,11 @@ void MainWindow::SetVisibilityIndicatorOfLayer(int Layer, bool Visibility)
    if (Layer < Actionlist.size()) {
       Actionlist.at(Layer)->setChecked(Visibility);
    }
+}
+
+void MainWindow::ShowOverviewChanged(bool OverviewEnabled)
+{
+   ShowOverviewAct->setChecked(OverviewEnabled);
 }
 
 //! [15]

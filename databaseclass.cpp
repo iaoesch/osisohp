@@ -78,6 +78,8 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent)
    LastDrawingValid = false;
    EraseLastDrawnObject = false;
    Frozen = false;
+   ShowOverview = false;
+
    myPenWidth = 2;
    myEraserWidth = Settings.EraserSize;
    SelectedPenWidth = myPenWidth;
@@ -463,13 +465,20 @@ void DatabaseClass::clearImage()
 
     update();
 }
+
+void DatabaseClass::ToggleShowOverview(bool Mode)
+{
+   ShowOverview = Mode;
+   Parent.UpdateShowOverviewChanged(Mode);
+   update();
+   }
 //! [10]
 
 
 
 void DatabaseClass::PasteImage(QImage ImageToPaste)
 {
-    QSize RequiredSize = image.size().expandedTo(ImageToPaste.size() + QSize(Origin.x(), Origin.y()));
+   QSize RequiredSize = image.size().expandedTo(ImageToPaste.size() + QSize(Origin.x(), Origin.y()));
     resizeImage(&image, RequiredSize);
     QPainter painter(&image);
     painter.drawImage(Origin, ImageToPaste);
@@ -645,6 +654,31 @@ void DatabaseClass::PaintOverview(QPainter &p, QSize const &OutputSize)
 
    painter.drawRect(Origin.x(), Origin.y(), OutputSize.width(), OutputSize.height());
    p.drawImage(QPointF(0,0), Overview.scaled(OutputSize, Qt::KeepAspectRatio));
+}
+
+QPointF DatabaseClass::TranslateCoordinateOffsetFromOverview(QPointF Coordinates)
+{
+    double ScalingFactorX = image.width() / static_cast<double>(Parent.width());
+    double ScalingFactorY = image.height() / static_cast<double>(Parent.height());
+    double ScalingFactor;
+    if (ScalingFactorY > ScalingFactorX) {
+       ScalingFactor = ScalingFactorX;
+    } else {
+       ScalingFactor = ScalingFactorY;
+    }
+    QPointF UpScaledCoordinates = Coordinates * ScalingFactor;
+    UpScaledCoordinates -= QPointF(Parent.width()/2, Parent.height()/2);
+    if (UpScaledCoordinates.x() < 0) {
+       UpScaledCoordinates.setX(0);
+    } else if (UpScaledCoordinates.x() > (image.width() - Parent.width()/2)) {
+       UpScaledCoordinates.setX(image.width() - Parent.width()/2);
+    }
+    if (UpScaledCoordinates.y() < 0) {
+       UpScaledCoordinates.setY(0);
+    } else if (UpScaledCoordinates.y() > (image.height() - Parent.height()/2)) {
+       UpScaledCoordinates.setY(image.height() - Parent.height()/2);
+    }
+    return UpScaledCoordinates;
 }
 
 void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRect, QPointF const &Origin, QPointF const &BackgroundImagesOrigin)

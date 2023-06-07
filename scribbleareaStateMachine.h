@@ -87,7 +87,8 @@ enum ScribblingState {
    MovingPostit,
    ScrollingDrawingArea,
    WaitingForTouchScrolling,
-   TouchScrollingDrawingArea
+   TouchScrollingDrawingArea,
+   WaitingToSelectRegionFromOverview
 };
 }
 
@@ -102,8 +103,10 @@ public:
    virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    virtual void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
+   virtual void HandleOverviewEventSM(bool Enabled);
    virtual void timeoutSM();
    virtual State::ScribblingState StateId() = 0;
+ //  virtual std::string StateName() = 0;
    virtual ~StateBaseClass() {}
 
    void HandleMoveNoLeftButtonEvent(Qt::MouseButtons Buttons, QPointF Position);
@@ -120,9 +123,12 @@ public:
  //  virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
+   virtual void HandleOverviewEventSM(bool Enabled) override;
    virtual void timeoutSM() override;
    virtual ~StateClass() override {}
    virtual State::ScribblingState StateId() override;
+   //virtual std::string StateName() override;
+
 };
 
 class ControllingStateMachine : public QObject {
@@ -201,6 +207,7 @@ private:
    MakeStateObject(ScrollingDrawingArea);
    MakeStateObject(WaitingForTouchScrolling);
    MakeStateObject(TouchScrollingDrawingArea);
+   MakeStateObject(WaitingToSelectRegionFromOverview);
 
 public:
 
@@ -224,6 +231,8 @@ public:
    void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
+   void HandleOverviewEventSM(bool Enabled);
+
    ControllingStateMachine(DatabaseClass &Database, GuiInterface &Interface);
 public slots:
    void timeoutSM();

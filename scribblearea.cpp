@@ -64,7 +64,6 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     ShowPointer = false;
 #endif
 
-    ShowOverview = false;
 
     setMouseTracking(true);
 
@@ -167,7 +166,8 @@ void ScribbleArea::HandleToolAction(QAction *action)
     } else if (action->iconText() == "Freeze") {
        Freeze(action->isChecked());
     } else if (action->iconText() == "ShowOverview") {
-       ToggleShowOverview(action->isChecked());
+       //ToggleShowOverview(action->isChecked());
+       StateMachine.HandleOverviewEventSM(action->isChecked());
     }
 }
 
@@ -191,7 +191,12 @@ void ScribbleArea::setPenWidth(int newWidth)
 
 void ScribbleArea::PasteImage(QImage ImageToPaste)
 {
-    MyDatas.PasteImage(ImageToPaste);
+   MyDatas.PasteImage(ImageToPaste);
+}
+
+void ScribbleArea::UpdateShowOverviewChanged(bool OverviewEnabled)
+{
+   emit(ShowOverviewChanged(OverviewEnabled));
 }
 
 
@@ -836,7 +841,7 @@ void ScribbleArea::timeoutSM()
 void ScribbleArea::paintEvent(QPaintEvent *event)
 //! [13] //! [14]
 {
-   if (ShowOverview) {
+   if (MyDatas.GetShowOverview()) {
       QPainter painter(this);
       MyDatas.PaintOverview(painter, this->size());
    } else {

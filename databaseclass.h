@@ -63,6 +63,7 @@ class DatabaseClass
    bool DiscardSelection;
    bool MarkerActive;
    bool ShowPostitsFrame;
+   bool ShowOverview;
 
 
    QPointF SelectedOffset;
@@ -155,6 +156,8 @@ public:
    QColor penColor() const { return myPenColor; }
    int penWidth() const { return SelectedPenWidth; }
    void Freeze(bool Mode) {Frozen = Mode;}
+   bool GetShowOverview() {return ShowOverview;}
+   void ToggleShowOverview(bool Mode);
 
    QColor GetBackGroundColor() const { return BackGroundColor; }
    void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; update();}
@@ -206,6 +209,7 @@ public:
    void ExtendBoundingboxAndShape(QPointF Position);
    void setShowPostitsFrame(bool newShowPostitsFrame);
 
+   QPointF TranslateCoordinateOffsetFromOverview(QPointF Coordinates);
 private:
    void update();
    void update(const QRect &r);

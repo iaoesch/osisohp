@@ -74,6 +74,8 @@ private slots:
     void ShowPostitsFrame();
     void createLayerActions(int Number);
     void SetVisibilityIndicatorOfLayer(int Layer, bool Visibility);
+    void ShowOverviewChanged(bool OverviewEnabled);
+
 
 
     void UpdatePasteState();
@@ -116,6 +118,7 @@ private:
     QAction *penWidthAct;
     QAction *DirectPostitSelectAct;
     QAction *ShowPostitsFrameAct;
+    QAction *ShowOverviewAct;
     QAction *printAct;
     QAction *clearScreenAct;
     QAction *aboutAct;

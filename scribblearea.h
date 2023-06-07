@@ -98,11 +98,12 @@ public:
     int penWidth() const { return MyDatas.penWidth();}
 
     void Freeze(bool Mode) {MyDatas.Freeze(Mode);}
-    void ToggleShowOverview(bool Mode) {ShowOverview = Mode; update();}
+    //void ToggleShowOverview(bool Mode) {MyDatas.ToggleShowOverview(Mode);}
     void MoveImageToBackgroundLayer() {MyDatas.MoveImageToBackgroundLayer();}
     void MoveTopBackgroundLayerToImage() {MyDatas.MoveTopBackgroundLayerToImage();}
     void CollapseBackgroundLayers() {MyDatas.CollapseBackgroundLayers();}
     void CollapseAllVisibleLayersToTop() {MyDatas.CollapseAllVisibleLayersToTop();}
+    void UpdateShowOverviewChanged(bool OverviewEnabled);
 
     bool SaveImage(const QString &fileName);
 public slots:
@@ -117,6 +118,7 @@ public slots:
 signals:
     void NumberOfLayerChanged(int NumberOfLayers);
     void SetVisibilityIndicatorOfLayer(int Layer, bool Visibility);
+    void ShowOverviewChanged(bool OverviewEnabled);
 
 protected:
     void mousePressEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
@@ -134,7 +136,6 @@ private:
 
 
     Settings Settings;
-    bool ShowOverview;
     bool SelectPostitsDirectly;
 
 #ifdef USE_NEW_STATEMACHINE

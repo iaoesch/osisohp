@@ -121,6 +121,11 @@ void StateBaseClass::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF 
 {
 }
 
+void StateBaseClass::HandleOverviewEventSM(bool Enabled)
+{
+
+}
+
 
 template<State::ScribblingState State>
 State::ScribblingState StateClass<State>::StateId() {return TheState;}
@@ -163,6 +168,12 @@ void StateClass<State>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Pos
    void StateClass<State>::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
    {
       std::cout << "Unexpected event HandleTouchRelaseEventSM() in default<> State " << StateId() << std::endl;
+   }
+
+   template<State::ScribblingState State>
+   void StateClass<State>::HandleOverviewEventSM(bool Enabled)
+   {
+      std::cout << "Unexpected event HandleOverviewEventSM() in default<> State " << StateId() << std::endl;
    }
 
    template<State::ScribblingState State>
@@ -233,6 +244,15 @@ void StateClass<State::ScribblingState::Idle>::HandleReleaseEventSM(Qt::MouseBut
 {
    if (Button == Qt::LeftButton) {
       // Do Nothing
+   }
+}
+
+template<>
+void StateClass<State::ScribblingState::Idle>::HandleOverviewEventSM(bool Enabled)
+{
+   if (Enabled) {
+      StateMachine.SetNewState(&StateMachine.WaitingToSelectRegionFromOverview);
+      StateMachine.Context.MyDatas.ToggleShowOverview(true);
    }
 }
 
@@ -840,6 +860,27 @@ void StateClass<State::ScribblingState::WaitingForTouchScrolling>::HandleTouchRe
    }
 }
 
+/*********** Overviev *******************************/
+
+template<>
+void StateClass<State::ScribblingState::WaitingToSelectRegionFromOverview>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
+{
+   if (Button == Qt::LeftButton) {
+      StateMachine.Context.MyDatas.MoveOrigin(-(StateMachine.Context.MyDatas.TranslateCoordinateOffsetFromOverview(Position)-StateMachine.Context.MyDatas.GetOrigin()));
+      StateMachine.SetNewState(&StateMachine.Idle);
+      StateMachine.Context.MyDatas.ToggleShowOverview(false);
+   }
+}
+
+template<>
+void StateClass<State::ScribblingState::WaitingToSelectRegionFromOverview>::HandleOverviewEventSM(bool Enabled)
+{
+   if (!Enabled) {
+      StateMachine.SetNewState(&StateMachine.Idle);
+      StateMachine.Context.MyDatas.ToggleShowOverview(false);
+   }
+}
+
 
 
 ControllingStateMachine::PointerType ControllingStateMachine::PointerTypeToShow()
@@ -906,7 +947,11 @@ void ControllingStateMachine::HandleTouchMoveEventSM(int NumberOfTouchpoints, QP
 void ControllingStateMachine::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
    CurrentState->HandleTouchReleaseEventSM(NumberOfTouchpoints, MeanPosition);
+}
 
+void ControllingStateMachine::HandleOverviewEventSM(bool Enabled)
+{
+   CurrentState->HandleOverviewEventSM(Enabled);
 }
 
 void ControllingStateMachine::Timeout()
@@ -915,7 +960,7 @@ void ControllingStateMachine::Timeout()
 
 }
 
-
+#define InitStateObject(s) s(*this, ##s)
 
 
 ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database, GuiInterface &NewInterface)
@@ -935,7 +980,8 @@ ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database, GuiInt
        MovingPostit(*this),
        ScrollingDrawingArea(*this),
        WaitingForTouchScrolling(*this),
-       TouchScrollingDrawingArea(*this)
+       TouchScrollingDrawingArea(*this),
+       WaitingToSelectRegionFromOverview(*this)
 {
     CurrentState = &Idle;
     Context.ShowPointer = false;
