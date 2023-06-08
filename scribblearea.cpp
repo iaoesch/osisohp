@@ -721,7 +721,9 @@ bool ScribbleArea::event(QEvent *event)
             update();
 
          }
-      default:
+         event->accept();
+         return true;
+       default:
          //std::cout << "<" << event->type() << ">";
          return QWidget::event(event);
 
