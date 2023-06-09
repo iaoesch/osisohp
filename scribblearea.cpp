@@ -854,7 +854,8 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
       if (StateMachine.IsScrollingState()){
          painter.setPen(QPen(QColor(90, 0, 0, 50), 1, Qt::SolidLine, Qt::RoundCap,
                              Qt::RoundJoin));
-         painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
+         //painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
+         painter.setBrush(QBrush(QColor(200, 230, 200, 50)));
 
          painter.drawRect(0,0,this->width(), this->height());
        }

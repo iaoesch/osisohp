@@ -775,7 +775,8 @@ void DatabaseClass::MakeSreenMoveHint()
 {
    SelectedImagePart =  image.copy();
    HintSelectedImagePart = SelectedImagePart;
-   HintSelectedImagePart.fill(qRgba(0, 0, 0, 40));
+ //  HintSelectedImagePart.fill(qRgba(200, 200, 200, 140));
+  HintSelectedImagePart.fill(qRgba(0, 0, 0, 40));
 }
 
 

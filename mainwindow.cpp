@@ -149,8 +149,8 @@ MainWindow::MainWindow()
   //
 
     setWindowTitle(tr("Osis OHP"));
-
-    resize(1500, 1500);
+    setWindowState(Qt::WindowMaximized);
+    resize(width(), height());
     UpdateColors();
 }
 //! [0]

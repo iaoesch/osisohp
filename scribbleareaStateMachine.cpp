@@ -151,13 +151,14 @@ void StateClass<State>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Pos
    std::cout << "Unexpected event HandleReleaseEventSM() in default<>  State " << StateId() << std::endl;
 }
 
-#if 0
-   template<State::ScribblingState State>
-   void StateClass<State>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+
+template<State::ScribblingState State>
+void StateClass<State>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
-   std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+   //std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+   StateBaseClass::HandleTouchPressEventSM(NumberOfTouchpoints, MeanPosition);
 }
-#endif
+
    template<State::ScribblingState State>
    void StateClass<State>::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
    {
@@ -251,6 +252,7 @@ template<>
 void StateClass<State::ScribblingState::Idle>::HandleOverviewEventSM(bool Enabled)
 {
    if (Enabled) {
+      StateMachine.Context.MyDatas.CompleteImage();
       StateMachine.SetNewState(&StateMachine.WaitingToSelectRegionFromOverview);
       StateMachine.Context.MyDatas.ToggleShowOverview(true);
    }
@@ -841,7 +843,7 @@ void StateClass<State::ScribblingState::WaitingForTouchScrolling>::HandleTouchMo
 template<>
 void StateClass<State::ScribblingState::TouchScrollingDrawingArea>::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
-   if(NumberOfTouchpoints == 2) {
+   if(NumberOfTouchpoints >= 2) {
       StateMachine.Context.MyDatas.MoveOrigin(MeanPosition - StateMachine.Context.ScrollingLastPosition);
 
       StateMachine.Context.MyDatas.resizeScrolledImage();
@@ -852,14 +854,32 @@ void StateClass<State::ScribblingState::TouchScrollingDrawingArea>::HandleTouchR
 }
 
 template<>
-void StateClass<State::ScribblingState::WaitingForTouchScrolling>::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+void StateClass<State::ScribblingState::TouchScrollingDrawingArea>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
-   if(NumberOfTouchpoints == 2) {
+   if(NumberOfTouchpoints > 2) {
 
-      StateMachine.TouchScrollingDrawingArea.HandleTouchMoveEventSM(NumberOfTouchpoints, MeanPosition);
+      HandleTouchReleaseEventSM(NumberOfTouchpoints, MeanPosition);
    }
 }
 
+template<>
+void StateClass<State::ScribblingState::WaitingForTouchScrolling>::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+   if(NumberOfTouchpoints >= 2) {
+
+      StateMachine.TouchScrollingDrawingArea.HandleTouchReleaseEventSM(NumberOfTouchpoints, MeanPosition);
+   }
+}
+
+
+template<>
+void StateClass<State::ScribblingState::WaitingForTouchScrolling>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+   if(NumberOfTouchpoints >= 2) {
+
+      StateMachine.TouchScrollingDrawingArea.HandleTouchReleaseEventSM(NumberOfTouchpoints, MeanPosition);
+   }
+}
 /*********** Overviev *******************************/
 
 template<>
@@ -881,6 +901,17 @@ void StateClass<State::ScribblingState::WaitingToSelectRegionFromOverview>::Hand
    }
 }
 
+template<>
+void StateClass<State::ScribblingState::WaitingToSelectRegionFromOverview>::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+   // Ignore in overview
+}
+
+template<>
+void StateClass<State::ScribblingState::WaitingToSelectRegionFromOverview>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+   // Ignore in overview
+}
 
 
 ControllingStateMachine::PointerType ControllingStateMachine::PointerTypeToShow()
