@@ -48,7 +48,6 @@
 #ifdef USE_NEW_STATEMACHINE
 #include "databaseclass.h"
 
-
 template<>
 void StateClass<State::ScribblingState::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
 
@@ -229,7 +228,7 @@ void StateClass<State::ScribblingState::Idle>::HandleMoveEventSM(Qt::MouseButton
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
    StateMachine.ShowBigPointer();
    if ((Buttons & Qt::LeftButton)) {
-       if ((Position-StateMachine.Context.MyDatas.getLastPoint()).manhattanLength() < StateMachine.Context.MyDatas.getMyPenWidth()+2) {
+       if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
    }  else {
@@ -273,7 +272,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing
 
    if ((Buttons & Qt::LeftButton)) {
 
-       if (((Position-StateMachine.Context.MyDatas.getButtonDownPosition()).manhattanLength() < (StateMachine.Context.MyDatas.getMyPenWidth()*3+2))) {
+       if (StateMachine.Context.MyDatas.IsJitter(Position, StateMachine.Context.MyDatas.getButtonDownPosition(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
        StateMachine.SetNewState(&StateMachine.Drawing);
@@ -346,7 +345,7 @@ void StateClass<State::ScribblingState::Drawing>::HandleMoveEventSM(Qt::MouseBut
    StateMachine.ShowBigPointer();
 
    if ((Buttons & Qt::LeftButton)) {
-       if (((Position-StateMachine.Context.MyDatas.getLastPoint()).manhattanLength() < (StateMachine.Context.MyDatas.getMyPenWidth()+2))) {
+       if ((StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure))) {
            return; // ignore small movements (probably use penwidth*2)
        }
        StateMachine.MyTimer.stop();
@@ -406,7 +405,7 @@ void StateClass<State::ScribblingState::DrawingPaused>::HandleMoveEventSM(Qt::Mo
    StateMachine.ShowBigPointer();
 
    if ((Buttons & Qt::LeftButton)) {
-       if ((Position-StateMachine.Context.MyDatas.getLastPoint()).manhattanLength() < StateMachine.Context.MyDatas.getMyPenWidth()+2) {
+       if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
 
@@ -440,11 +439,11 @@ void StateClass<State::ScribblingState::DrawingFillRequested>::HandleMoveEventSM
    StateMachine.ShowBigPointer();
 
    if ((Buttons & Qt::LeftButton)) {
-       if ((Position-StateMachine.Context.MyDatas.getLastPoint()).manhattanLength() < StateMachine.Context.MyDatas.getMyPenWidth()+2) {
+       if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
 
-       if ((Position-StateMachine.Context.FillPolygonStartPosition).manhattanLength() > (StateMachine.Context.MyDatas.getMyPenWidth()*3+2)) {
+       if (StateMachine.Context.MyDatas.IsJitter(Position, StateMachine.Context.FillPolygonStartPosition, Pressure)) {
           StateMachine.SetNewState(&StateMachine.Drawing);
           StateMachine.Interface.setCursor(Qt::ArrowCursor);
 
@@ -482,7 +481,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelect
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
    if ((Buttons & Qt::LeftButton)) {
-       if ((Position-StateMachine.Context.MyDatas.getLastPoint()).manhattanLength() < StateMachine.Context.MyDatas.getMyPenWidth()+2) {
+       if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
 
@@ -527,7 +526,7 @@ void StateClass<State::ScribblingState::MovingSelection>::HandleMoveEventSM(Qt::
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
    if ((Buttons & Qt::LeftButton)) {
-       if ((Position-StateMachine.Context.MyDatas.getLastPoint()).manhattanLength() < StateMachine.Context.MyDatas.getMyPenWidth()+2) {
+       if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
        // QPoint Offset = event->pos() - SelectedPoint;
@@ -604,7 +603,7 @@ void StateClass<State::ScribblingState::MovingSelectionPaused>::HandleMoveEventS
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
    if ((Buttons & Qt::LeftButton)) {
-       if ((Position-StateMachine.Context.MyDatas.getLastPoint()).manhattanLength() < StateMachine.Context.MyDatas.getMyPenWidth()+2) {
+       if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
 
@@ -637,7 +636,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithCreate
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
    if ((Buttons & Qt::LeftButton)) {
-       if ((Position-StateMachine.Context.MyDatas.getLastPoint()).manhattanLength() < StateMachine.Context.MyDatas.getMyPenWidth()+2) {
+       if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
        StateMachine.SetNewState(&StateMachine.MovingPostit);
@@ -666,7 +665,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelect
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
    if ((Buttons & Qt::LeftButton)) {
-       if ((Position-StateMachine.Context.MyDatas.getLastPoint()).manhattanLength() < StateMachine.Context.MyDatas.getMyPenWidth()+2) {
+       if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
 
@@ -701,7 +700,7 @@ void StateClass<State::ScribblingState::MovingPostit>::HandleMoveEventSM(Qt::Mou
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
    if ((Buttons & Qt::LeftButton)) {
-       if ((Position-StateMachine.Context.MyDatas.getLastPoint()).manhattanLength() < StateMachine.Context.MyDatas.getMyPenWidth()+2) {
+       if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
 
@@ -745,7 +744,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForScrolli
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
    if ((Buttons & Qt::LeftButton)) {
-       if ((Position-StateMachine.Context.MyDatas.getLastPoint()).manhattanLength() < StateMachine.Context.MyDatas.getMyPenWidth()+2) {
+       if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
        StateMachine.SetNewState(&StateMachine.ScrollingDrawingArea);
@@ -779,7 +778,7 @@ void StateClass<State::ScribblingState::ScrollingDrawingArea>::HandleMoveEventSM
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
    if ((Buttons & Qt::LeftButton)) {
-       if ((Position-StateMachine.Context.MyDatas.getLastPoint()).manhattanLength() < StateMachine.Context.MyDatas.getMyPenWidth()+2) {
+       if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
        StateMachine.Context.MyDatas.CompleteImage();

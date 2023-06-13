@@ -547,6 +547,7 @@ bool DatabaseClass::SaveDatabase(const QString &fileName)
       out << Picture.Position;
       out << Picture.Image;
       out << Picture.Box;
+      out << Picture.BorderPath;
    }
    out << (qint32)(BackgroundImages.size());
    for (auto &Picture: BackgroundImages) {
@@ -600,12 +601,14 @@ bool DatabaseClass::LoadDatabase(const QString &fileName)
    QImage NewImage;
    QPoint Position;
    BoundingBoxClass NewBox;
+   QPainterPath BorderPath;
    PostIts.clear();
    for (int i = 0; i < NumberOfSavedPostits; i++) {
       in >> Position;
       in >> NewImage;
       in >> NewBox;
-      PostIts.push_back(PostIt(NewImage, Position, NewBox));
+      in >> BorderPath;
+      PostIts.push_back(PostIt(NewImage, Position, NewBox, BorderPath));
    }
    qint32 NumberOfBackgroundLayers = 0;
    in >> NumberOfBackgroundLayers;
