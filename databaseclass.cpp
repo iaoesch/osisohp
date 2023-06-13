@@ -503,10 +503,26 @@ void DatabaseClass::ToggleShowOverview(bool Mode)
 
 void DatabaseClass::PasteImage(QImage ImageToPaste)
 {
-   QSize RequiredSize = image.size().expandedTo(ImageToPaste.size() + QSize(Origin.x(), Origin.y()));
+   QSizeF DestSize = ImageToPaste.size();
+
+   bool ShrinkToFit = true;
+   if (ShrinkToFit) {
+   if (DestSize.width() > Parent.width()) {
+      DestSize.setWidth(Parent.width());
+      DestSize.setHeight(DestSize.height()*Parent.width()/ImageToPaste.width());
+   }
+   if (DestSize.height() > Parent.height()) {
+      DestSize.setHeight(Parent.height());
+      DestSize.setWidth(DestSize.width()*Parent.height()/ImageToPaste.height());
+   }
+   }
+
+
+   QRectF Destination(Origin, DestSize);
+   QSize RequiredSize = image.size().expandedTo(DestSize.toSize() + QSize(Origin.x(), Origin.y()));
     resizeImage(&image, RequiredSize);
     QPainter painter(&image);
-    painter.drawImage(Origin, ImageToPaste);
+    painter.drawImage(Destination, ImageToPaste);
     update();
 }
 
