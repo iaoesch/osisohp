@@ -14,6 +14,8 @@
 #include <QClipboard>
 #include "scribblearea.h"
 
+#include "DebugStream.hpp"
+
 
 
 bool DatabaseClass::getLastDrawingValid() const
@@ -199,8 +201,16 @@ void DatabaseClass::CreeatePostitFromSelection()
 void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
 //! [17] //! [18]
 {
-   std::cout << "Drawing ";
-   int ModifiedPenWidth = myPenWidth * (1.0 + Pressure*Pressure*4);
+   DEBUG_LOG << "Drawing Pressure: " << Pressure << std::endl;
+   constexpr double MaxPenScaling = 11.0;
+   constexpr double MinPenScaling = 1.0;
+   constexpr double MaxPenForce = 0.9;
+   constexpr double MinPenForce = DatabaseClass::JitterPressureLimit;
+   constexpr double dx = MaxPenForce*MaxPenForce - MinPenForce*MinPenForce;
+   constexpr double dy = MaxPenScaling - MinPenScaling;
+
+   int ModifiedPenWidth = myPenWidth * qMax(MinPenScaling, Pressure*Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*MinPenForce*dy/dx)));
+//   int ModifiedPenWidth = myPenWidth * qMax(1.0, Pressure*Pressure*4);
     QPainter painter(&LastDrawnObject);
     painter.setCompositionMode(QPainter::CompositionMode_Source);
     painter.setPen(QPen(myPenColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
@@ -219,7 +229,7 @@ void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
 void DatabaseClass::EraseLineTo(const QPointF &endPoint, double Pressure)
 //! [17] //! [18]
 {
-    std::cout << "Erasing ";
+    DEBUG_LOG << "Erasing ";
     QPainter painter(&LastDrawnObject);
     int ModifiedPenWidth = (myPenWidth+myEraserWidth)*3*(1.0 + Pressure*Pressure*10);
     painter.setPen(QPen(BackGroundColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,

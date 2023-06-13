@@ -222,8 +222,9 @@ public:
    const QColor &getScrollHintColor() const;
    void setScrollHintColor(const QColor &newScrollHintColor);
 
+   static constexpr double JitterPressureLimit = 0.6;
    bool IsJitter(QPointF OldPoint, QPointF NewPoint, double Pressure) {
-      return ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()*3+2));
+      return ((Pressure < JitterPressureLimit) && ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()*3+2)));
    }
    bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, double Pressure) {
       return ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()+2));

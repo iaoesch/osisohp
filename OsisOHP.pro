@@ -2,6 +2,7 @@ QT += widgets
 qtHaveModule(printsupport): QT += printsupport
 
 HEADERS       = mainwindow.h \
+   DebugStream.hpp \
    Settings.hpp \
    databaseclass.h \
    gesturetracker.hpp \

@@ -47,13 +47,14 @@
 #include "scribbleareaStateMachine.h"
 #ifdef USE_NEW_STATEMACHINE
 #include "databaseclass.h"
+#include "DebugStream.hpp"
 
 template<>
 void StateClass<State::ScribblingState::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
 
 void StateBaseClass::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
-   std::cout << "HandlePressEventSM: unexpected State: (Baseclass)" << StateId()  << std::endl;
+   DEBUG_LOG << "HandlePressEventSM: unexpected State: (Baseclass)" << StateId()  << std::endl;
    StateMachine.Idle.HandlePressEventSM(Button, Position, Timestamp);
 }
 
@@ -134,52 +135,52 @@ State::ScribblingState StateClass<State>::StateId() {return TheState;}
 template<State::ScribblingState State>
 void StateClass<State>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
-   std::cout << "Unexpected event HandlePressEventSM() in default<> State " << StateId() << std::endl;
+   DEBUG_LOG << "Unexpected event HandlePressEventSM() in default<> State " << StateId() << std::endl;
 }
 
 template<State::ScribblingState State>
 void StateClass<State>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
-   std::cout << "Unexpected event HandleMoveEventSM() in default<> State " << StateId() << std::endl;
+   DEBUG_LOG << "Unexpected event HandleMoveEventSM() in default<> State " << StateId() << std::endl;
 }
 
 template<State::ScribblingState State>
 void StateClass<State>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 
 {
-   std::cout << "Unexpected event HandleReleaseEventSM() in default<>  State " << StateId() << std::endl;
+   DEBUG_LOG << "Unexpected event HandleReleaseEventSM() in default<>  State " << StateId() << std::endl;
 }
 
 
 template<State::ScribblingState State>
 void StateClass<State>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
-   //std::cout << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
+   //DEBUG_LOG << "Unexpected event HandlePressEventSM() in State " << StateId() << std::endl;
    StateBaseClass::HandleTouchPressEventSM(NumberOfTouchpoints, MeanPosition);
 }
 
    template<State::ScribblingState State>
    void StateClass<State>::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
    {
-      std::cout << "Unexpected event HandleTouchMoveEventSM() in default<> State " << StateId() << std::endl;
+      DEBUG_LOG << "Unexpected event HandleTouchMoveEventSM() in default<> State " << StateId() << std::endl;
    }
 
    template<State::ScribblingState State>
    void StateClass<State>::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
    {
-      std::cout << "Unexpected event HandleTouchRelaseEventSM() in default<> State " << StateId() << std::endl;
+      DEBUG_LOG << "Unexpected event HandleTouchRelaseEventSM() in default<> State " << StateId() << std::endl;
    }
 
    template<State::ScribblingState State>
    void StateClass<State>::HandleOverviewEventSM(bool Enabled)
    {
-      std::cout << "Unexpected event HandleOverviewEventSM() in default<> State " << StateId() << std::endl;
+      DEBUG_LOG << "Unexpected event HandleOverviewEventSM() in default<> State " << StateId() << std::endl;
    }
 
    template<State::ScribblingState State>
    void StateClass<State>::timeoutSM()
    {
-      std::cout << "Unexpected event timeoutSM() in default<> State " << StateId() << std::endl;
+      DEBUG_LOG << "Unexpected event timeoutSM() in default<> State " << StateId() << std::endl;
    }
 
 
@@ -189,7 +190,7 @@ void StateClass<State>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF
 template<>
 void StateClass<State::ScribblingState::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
-    std::cout << "Button Down: " << Button  << std::endl;
+    DEBUG_LOG << "Button Down: " << Button  << std::endl;
     if (Button == Qt::LeftButton) {
        StateMachine.Interface.setCursor(Qt::ArrowCursor);
 
@@ -276,7 +277,19 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing
            return; // ignore small movements (probably use penwidth*2)
        }
        StateMachine.SetNewState(&StateMachine.Drawing);
-       StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+       StateMachine.MyTimer.stop();
+       StateMachine.MyTimer.start(StateMachine.Settings.GestureTimeout);
+       StateMachine.Context.MyDatas.FlushLastDrawnPicture();
+      //LastDrawnObject.fill(BackgroundColor);
+      if (Erasing) {
+         StateMachine.Context.MyDatas.EraseLineTo(Position, Pressure);
+      } else {
+         StateMachine.Context.MyDatas.drawLineTo(Position, Pressure);
+      }
+      StateMachine.Context.MyDatas.ExtendBoundingboxAndShape(Position);
+
+       //StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
    }  else {
       HandleMoveNoLeftButtonEvent(Buttons, Position);
@@ -319,7 +332,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing
          //scribbling = false;
          //NewDrawingStarted = false;
          StateMachine.Interface.setCursor(Qt::ClosedHandCursor);
-         std::cout << "Selected postit " << std::endl;
+         DEBUG_LOG << "Selected postit " << std::endl;
          StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithSelectedPostitForMoving);
 
 
@@ -508,7 +521,7 @@ template<>
 void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>::timeoutSM()
 {
    {
-      std::cout << "Creating postit " << std::endl;
+      DEBUG_LOG << "Creating postit " << std::endl;
 
       //WaitForPostIt = false;
       StateMachine.Context.MyDatas.CreeatePostitFromSelection();
@@ -554,11 +567,11 @@ void StateClass<State::ScribblingState::MovingSelection>::HandleReleaseEventSM(Q
    if (Button == Qt::LeftButton) {
       //WaitForPostIt = false;
        if (StateMachine.Tracker.GetCurrentSpeed() > 0.25f) {
-           std::cout << "LeavingSpeed " << StateMachine.Tracker.GetCurrentSpeed() << std::endl;
+           DEBUG_LOG << "LeavingSpeed " << StateMachine.Tracker.GetCurrentSpeed() << std::endl;
            StateMachine.Context.MyDatas.setDiscardSelection(true);
            StateMachine.Interface.UpdateRequest();
        }
-       //std::cout << "LeavingSpeed " << (LastDistance + CurrentDistance) << " / " << (DeltaTLastDistance + DeltaTCurrentDistance) << " = " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
+       //DEBUG_LOG << "LeavingSpeed " << (LastDistance + CurrentDistance) << " / " << (DeltaTLastDistance + DeltaTCurrentDistance) << " = " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
            ;
      // QPoint Offset =  - SelectedPoint;
        if (StateMachine.Context.MyDatas.getDiscardSelection() == false) {
@@ -705,7 +718,7 @@ void StateClass<State::ScribblingState::MovingPostit>::HandleMoveEventSM(Qt::Mou
        }
 
        if (StateMachine.Context.MyDatas.IsAnySelectedPostit()) {
-          std::cout << "Moving postit " << std::endl;
+          DEBUG_LOG << "Moving postit " << std::endl;
           StateMachine.Context.MyDatas.MoveSelectedPostits(Position);
           StateMachine.Interface.UpdateRequest();
        }
@@ -721,7 +734,7 @@ void StateClass<State::ScribblingState::MovingPostit>::HandleReleaseEventSM(Qt::
 {
    if (Button == Qt::LeftButton) {
       if ((StateMachine.Context.MyDatas.IsAnySelectedPostit())) {
-         std::cout << "Fixing postit " << std::endl;
+         DEBUG_LOG << "Fixing postit " << std::endl;
          StateMachine.Context.MyDatas.FinishMovingSelectedPostits(Position);
 
          //  MoveSelected = false;
@@ -817,7 +830,7 @@ template<>
 void StateClass<State::ScribblingState::TouchScrollingDrawingArea>::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
    if(NumberOfTouchpoints == 2) {
-   std::cout << "TM(" << MeanPosition.x() <<":" << MeanPosition.y() << ")";
+   DEBUG_LOG << "TM(" << MeanPosition.x() <<":" << MeanPosition.y() << ")";
 
          StateMachine.Context.MyDatas.CompleteImage();
          StateMachine.Context.MyDatas.MoveOrigin(MeanPosition- StateMachine.Context.ScrollingLastPosition);
@@ -831,7 +844,7 @@ template<>
 void StateClass<State::ScribblingState::WaitingForTouchScrolling>::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
    if(NumberOfTouchpoints == 2) {
-   std::cout << "TM(" << MeanPosition.x() <<":" << MeanPosition.y() << ")";
+   DEBUG_LOG << "TM(" << MeanPosition.x() <<":" << MeanPosition.y() << ")";
 
    StateMachine.SetNewState(&StateMachine.TouchScrollingDrawingArea);
    StateMachine.TouchScrollingDrawingArea.HandleTouchMoveEventSM(NumberOfTouchpoints, MeanPosition);
@@ -960,7 +973,7 @@ void ControllingStateMachine::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint
 
 void ControllingStateMachine::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 {
-   std::cout << "Button Up: " << Button  << std::endl;
+   DEBUG_LOG << "Button Up: " << Button  << std::endl;
    CurrentState->HandleReleaseEventSM(Button, Position, Erasing, Pressure);
 }
 
