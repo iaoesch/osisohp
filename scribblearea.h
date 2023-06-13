@@ -90,6 +90,9 @@ public:
     QColor GetBackGroundColor() const { return MyDatas.GetBackGroundColor(); }
     void setBackGroundColor(const QColor &newColor) {MyDatas.setBackGroundColor(newColor);}
     void setPostItBackgroundColor(const QColor &newColor) {MyDatas.setPostItBackgroundColor(newColor);}
+    void setScrollHintColor(const QColor &newColor) {MyDatas.setScrollHintColor(newColor);}
+    void setSelectionHintColor(const QColor &newColor) {MyDatas.setSelectionHintColor(newColor);}
+
 
     void PasteImage(QImage ImageToPaste);
 

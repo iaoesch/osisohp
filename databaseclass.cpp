@@ -71,6 +71,16 @@ void DatabaseClass::setShowPostitsFrame(bool newShowPostitsFrame)
    ShowPostitsFrame = newShowPostitsFrame;
 }
 
+const QColor &DatabaseClass::getScrollHintColor() const
+{
+   return ScrollHintColor;
+}
+
+void DatabaseClass::setScrollHintColor(const QColor &newScrollHintColor)
+{
+   ScrollHintColor = newScrollHintColor;
+}
+
 DatabaseClass::DatabaseClass(ScribbleArea &Parent)
    : Parent(Parent)
 {
@@ -87,9 +97,12 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent)
 
    TransparentColor = QColor(255, 255, 255, 0);
    BackGroundColor = QColor(230,230, 200,255);
+   ScrollHintColor = QColor(0, 30, 0, 50);
+   ScrollHintBorderColor = QColor(90, 0, 0, 50);
+   SelectionHintColor = QColor(0, 30, 0, 50);
+
    DefaultBackGroundColor = BackGroundColor;
    PostItBackgroundColor = QColor(100, 0, 0, 50);
-
 
    RecentlyPastedObjectValid = false;
    MarkerActive = false;
@@ -149,9 +162,9 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject()
    painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
 
    QPainter painter(&HintSelectedImagePart);
-   painter.setPen(QPen(QColor(0, 30, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+   painter.setPen(QPen(SelectionHintBorderColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                        Qt::RoundJoin));
-   painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
+   painter.setBrush(QBrush(SelectionHintColor));
    LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetLeft(), -LastPaintedObjectBoundingBox.GetTop());
    painter.drawPolygon(LastDrawnObjectPoints);
    QPainterPath Path;
@@ -162,6 +175,7 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject()
    painter3.setClipPath(Path);
    painter3.drawImage(QPoint(0,0), SelectedImagePart);
    SelectedImagePart = MaskedSelectedImagePart;
+   SelectedImagePartPath = Path;
    LastDrawnObject.fill(qRgba(0, 0, 0, 0));
 }
 
@@ -177,7 +191,7 @@ void DatabaseClass::CreeatePostitFromSelection()
    painter.drawImage(0,0,SelectedImagePart);
    BoundingBoxClass TranslatedBoundingBox (LastPaintedObjectBoundingBox);
    TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
-   PostIts.push_back(PostIt(NewPostit, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox));
+   PostIts.push_back(PostIt(NewPostit, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox, SelectedImagePartPath));
    SelectedPostit.push_back({std::prev(PostIts.end()), PostIts.back().Position});
 }
 
@@ -648,9 +662,9 @@ void DatabaseClass::PaintOverview(QPainter &p, QSize const &OutputSize)
    QImage Overview(image.size(), QImage::Format_ARGB32);
    QPainter painter(&Overview);
    PaintVisibleDrawing(painter, Overview.rect(), {0,0}, BackgroundImagesOrigin-Origin);
-   painter.setPen(QPen(QColor(90, 0, 0, 50), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+   painter.setPen(QPen(ScrollHintBorderColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                        Qt::RoundJoin));
-   painter.setBrush(QBrush(QColor(0, 30, 0, 50)));
+   painter.setBrush(QBrush(ScrollHintColor));
 
    painter.drawRect(Origin.x(), Origin.y(), OutputSize.width(), OutputSize.height());
    p.drawImage(QPointF(0,0), Overview.scaled(OutputSize, Qt::KeepAspectRatio));
@@ -688,7 +702,7 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
 
     // First draw the background
     //QRect dirtyRect = event->rect();
-    painter.setPen(QPen(QColor(50,0,0,0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+    painter.setPen(QPen(QColor(0,0,0,0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
     painter.setBrush(QBrush(BackGroundColor));
     //painter.setBrush(QBrush(QColor(50,0,0,100)));

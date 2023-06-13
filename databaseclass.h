@@ -3,6 +3,7 @@
 
 #include <QImage>
 #include <QPoint>
+#include <QPainterPath>
 #include <list>
 #include <vector>
 
@@ -19,7 +20,8 @@ class DatabaseClass
       QImage Image;
       QPointF Position;
       BoundingBoxClass Box;
-      PostIt(const QImage &NewImage, const QPointF &Pos, BoundingBoxClass NewBox) : Image(NewImage), Position(Pos), Box(NewBox) {}
+      QPainterPath BorderPath;
+      PostIt(const QImage &NewImage, const QPointF &Pos, BoundingBoxClass NewBox, QPainterPath &Path) : Image(NewImage), Position(Pos), Box(NewBox), BorderPath(Path) {}
    };
 
    std::list<PostIt> PostIts;
@@ -75,10 +77,14 @@ class DatabaseClass
    QColor TransparentColor;
    QColor BackGroundColor;
    QColor DefaultBackGroundColor;
+   QColor ScrollHintColor;
+   QColor SelectionHintColor;
+
    QColor PostItBackgroundColor;
 
    QPolygonF LastDrawnObjectPoints;
    QImage SelectedImagePart;
+   QPainterPath SelectedImagePartPath;
    QImage HintSelectedImagePart;
 
    bool RecentlyPastedObjectValid;
@@ -162,6 +168,7 @@ public:
    QColor GetBackGroundColor() const { return BackGroundColor; }
    void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; update();}
    void setPostItBackgroundColor(const QColor &newColor) {PostItBackgroundColor = newColor; update();}
+   void setSelectionHintColor(const QColor &newColor) {SelectionHintColor = newColor;}
 
    bool PostItSelected(QPointF Position);
    bool IsInsideAnyPostIt(QPointF Position);
@@ -210,6 +217,9 @@ public:
    void setShowPostitsFrame(bool newShowPostitsFrame);
 
    QPointF TranslateCoordinateOffsetFromOverview(QPointF Coordinates);
+   const QColor &getScrollHintColor() const;
+   void setScrollHintColor(const QColor &newScrollHintColor);
+
 private:
    void update();
    void update(const QRect &r);

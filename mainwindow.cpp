@@ -166,6 +166,9 @@ void MainWindow::SetWhiteBoardColors(void)
    PenInfo[6].PenColor = Qt::black;
    PenInfo[7].PenColor = Qt::yellow;
    BackgroundColor = QColor(230,230, 200,255);
+   ScrollHintColor = QColor(200, 230, 200, 50);
+   PostItBackgroundColor = QColor(100, 0, 0, 50);
+   SelectionHintColor = QColor(200, 230, 200, 50);
 }
 
 void MainWindow::SetBlackBoardColors(void)
@@ -179,6 +182,9 @@ void MainWindow::SetBlackBoardColors(void)
    PenInfo[6].PenColor = Qt::white;
    PenInfo[7].PenColor = Qt::yellow;
    BackgroundColor = QColor(30, 30, 30, 255);
+   ScrollHintColor = QColor(200, 230, 200, 50);
+   PostItBackgroundColor = QColor(150, 250, 250, 50);
+   SelectionHintColor = QColor(200, 230, 200, 50);
 }
 
 void MainWindow::UpdateColors(void)
@@ -191,7 +197,10 @@ void MainWindow::UpdateColors(void)
       p.SetPenColorAct->setData(p.PenColor);
    }
    scribbleArea->setBackGroundColor(BackgroundColor);
-   SetMatchingPostitColor(BackgroundColor);
+   scribbleArea->setPostItBackgroundColor(PostItBackgroundColor);
+   scribbleArea->setScrollHintColor(ScrollHintColor);
+   scribbleArea->setSelectionHintColor(SelectionHintColor);
+
 //   if (BackgroundColor.value() > 128) {
 //      QColor PostitColor = BackgroundColor.darker();
 //      PostitColor.setAlpha(40);
@@ -261,7 +270,13 @@ void MainWindow::penColor()
 //! [8]
 void MainWindow::SetMatchingPostitColor(QColor &newColor)
 {
-   scribbleArea->setPostItBackgroundColor(QColor(255-newColor.red(), 255-newColor.green(), 255-newColor.blue(), 50));
+   PostItBackgroundColor = QColor(255-newColor.red(), 255-newColor.green(), 255-newColor.blue(), 50);
+   scribbleArea->setPostItBackgroundColor(PostItBackgroundColor);
+   ScrollHintColor = QColor(255-newColor.red(), 255-newColor.green(), 255-newColor.blue(), 50);
+   scribbleArea->setScrollHintColor(ScrollHintColor);
+   SelectionHintColor = QColor(255-newColor.red(), 255-newColor.green(), 255-newColor.blue(), 50);
+   scribbleArea->setSelectionHintColor(SelectionHintColor);
+
 }
 
 void MainWindow::BackGroundColorColor()

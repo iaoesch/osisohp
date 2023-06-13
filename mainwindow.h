@@ -104,6 +104,10 @@ private:
 
     PenInfo PenInfo[NumberOfPens];
     QColor BackgroundColor;
+    QColor ScrollHintColor;
+    QColor SelectionHintColor;
+    QColor PostItBackgroundColor;
+
 
     QAction *openAct;
     QAction *saveAct;
