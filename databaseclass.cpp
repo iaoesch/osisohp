@@ -100,6 +100,7 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent)
    ScrollHintColor = QColor(0, 30, 0, 50);
    ScrollHintBorderColor = QColor(90, 0, 0, 50);
    SelectionHintColor = QColor(0, 30, 0, 50);
+   SelectionHintBorderColor = QColor(0, 30, 0, 50);
 
    DefaultBackGroundColor = BackGroundColor;
    PostItBackgroundColor = QColor(100, 0, 0, 50);

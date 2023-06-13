@@ -78,7 +78,9 @@ class DatabaseClass
    QColor BackGroundColor;
    QColor DefaultBackGroundColor;
    QColor ScrollHintColor;
+   QColor ScrollHintBorderColor;
    QColor SelectionHintColor;
+   QColor SelectionHintBorderColor;
 
    QColor PostItBackgroundColor;
 

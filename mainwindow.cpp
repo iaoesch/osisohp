@@ -97,6 +97,7 @@ MainWindow::MainWindow()
 #endif
     Group->setExclusive(true);
     PenInfo[0].SetPenColorAct->setChecked(true);
+    scribbleArea->setPenColor(PenInfo[0].PenColor);
 
     Group = new QActionGroup(this);
     Group->setExclusive(true);
@@ -152,6 +153,7 @@ MainWindow::MainWindow()
     setWindowState(Qt::WindowMaximized);
     resize(width(), height());
     UpdateColors();
+
 }
 //! [0]
 
@@ -587,7 +589,10 @@ void MainWindow::writeSettings()
         settings.setValue("Color", PenInfo[i].PenColor);
     }
     settings.endArray();
-    settings.setValue("BackgroundColor", scribbleArea->GetBackGroundColor());
+    settings.setValue("BackgroundColor", BackgroundColor);
+    settings.setValue("ScrollHintColor", ScrollHintColor);
+    settings.setValue("SelectionHintColor", SelectionHintColor);
+    settings.setValue("PostItBackgroundColor", PostItBackgroundColor);
 
     settings.beginGroup("SensorNames");
     settings.endGroup();
@@ -609,6 +614,10 @@ void MainWindow::readSettings()
     }
     settings.endArray();
     BackgroundColor = settings.value("BackgroundColor").value<QColor>();
+    ScrollHintColor = settings.value("ScrollHintColor").value<QColor>();
+    SelectionHintColor = settings.value("SelectionHintColor").value<QColor>();
+    PostItBackgroundColor = settings.value("PostItBackgroundColor").value<QColor>();
+
     settings.beginGroup("SensorNames");
     settings.endGroup();
     settings.endGroup();
