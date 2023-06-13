@@ -65,7 +65,7 @@ MainWindow::MainWindow()
     for (auto &p: PenInfo) {
        ToolIcon.fill(p.PenColor);
        p.SetPenColorAct = toolBar->addAction(QIcon(ToolIcon), "PenColor");
-       Group->addAction(p.SetPenColorAct);
+       Group->addAction(p.SetPenColorAct)->setCheckable(true);
        p.SetPenColorAct->setData(QVariant(p.PenColor));
     }
     PenInfo[NumberOfPens-1].SetPenColorAct->setText("MarkerYellow");
@@ -98,26 +98,31 @@ MainWindow::MainWindow()
     Group->setExclusive(true);
     PenInfo[0].SetPenColorAct->setChecked(true);
 
+    Group = new QActionGroup(this);
+    Group->setExclusive(true);
     ToolIcon.fill(Qt::yellow);
     QPainter IconPainter(&ToolIcon);
     IconPainter.setPen(Qt::black);
     IconPainter.setBrush(QBrush(Qt::black));
     IconPainter.drawEllipse(4,4,5,5);
-    toolBar->addAction(ToolIcon, "SmallPen");
+    Group->addAction(toolBar->addAction(ToolIcon, "SmallPen"))->setCheckable(true);
 
     IconPainter.drawEllipse(3,3,7,7);
-    toolBar->addAction(ToolIcon, "MediumPen");
+    Group->addAction(toolBar->addAction(ToolIcon, "MediumPen"))->setCheckable(true);
 
     IconPainter.drawEllipse(2,2,9,9);
-    QAction *LargePen = toolBar->addAction(ToolIcon, "LargePen");
+    QAction *LargePen = Group->addAction(toolBar->addAction(ToolIcon, "LargePen"));
+    LargePen->setCheckable(true);
     LargePen->setChecked(true);
+    toolBar->addAction(QIcon(":/images/spongeicon.png"), "Sponge")->setCheckable(true);
 
     toolBar->addAction("Freeze")->setCheckable(true);
     toolBar->addAction("NewPlane");
     toolBar->addAction("Merge")->setToolTip("Merge visible Background");
     toolBar->addAction("ToTop")->setToolTip("Merge all visible to editable");
     toolBar->addAction("Cut")->setCheckable(true);
-    toolBar->addAction("ShowOverview")->setCheckable(true);
+    ShowOverviewAct = toolBar->addAction("ShowOverview");
+    ShowOverviewAct->setCheckable(true);
 
     connect(toolBar, SIGNAL(actionTriggered(QAction *)),
             scribbleArea, SLOT(HandleToolAction(QAction * )));
@@ -136,13 +141,16 @@ MainWindow::MainWindow()
             this, &MainWindow::createLayerActions);
     connect(scribbleArea, &ScribbleArea::SetVisibilityIndicatorOfLayer,
             this, &MainWindow::SetVisibilityIndicatorOfLayer);
+    connect(scribbleArea, &ScribbleArea::ShowOverviewChanged,
+            this, &MainWindow::ShowOverviewChanged);
+
 
 
   //
 
     setWindowTitle(tr("Osis OHP"));
-
-    resize(1500, 1500);
+    setWindowState(Qt::WindowMaximized);
+    resize(width(), height());
     UpdateColors();
 }
 //! [0]
@@ -158,6 +166,9 @@ void MainWindow::SetWhiteBoardColors(void)
    PenInfo[6].PenColor = Qt::black;
    PenInfo[7].PenColor = Qt::yellow;
    BackgroundColor = QColor(230,230, 200,255);
+   ScrollHintColor = QColor(200, 230, 200, 50);
+   PostItBackgroundColor = QColor(100, 0, 0, 50);
+   SelectionHintColor = QColor(200, 230, 200, 50);
 }
 
 void MainWindow::SetBlackBoardColors(void)
@@ -171,6 +182,9 @@ void MainWindow::SetBlackBoardColors(void)
    PenInfo[6].PenColor = Qt::white;
    PenInfo[7].PenColor = Qt::yellow;
    BackgroundColor = QColor(30, 30, 30, 255);
+   ScrollHintColor = QColor(200, 230, 200, 50);
+   PostItBackgroundColor = QColor(150, 250, 250, 50);
+   SelectionHintColor = QColor(200, 230, 200, 50);
 }
 
 void MainWindow::UpdateColors(void)
@@ -183,7 +197,10 @@ void MainWindow::UpdateColors(void)
       p.SetPenColorAct->setData(p.PenColor);
    }
    scribbleArea->setBackGroundColor(BackgroundColor);
-   SetMatchingPostitColor(BackgroundColor);
+   scribbleArea->setPostItBackgroundColor(PostItBackgroundColor);
+   scribbleArea->setScrollHintColor(ScrollHintColor);
+   scribbleArea->setSelectionHintColor(SelectionHintColor);
+
 //   if (BackgroundColor.value() > 128) {
 //      QColor PostitColor = BackgroundColor.darker();
 //      PostitColor.setAlpha(40);
@@ -253,7 +270,13 @@ void MainWindow::penColor()
 //! [8]
 void MainWindow::SetMatchingPostitColor(QColor &newColor)
 {
-   scribbleArea->setPostItBackgroundColor(QColor(255-newColor.red(), 255-newColor.green(), 255-newColor.blue(), 50));
+   PostItBackgroundColor = QColor(255-newColor.red(), 255-newColor.green(), 255-newColor.blue(), 50);
+   scribbleArea->setPostItBackgroundColor(PostItBackgroundColor);
+   ScrollHintColor = QColor(255-newColor.red(), 255-newColor.green(), 255-newColor.blue(), 50);
+   scribbleArea->setScrollHintColor(ScrollHintColor);
+   SelectionHintColor = QColor(255-newColor.red(), 255-newColor.green(), 255-newColor.blue(), 50);
+   scribbleArea->setSelectionHintColor(SelectionHintColor);
+
 }
 
 void MainWindow::BackGroundColorColor()
@@ -435,6 +458,11 @@ void MainWindow::SetVisibilityIndicatorOfLayer(int Layer, bool Visibility)
    if (Layer < Actionlist.size()) {
       Actionlist.at(Layer)->setChecked(Visibility);
    }
+}
+
+void MainWindow::ShowOverviewChanged(bool OverviewEnabled)
+{
+   ShowOverviewAct->setChecked(OverviewEnabled);
 }
 
 //! [15]

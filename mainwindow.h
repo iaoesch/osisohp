@@ -74,6 +74,8 @@ private slots:
     void ShowPostitsFrame();
     void createLayerActions(int Number);
     void SetVisibilityIndicatorOfLayer(int Layer, bool Visibility);
+    void ShowOverviewChanged(bool OverviewEnabled);
+
 
 
     void UpdatePasteState();
@@ -102,6 +104,10 @@ private:
 
     PenInfo PenInfo[NumberOfPens];
     QColor BackgroundColor;
+    QColor ScrollHintColor;
+    QColor SelectionHintColor;
+    QColor PostItBackgroundColor;
+
 
     QAction *openAct;
     QAction *saveAct;
@@ -116,6 +122,7 @@ private:
     QAction *penWidthAct;
     QAction *DirectPostitSelectAct;
     QAction *ShowPostitsFrameAct;
+    QAction *ShowOverviewAct;
     QAction *printAct;
     QAction *clearScreenAct;
     QAction *aboutAct;
