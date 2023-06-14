@@ -1002,7 +1002,11 @@ void DatabaseClass::CancelPasteImage()
 
 void DatabaseClass::ScaleImageToPaste(double ScalingFactor)
 {
-   ScalingFactorOfImageToPaste *= ScalingFactor;
+   if (ScalingFactor > 0.1) {
+      ScalingFactorOfImageToPaste *= ScalingFactor;
+   } else {
+      ScalingFactorOfImageToPaste = 1.0;
+   }
    update();
 }
 

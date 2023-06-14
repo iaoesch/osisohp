@@ -754,12 +754,20 @@ void ScribbleArea::keyPressEvent(QKeyEvent *event)
          StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::CancelPasting);
          break;
 
+      case Qt::Key_Backspace:
+      case Qt::Key_O:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::MakeOriginalSize);
+         break;
+
       case Qt::Key_Plus:
+      case Qt::Key_1:
          StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::MakeBigger);
          break;
 
 
       case Qt::Key_Minus:
+      case Qt::Key_Underscore:
+      case Qt::Key_Space:
          StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::MakeSmaller);
          break;
 

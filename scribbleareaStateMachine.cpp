@@ -980,6 +980,9 @@ void StateClass<State::ScribblingState::WaitingToPasteClippboardImage>::HandleKe
          StateMachine.Context.MyDatas.ScaleImageToPaste(0.9);
          break;
 
+      case DatabaseClass::MakeOriginalSize:
+         StateMachine.Context.MyDatas.ScaleImageToPaste(-1.0);
+         break;
    }
 }
 
