@@ -92,6 +92,9 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent)
    Frozen = false;
    ShowOverview = false;
 
+   PasteStatus = None;
+
+
    myPenWidth = 2;
    myEraserWidth = Settings.EraserSize;
    SelectedPenWidth = myPenWidth;
@@ -503,7 +506,12 @@ void DatabaseClass::ToggleShowOverview(bool Mode)
 
 void DatabaseClass::PasteImage(QImage ImageToPaste)
 {
+#if 0
+   CompleteImage();
+   ControllingStateMachine
+#else
    QSizeF DestSize = ImageToPaste.size();
+   CompleteImage();
 
    bool ShrinkToFit = true;
    if (ShrinkToFit) {
@@ -524,6 +532,7 @@ void DatabaseClass::PasteImage(QImage ImageToPaste)
     QPainter painter(&image);
     painter.drawImage(Destination, ImageToPaste);
     update();
+#endif
 }
 
 void DatabaseClass::CopyImageToClipboard()
@@ -778,6 +787,13 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
        painter.setCompositionMode(QPainter::CompositionMode_SourceOut);
     }
 #endif
+    // Now draw pasted object, if availlable
+    if (PasteStatus != None) {
+       QSizeF DestSize = ImageToPaste.size();
+       DestSize *= ScalingFactorOfImageToPaste;
+       QRectF Destination(Origin, DestSize);
+       painter.drawImage(Destination, ImageToPaste);
+    }
 
     // Now draw all postits
     for (auto &&Picture: PostIts) {
@@ -900,6 +916,96 @@ void DatabaseClass::FinishMovingSelectedPostits(QPointF Position)
       PostIts.splice( PostIts.end(), PostIts, r.postit);
    }
 }
+
+void DatabaseClass::SetImageToPaste(QImage Image)
+{
+   CompleteImage();
+   PasteStatus = Drawing;
+   ImageToPaste = Image;
+   ScalingFactorOfImageToPaste = 1.0;
+   QSizeF DestSize = ImageToPaste.size();
+
+   bool ShrinkToFit = true;
+   if (ShrinkToFit) {
+      if (DestSize.width() > Parent.width()) {
+         ScalingFactorOfImageToPaste = static_cast<double>(Parent.width())/ImageToPaste.width();
+      }
+      if (DestSize.height() > Parent.height()) {
+         double ScalingFactorYOfImageToPaste = static_cast<double>(Parent.height())/ImageToPaste.height();
+         if (ScalingFactorYOfImageToPaste < ScalingFactorOfImageToPaste) {
+            ScalingFactorOfImageToPaste = ScalingFactorYOfImageToPaste;
+         }
+      }
+   }
+
+}
+
+void DatabaseClass::DoPasteImage(PasteEvent Event)
+{
+   QSizeF DestSize = ImageToPaste.size();
+   DestSize *= ScalingFactorOfImageToPaste;
+   QRectF Destination(Origin, DestSize);
+   QSize RequiredSize = image.size().expandedTo(DestSize.toSize() + QSize(Origin.x(), Origin.y()));
+   resizeImage(&image, RequiredSize);
+   // Should also resize all layers
+   if (!Frozen && !BackgroundImages.empty()) {
+      for (auto &p: BackgroundImages) {
+         resizeImage(&*p, RequiredSize);
+      }
+   }
+   //QPainter painter(&image);
+
+   switch(Event) {
+      case DatabaseClass::PasteTopLayer:
+         {
+            QImage NewImage(RequiredSize, QImage::Format_ARGB32);
+            NewImage.fill(TransparentColor);
+            QPainter painter(&NewImage);
+            painter.drawImage(Destination, ImageToPaste);
+            BackgroundImages.push_back(std::make_unique<QImage>(NewImage));
+            UpdateGUI(BackgroundImages.size());
+         }
+         break;
+      case DatabaseClass::PasteBottomLayer:
+         {
+            QImage NewImage(RequiredSize, QImage::Format_ARGB32);
+            NewImage.fill(TransparentColor);
+            QPainter painter(&NewImage);
+            painter.drawImage(Destination, ImageToPaste);
+            BackgroundImages.push_front(std::make_unique<QImage>(NewImage));
+            UpdateGUI(BackgroundImages.size());
+         }
+         break;
+      case DatabaseClass::PasteDrawing:
+         {
+            QPainter painter(&image);
+            painter.drawImage(Destination, ImageToPaste);
+         }
+
+         break;
+      case DatabaseClass::CancelPasting:
+      case DatabaseClass::MakeBigger:
+      case DatabaseClass::MakeSmaller:
+         // Ignore
+         break;
+   }
+   PasteStatus = None;
+
+   update();
+}
+
+void DatabaseClass::CancelPasteImage()
+{
+   PasteStatus = None;
+   update();
+}
+
+void DatabaseClass::ScaleImageToPaste(double ScalingFactor)
+{
+   ScalingFactorOfImageToPaste *= ScalingFactor;
+   update();
+}
+
 
 void DatabaseClass::ExtendBoundingboxAndShape(QPointF Position)
 {

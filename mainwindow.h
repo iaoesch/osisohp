@@ -136,6 +136,8 @@ private:
     void UpdateColors();
     void SetMatchingPostitColor(QColor &newColor);
 
+
+    // QWidget interface
 };
 //! [0]
 

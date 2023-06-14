@@ -53,6 +53,7 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     : QWidget(parent), MyDatas(*this), Interface(this), StateMachine(MyDatas, Interface)
 {
     setAttribute(Qt::WA_StaticContents);
+    setFocusPolicy(Qt::StrongFocus);
     setTabletTracking(true);
     QWidget::setAttribute(Qt::WA_AcceptTouchEvents);
     //QWidget::setAttribute(Qt::WA_TouchPadAcceptSingleTouchEvents);
@@ -192,7 +193,8 @@ void ScribbleArea::setPenWidth(int newWidth)
 
 void ScribbleArea::PasteImage(QImage ImageToPaste)
 {
-   MyDatas.PasteImage(ImageToPaste);
+   //MyDatas.PasteImage(ImageToPaste);
+   StateMachine.HandlePasteEventSM(ImageToPaste);
 }
 
 void ScribbleArea::UpdateShowOverviewChanged(bool OverviewEnabled)
@@ -730,6 +732,38 @@ bool ScribbleArea::event(QEvent *event)
 
    }
 
+}
+
+void ScribbleArea::keyPressEvent(QKeyEvent *event)
+{
+   std::cout << "GotKeyEvent" << std::endl;
+   switch(event->key()) {
+      case Qt::Key_Return:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::PasteDrawing);
+         break;
+
+      case Qt::Key_T:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::PasteTopLayer);
+         break;
+
+      case Qt::Key_B:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::PasteBottomLayer);
+         break;
+
+      case Qt::Key_Escape:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::CancelPasting);
+         break;
+
+      case Qt::Key_Plus:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::MakeBigger);
+         break;
+
+
+      case Qt::Key_Minus:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::MakeSmaller);
+         break;
+
+   }
 }
 
 #ifndef USE_NEW_STATEMACHINE

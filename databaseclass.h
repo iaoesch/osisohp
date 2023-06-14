@@ -6,6 +6,7 @@
 #include <QPainterPath>
 #include <list>
 #include <vector>
+#include <deque>
 
 #include "box.hpp"
 #include "Settings.hpp"
@@ -52,7 +53,7 @@ class DatabaseClass
    };
 
    //std::vector<std::unique_ptr<QImage>> BackgroundImages;
-   std::vector<ImageDescriptor> BackgroundImages;
+   std::deque<ImageDescriptor> BackgroundImages;
 
    QPointF Origin;
    bool Frozen;
@@ -89,6 +90,10 @@ class DatabaseClass
    QPainterPath SelectedImagePartPath;
    QImage HintSelectedImagePart;
 
+   enum   PasteImage{None, Drawing, TopLayer, BottomLayer} PasteStatus;
+   QImage ImageToPaste;
+   double ScalingFactorOfImageToPaste;
+
    bool RecentlyPastedObjectValid;
    QPointF RecentlyPastedObjectPosition;
    QImage RecentlyPastedObject;
@@ -99,6 +104,9 @@ class DatabaseClass
 
 
 public:
+   enum PasteEvent {PasteTopLayer, PasteBottomLayer, PasteDrawing, CancelPasting, MakeBigger, MakeSmaller};
+
+
    void SetSelectedOffset() {SelectedOffset = QPoint(LastPaintedObjectBoundingBox.GetLeft(), LastPaintedObjectBoundingBox.GetTop()) - lastPoint;}
 
    void RestartCurrentPaintedObjectBoundingBox(QPointF const &StartPoint) {  CurrentPaintedObjectBoundingBox.Clear();
@@ -136,6 +144,12 @@ public:
    void CreeatePostitFromSelection();
    void MoveSelectedPostits(QPointF Position);
    void FinishMovingSelectedPostits(QPointF Position);
+
+   void SetImageToPaste(QImage Image);
+   void DoPasteImage(PasteEvent Event);
+   void CancelPasteImage();
+   void ScaleImageToPaste(double ScalingFactor);
+
 
    void GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size);
 

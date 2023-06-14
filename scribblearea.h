@@ -131,6 +131,9 @@ protected:
     void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE;
     void tabletEvent(QTabletEvent * event) Q_DECL_OVERRIDE;
     bool event(QEvent *event) Q_DECL_OVERRIDE;
+protected:
+    void keyPressEvent(QKeyEvent *event) override;
+
 
 private slots:
     void PointerTimeout();

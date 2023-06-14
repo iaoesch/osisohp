@@ -126,6 +126,15 @@ void StateBaseClass::HandleOverviewEventSM(bool Enabled)
 
 }
 
+void StateBaseClass::HandlePasteEventSM(QImage Image)
+{
+
+}
+
+void StateBaseClass::HandleKeyEventSM(PasteEvent Event)
+{
+
+}
 
 template<State::ScribblingState State>
 State::ScribblingState StateClass<State>::StateId() {return TheState;}
@@ -176,6 +185,19 @@ void StateClass<State>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF
    {
       DEBUG_LOG << "Unexpected event HandleOverviewEventSM() in default<> State " << StateId() << std::endl;
    }
+
+   template<State::ScribblingState State>
+   void StateClass<State>::HandlePasteEventSM(QImage Image)
+   {
+      DEBUG_LOG << "Unexpected event HandlePasteEventSM() in default<> State " << StateId() << std::endl;
+   }
+
+   template<State::ScribblingState State>
+   void StateClass<State>::HandleKeyEventSM(PasteEvent Event)
+   {
+      DEBUG_LOG << "Unexpected event HandleKeyEventSM() in default<> State " << StateId() << std::endl;
+   }
+
 
    template<State::ScribblingState State>
    void StateClass<State>::timeoutSM()
@@ -257,6 +279,16 @@ void StateClass<State::ScribblingState::Idle>::HandleOverviewEventSM(bool Enable
       StateMachine.Context.MyDatas.ToggleShowOverview(true);
    }
 }
+
+template<>
+void StateClass<State::ScribblingState::Idle>::HandlePasteEventSM(QImage Image)
+{
+   StateMachine.Context.MyDatas.SetImageToPaste(Image);
+   StateMachine.SetNewState(&StateMachine.WaitingToPasteClippboardImage);
+}
+
+
+
 
 /***************  WaitingToLeaveJitterProtectionForDrawing  *****************/
 template <>
@@ -925,6 +957,58 @@ void StateClass<State::ScribblingState::WaitingToSelectRegionFromOverview>::Hand
    // Ignore in overview
 }
 
+/*********** Paste Clipboard *******************************/
+
+template<>
+void StateClass<State::ScribblingState::WaitingToPasteClippboardImage>::HandleKeyEventSM(PasteEvent Event)
+{
+   switch(Event) {
+      case DatabaseClass::PasteTopLayer:
+      case DatabaseClass::PasteBottomLayer:
+      case DatabaseClass::PasteDrawing:
+         StateMachine.Context.MyDatas.DoPasteImage(Event);
+         StateMachine.SetNewState(&StateMachine.Idle);
+         break;
+      case DatabaseClass::CancelPasting:
+         StateMachine.Context.MyDatas.CancelPasteImage();
+         StateMachine.SetNewState(&StateMachine.Idle);
+         break;
+      case DatabaseClass::MakeBigger:
+         StateMachine.Context.MyDatas.ScaleImageToPaste(1.1);
+         break;
+      case DatabaseClass::MakeSmaller:
+         StateMachine.Context.MyDatas.ScaleImageToPaste(0.9);
+         break;
+
+   }
+}
+
+
+
+template<>
+void StateClass<State::ScribblingState::WaitingToPasteClippboardImage>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
+{
+   if (Button == Qt::LeftButton) {
+      StateMachine.Context.MyDatas.DoPasteImage(DatabaseClass::PasteDrawing);
+      StateMachine.SetNewState(&StateMachine.Idle);
+   }
+}
+
+
+template<>
+void StateClass<State::ScribblingState::WaitingToPasteClippboardImage>::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+   // Ignore in overview
+}
+
+template<>
+void StateClass<State::ScribblingState::WaitingToPasteClippboardImage>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+{
+   // Ignore in overview
+}
+
+/*********** End of Statemachine *******************************/
+
 
 ControllingStateMachine::PointerType ControllingStateMachine::PointerTypeToShow()
 {
@@ -997,6 +1081,16 @@ void ControllingStateMachine::HandleOverviewEventSM(bool Enabled)
    CurrentState->HandleOverviewEventSM(Enabled);
 }
 
+void ControllingStateMachine::HandlePasteEventSM(QImage ImageToPaste)
+{
+   CurrentState->HandlePasteEventSM(ImageToPaste);
+}
+
+void ControllingStateMachine::HandleKeyEventSM(DatabaseClass::PasteEvent Event)
+{
+   CurrentState->HandleKeyEventSM(Event);
+}
+
 void ControllingStateMachine::Timeout()
 {
    CurrentState->timeoutSM();
@@ -1024,7 +1118,8 @@ ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database, GuiInt
        ScrollingDrawingArea(*this),
        WaitingForTouchScrolling(*this),
        TouchScrollingDrawingArea(*this),
-       WaitingToSelectRegionFromOverview(*this)
+       WaitingToSelectRegionFromOverview(*this),
+       WaitingToPasteClippboardImage(*this)
 {
     CurrentState = &Idle;
     Context.ShowPointer = false;
