@@ -355,6 +355,8 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing
       //scribbling = false;
       StateMachine.Interface.UpdateRequest();
       //WaitForPostIt = true;
+      StateMachine.Interface.setCursor(Qt::DragMoveCursor);
+
       StateMachine.MyTimer.start(StateMachine.Settings.PostItTimeout);
       StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithSelectedAreaForMoving);
 
@@ -373,6 +375,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing
          //Scrolling = true;
          StateMachine.Context.ScrollingLastPosition = StateMachine.Context.MyDatas.getSelectedCurrentPosition();
          StateMachine.Context.ScrollingOldOrigin = StateMachine.Context.MyDatas.GetOrigin();
+         StateMachine.Interface.setCursor(Qt::SizeAllCursor);
          //scribbling = false;
          StateMachine.Interface.UpdateRequest();
          StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionForScrolling);
@@ -391,10 +394,12 @@ void StateClass<State::ScribblingState::Drawing>::HandleMoveEventSM(Qt::MouseBut
 
    if ((Buttons & Qt::LeftButton)) {
        if ((StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure))) {
-           return; // ignore small movements (probably use penwidth*2)
+          // return; // ignore small movements (probably use penwidth*2)
+          // Dont restart timer on small movements
+       } else {
+          StateMachine.MyTimer.stop();
+          StateMachine.MyTimer.start(StateMachine.Settings.GestureTimeout);
        }
-       StateMachine.MyTimer.stop();
-       StateMachine.MyTimer.start(StateMachine.Settings.GestureTimeout);
        StateMachine.Context.MyDatas.FlushLastDrawnPicture();
       //LastDrawnObject.fill(BackgroundColor);
       if (Erasing) {
@@ -529,6 +534,7 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelect
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
+       StateMachine.Interface.setCursor(Qt::DragCopyCursor);
 
        StateMachine.SetNewState(&StateMachine.MovingSelection);
        StateMachine.MovingSelection.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
