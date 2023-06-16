@@ -197,11 +197,11 @@ private:
 
 
 
-    QTimer MyTimer;
-    QTimer PointerTimer;
 
 #ifdef USE_NEW_STATEMACHINE
 #else
+    QTimer MyTimer;
+    QTimer PointerTimer;
      void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
     void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
     void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);

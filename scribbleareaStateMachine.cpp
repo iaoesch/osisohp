@@ -339,7 +339,8 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing
 
 
 template<>
-void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing>::timeoutSM()
+void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionForDrawing>
+::timeoutSM()
 {
    if (StateMachine.Context.DownInsideObject) {
 
@@ -526,7 +527,8 @@ template<>
 void StateClass<State::ScribblingState::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
 
 template<>
-void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>
+::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
@@ -548,7 +550,8 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelect
 
 
 template<>
-void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
+void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>
+::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 {
    if (Button == Qt::LeftButton) {
       StateMachine.SetNewState(&StateMachine.Idle);
@@ -556,7 +559,8 @@ void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelect
 }
 
 template<>
-void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>::timeoutSM()
+void StateClass<State::ScribblingState::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>
+::timeoutSM()
 {
    {
       DEBUG_LOG << "Creating postit " << std::endl;

@@ -18,11 +18,13 @@ class DatabaseClass
    ScribbleArea &Parent;
    Settings Settings;
    struct PostIt {
+      static int NextId;
       QImage Image;
       QPointF Position;
       BoundingBoxClass Box;
       QPainterPath BorderPath;
-      PostIt(const QImage &NewImage, const QPointF &Pos, BoundingBoxClass NewBox, QPainterPath &Path) : Image(NewImage), Position(Pos), Box(NewBox), BorderPath(Path) {}
+      int Id;
+      PostIt(const QImage &NewImage, const QPointF &Pos, BoundingBoxClass NewBox, QPainterPath &Path) : Image(NewImage), Position(Pos), Box(NewBox), BorderPath(Path), Id(NextId++) {}
    };
 
    std::list<PostIt> PostIts;

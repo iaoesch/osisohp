@@ -64,17 +64,18 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     EraserShape = QImage(":/images/HandWithEraser.png");
 #ifndef USE_NEW_STATEMACHINE
     ShowPointer = false;
-#endif
-
-
-    setMouseTracking(true);
-
     connect(&MyTimer, SIGNAL(timeout()), this, SLOT(timeoutSM()));
 
     MyTimer.setSingleShot(true);
 
     connect(&PointerTimer, &QTimer::timeout, this, &ScribbleArea::PointerTimeout);
     PointerTimer.setSingleShot(true);
+
+
+#endif
+
+    setMouseTracking(true);
+
 
     /*CopyTimeout = 500;
     GestureTimeout = 500;

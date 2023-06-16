@@ -16,7 +16,7 @@
 
 #include "DebugStream.hpp"
 
-
+int DatabaseClass::PostIt::NextId = 0;
 
 bool DatabaseClass::getLastDrawingValid() const
 {
@@ -187,6 +187,8 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject()
 
 void DatabaseClass::CreeatePostitFromSelection()
 {
+   std::cout << "new postit (" << PostIts.size() << ")" << std::flush;
+
    QImage NewPostit(HintSelectedImagePart);
    // Here we could add a different background for postits
    QPainter painter(&NewPostit);
@@ -802,6 +804,7 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
           painter.setBrush(QBrush(Qt::NoBrush));
           painter.setPen(Qt::black);
           painter.drawRect(Picture.Box.QRectangle().translated(-Origin.toPoint()));
+          painter.drawText(Picture.Box.QRectangle().translated(-Origin.toPoint()), QString::number(Picture.Id));
        }
     }
 

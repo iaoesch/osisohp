@@ -34,7 +34,7 @@ public:
    double Touchscaling = 4.0;
    double DirectSelectTimeout = 10.0;
    double CopyTimeout = 500;
-   double GestureTimeout = 500;
+   double GestureTimeout = 800;
    double SelectTimeout = 500;
    double PostItTimeout = 1000;
    double PointerHoldon = 250;
