@@ -102,6 +102,7 @@ class DatabaseClass
    BoundingBoxClass RecentlyPastedObjectBoundingBox;
 
    BoundingBoxClass LastPaintedObjectBoundingBox;
+   BoundingBoxClass SelectedImageBoundingBox;
    BoundingBoxClass CurrentPaintedObjectBoundingBox;
 
 
@@ -109,13 +110,14 @@ public:
    enum PasteEvent {PasteTopLayer, PasteBottomLayer, PasteDrawing, CancelPasting, MakeBigger, MakeSmaller, MakeOriginalSize};
 
 
-   void SetSelectedOffset() {SelectedOffset = QPoint(LastPaintedObjectBoundingBox.GetLeft(), LastPaintedObjectBoundingBox.GetTop()) - lastPoint;}
+   void SetSelectedOffset() {SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPoint;}
 
    void RestartCurrentPaintedObjectBoundingBox(QPointF const &StartPoint) {  CurrentPaintedObjectBoundingBox.Clear();
                                                           CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(StartPoint.x(), StartPoint.y()));
    }
 
-   bool IsInsideLstPaintedObjectBoundingBox(QPointF const &Point) { return LastPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));}
+   bool IsInsideLastPaintedObjectBoundingBox(QPointF const &Point) { return LastPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));}
+   void ClearLastPaintedObjectBoundingBox() { LastPaintedObjectBoundingBox.Clear();}
    void MoveOrigin(QPointF Offset) {
 
       Origin -= Offset;

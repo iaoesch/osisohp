@@ -155,6 +155,8 @@ bool DatabaseClass::ImportImage(const QString &fileName)
 void DatabaseClass::MakeSelectionFromLastDrawnObject()
 {
    SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.QRectangle().translated(Origin.toPoint()));
+   SelectedImageBoundingBox = LastPaintedObjectBoundingBox;
+
    HintSelectedImagePart = SelectedImagePart;
    HintSelectedImagePart.fill(qRgba(0, 0, 0, 0));
    DiscardSelection = false;
@@ -171,7 +173,7 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject()
    painter.setPen(QPen(SelectionHintBorderColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                        Qt::RoundJoin));
    painter.setBrush(QBrush(SelectionHintColor));
-   LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetLeft(), -LastPaintedObjectBoundingBox.GetTop());
+   LastDrawnObjectPoints.translate(-SelectedImageBoundingBox.GetLeft(), -SelectedImageBoundingBox.GetTop());
    painter.drawPolygon(LastDrawnObjectPoints);
    QPainterPath Path;
    Path.addPolygon(LastDrawnObjectPoints);
@@ -197,7 +199,7 @@ void DatabaseClass::CreeatePostitFromSelection()
    painter.drawRect(NewPostit.rect());
    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
    painter.drawImage(0,0,SelectedImagePart);
-   BoundingBoxClass TranslatedBoundingBox (LastPaintedObjectBoundingBox);
+   BoundingBoxClass TranslatedBoundingBox (SelectedImageBoundingBox);
    TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
    PostIts.push_back(PostIt(NewPostit, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox, SelectedImagePartPath));
    SelectedPostit.push_back({std::prev(PostIts.end()), PostIts.back().Position});
@@ -318,8 +320,8 @@ void DatabaseClass::resizeScrolledImage()
 {
     int NewWidth;
     int NewHeight;
-    int OffsetX = 0;
-    int OffsetY = 0;
+   // int OffsetX = 0;
+   // int OffsetY = 0;
     QPoint Offset;
     QSize Size;
 
@@ -343,8 +345,8 @@ void DatabaseClass::resizeScrolledImage()
 #endif
     // Now adjust all postits
     for (auto &&Picture: PostIts) {
-       Picture.Position += QPoint(OffsetX, OffsetY);
-       Picture.Box.Move(PositionClass(OffsetX, OffsetY));
+       Picture.Position += Offset;
+       Picture.Box.Move(PositionClass(Offset.x(), Offset.y()));
 
     }
 
