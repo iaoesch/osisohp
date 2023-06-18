@@ -98,6 +98,9 @@ enum ScribblingState {
 class StateBaseClass {
 protected:
    ControllingStateMachine &StateMachine;
+   void StartTimer(double TimeInms);
+   void StoppTimer();
+
 public:
    typedef DatabaseClass::PasteEvent PasteEvent;
    StateBaseClass(ControllingStateMachine &sm) : StateMachine(sm) {}
@@ -253,6 +256,10 @@ private slots:
    void PointerTimeout();
    void Timeout();
 };
+
+inline void StateBaseClass::StartTimer(double TimeInms) {StateMachine.MyTimer.start(static_cast<int>(TimeInms));}
+inline void StateBaseClass::StoppTimer() {StateMachine.MyTimer.stop();}
+
 #endif
 
 

@@ -42,12 +42,12 @@ class DatabaseClass
    QImage image;
    QImage LastDrawnObject;
     class ImageDescriptor {
-      bool Visible;
       std::unique_ptr<QImage> Image;
+      bool Visible;
 
       public:
-      ImageDescriptor(std::unique_ptr<QImage> TheImage) : Visible(true), Image(std::move(TheImage)) {}
-      ImageDescriptor(std::unique_ptr<QImage> TheImage, bool v) : Visible(v), Image(std::move(TheImage)) {}
+      ImageDescriptor(std::unique_ptr<QImage> TheImage) : Image(std::move(TheImage)), Visible(true) {}
+      ImageDescriptor(std::unique_ptr<QImage> TheImage, bool v) : Image(std::move(TheImage)), Visible(v) {}
       QImage &operator * () {return *Image;}
       QImage *operator -> () {return Image.operator ->();}
       bool IsVisible() {return Visible;}
@@ -59,8 +59,8 @@ class DatabaseClass
    std::deque<ImageDescriptor> BackgroundImages;
 
    QPointF Origin;
-   bool Frozen;
    QPointF BackgroundImagesOrigin;
+   bool Frozen;
 
 
    bool EraseLastDrawnObject;
@@ -94,9 +94,9 @@ class DatabaseClass
    QPainterPath SelectedImagePartPath;
    QImage HintSelectedImagePart;
 
-   enum   PasteImage{None, Drawing, TopLayer, BottomLayer} PasteStatus;
    QImage ImageToPaste;
    double ScalingFactorOfImageToPaste;
+   enum   PasteImage{None, Drawing, TopLayer, BottomLayer} PasteStatus;
 
    bool RecentlyPastedObjectValid;
    QPointF RecentlyPastedObjectPosition;
@@ -164,7 +164,7 @@ public:
    bool SaveDatabase(const QString &fileName);
    bool LoadDatabase(const QString &fileName);
    void setPenColor(const QColor &newColor);
-   bool SetLayerVisibility(int SelectedLayer, bool Visibility);
+   bool SetLayerVisibility(unsigned int SelectedLayer, bool Visibility);
    void setPenWidth(int newWidth);
    void UseSpongeAsEraser(bool UseSponge) {if (UseSponge) {myEraserWidth = Settings.SpongeSize;} else {myEraserWidth = Settings.EraserSize;}}
    void RestorePenWidth() {myPenWidth = SelectedPenWidth;}
@@ -248,7 +248,7 @@ public:
    bool IsJitter(QPointF OldPoint, QPointF NewPoint, double Pressure) {
       return ((Pressure < JitterPressureLimit) && ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()*3+2)));
    }
-   bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, double Pressure) {
+   bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, double Pressure [[maybe_unused]]) {
       return ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()+2));
    }
 
@@ -257,7 +257,7 @@ public:
 private:
    void update();
    void update(const QRect &r);
-   void UpdateGUI(int NumberOfLayers);
+   void UpdateGUIElements(unsigned long NumberOfLayers);
    void CreatePostit(QImage BackgroundImage, QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path);
 };
 

@@ -58,11 +58,7 @@ void StateBaseClass::HandlePressEventSM(Qt::MouseButton Button, QPointF Position
    StateMachine.Idle.HandlePressEventSM(Button, Position, Timestamp);
 }
 
-
-
-
-
-void StateBaseClass::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateBaseClass::HandleMoveEventSM(Qt::MouseButtons Buttons [[maybe_unused]], QPointF Position, ulong Timestamp, bool Erasing, double Pressure [[maybe_unused]])
 {
 
    StateMachine.Tracker.Trackmovement(Position, Timestamp);
@@ -71,7 +67,7 @@ void StateBaseClass::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Positio
    StateMachine.Context.LastPointerPosition = Position;
 }
 
-void StateBaseClass::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
+void StateBaseClass::HandleReleaseEventSM(Qt::MouseButton Button [[maybe_unused]], QPointF Position [[maybe_unused]], bool Erasing [[maybe_unused]], double Pressure [[maybe_unused]])
 {
 
 }
@@ -114,26 +110,26 @@ void StateBaseClass::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF Me
 
 }
 
-void StateBaseClass::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+void StateBaseClass::HandleTouchMoveEventSM(int NumberOfTouchpoints [[maybe_unused]], QPointF MeanPosition [[maybe_unused]])
 {
 
 }
 
-void StateBaseClass::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+void StateBaseClass::HandleTouchReleaseEventSM(int NumberOfTouchpoints [[maybe_unused]], QPointF MeanPosition [[maybe_unused]])
 {
 }
 
-void StateBaseClass::HandleOverviewEventSM(bool Enabled)
-{
-
-}
-
-void StateBaseClass::HandlePasteEventSM(QImage Image)
+void StateBaseClass::HandleOverviewEventSM(bool Enabled [[maybe_unused]])
 {
 
 }
 
-void StateBaseClass::HandleKeyEventSM(PasteEvent Event)
+void StateBaseClass::HandlePasteEventSM(QImage Image [[maybe_unused]])
+{
+
+}
+
+void StateBaseClass::HandleKeyEventSM(PasteEvent Event [[maybe_unused]])
 {
 
 }
@@ -144,19 +140,19 @@ State::ScribblingState StateClass<State>::StateId() {return TheState;}
 
 
 template<State::ScribblingState State>
-void StateClass<State>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
+void StateClass<State>::HandlePressEventSM(Qt::MouseButton Button [[maybe_unused]], QPointF Position [[maybe_unused]], ulong Timestamp [[maybe_unused]])
 {
    DEBUG_LOG << "Unexpected event HandlePressEventSM() in default<> State " << StateId() << std::endl;
 }
 
 template<State::ScribblingState State>
-void StateClass<State>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State>::HandleMoveEventSM(Qt::MouseButtons Buttons [[maybe_unused]], QPointF Position [[maybe_unused]], ulong Timestamp [[maybe_unused]], bool Erasing [[maybe_unused]], double Pressure [[maybe_unused]])
 {
    DEBUG_LOG << "Unexpected event HandleMoveEventSM() in default<> State " << StateId() << std::endl;
 }
 
 template<State::ScribblingState State>
-void StateClass<State>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
+void StateClass<State>::HandleReleaseEventSM(Qt::MouseButton Button [[maybe_unused]], QPointF Position [[maybe_unused]], bool Erasing [[maybe_unused]], double Pressure [[maybe_unused]])
 
 {
    DEBUG_LOG << "Unexpected event HandleReleaseEventSM() in default<>  State " << StateId() << std::endl;
@@ -171,31 +167,31 @@ void StateClass<State>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF
 }
 
    template<State::ScribblingState State>
-   void StateClass<State>::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+   void StateClass<State>::HandleTouchMoveEventSM(int NumberOfTouchpoints [[maybe_unused]], QPointF MeanPosition [[maybe_unused]])
    {
       DEBUG_LOG << "Unexpected event HandleTouchMoveEventSM() in default<> State " << StateId() << std::endl;
    }
 
    template<State::ScribblingState State>
-   void StateClass<State>::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+   void StateClass<State>::HandleTouchReleaseEventSM(int NumberOfTouchpoints [[maybe_unused]], QPointF MeanPosition [[maybe_unused]])
    {
       DEBUG_LOG << "Unexpected event HandleTouchRelaseEventSM() in default<> State " << StateId() << std::endl;
    }
 
    template<State::ScribblingState State>
-   void StateClass<State>::HandleOverviewEventSM(bool Enabled)
+   void StateClass<State>::HandleOverviewEventSM(bool Enabled [[maybe_unused]])
    {
       DEBUG_LOG << "Unexpected event HandleOverviewEventSM() in default<> State " << StateId() << std::endl;
    }
 
    template<State::ScribblingState State>
-   void StateClass<State>::HandlePasteEventSM(QImage Image)
+   void StateClass<State>::HandlePasteEventSM(QImage Image [[maybe_unused]])
    {
       DEBUG_LOG << "Unexpected event HandlePasteEventSM() in default<> State " << StateId() << std::endl;
    }
 
    template<State::ScribblingState State>
-   void StateClass<State>::HandleKeyEventSM(PasteEvent Event)
+   void StateClass<State>::HandleKeyEventSM(PasteEvent Event [[maybe_unused]])
    {
       DEBUG_LOG << "Unexpected event HandleKeyEventSM() in default<> State " << StateId() << std::endl;
    }
@@ -231,10 +227,10 @@ void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF
         if ((StateMachine.Context.SelectPostitsDirectly == true) &&
             (StateMachine.Context.MyDatas.FindSelectedPostIts(Position))) {
               StateMachine.Context.DownInsideObject = false;
-              StateMachine.MyTimer.start(StateMachine.Settings.DirectSelectTimeout);
+              StartTimer(StateMachine.Settings.DirectSelectTimeout);
 
         } else {
-           StateMachine.MyTimer.start(StateMachine.Settings.SelectTimeout);
+           StartTimer(StateMachine.Settings.SelectTimeout);
 
 
            if (StateMachine.Context.MyDatas.IsInsideLastPaintedObjectBoundingBox(Position)) {
@@ -265,7 +261,7 @@ void StateClass<State::Idle>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint
 
 
 template<>
-void StateClass<State::Idle>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
+void StateClass<State::Idle>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position [[maybe_unused]], bool Erasing [[maybe_unused]], double Pressure [[maybe_unused]])
 {
    if (Button == Qt::LeftButton) {
       // Do Nothing
@@ -312,8 +308,8 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
        }
        StateMachine.SetNewState(&StateMachine.Drawing);
 
-       StateMachine.MyTimer.stop();
-       StateMachine.MyTimer.start(StateMachine.Settings.GestureTimeout);
+       StoppTimer();
+       StartTimer(StateMachine.Settings.GestureTimeout);
        StateMachine.Context.MyDatas.FlushLastDrawnPicture();
       //LastDrawnObject.fill(BackgroundColor);
       if (Erasing) {
@@ -360,7 +356,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
       //WaitForPostIt = true;
       StateMachine.Interface.setCursor(Qt::DragMoveCursor);
 
-      StateMachine.MyTimer.start(StateMachine.Settings.PostItTimeout);
+      StartTimer(StateMachine.Settings.PostItTimeout);
       StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithSelectedAreaForMoving);
 
    } else {
@@ -371,7 +367,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
          StateMachine.Interface.setCursor(Qt::ClosedHandCursor);
          DEBUG_LOG << "Selected postit " << std::endl;
          StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithSelectedPostitForMoving);
-         StateMachine.MyTimer.start(StateMachine.Settings.PostItTimeout);
+         StartTimer(StateMachine.Settings.PostItTimeout);
 
 
       } else {
@@ -401,8 +397,8 @@ void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPo
           // return; // ignore small movements (probably use penwidth*2)
           // Dont restart timer on small movements
        } else {
-          StateMachine.MyTimer.stop();
-          StateMachine.MyTimer.start(StateMachine.Settings.GestureTimeout);
+          StoppTimer();
+          StartTimer(StateMachine.Settings.GestureTimeout);
        }
        StateMachine.Context.MyDatas.FlushLastDrawnPicture();
       //LastDrawnObject.fill(BackgroundColor);
@@ -423,7 +419,7 @@ template<>
 void StateClass<State::Drawing>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 {
    if (Button == Qt::LeftButton) {
-      StateMachine.MyTimer.stop();
+      StoppTimer();
       if (Erasing) {
          StateMachine.Context.MyDatas.EraseLineTo(Position, Pressure);
       } else {
@@ -554,7 +550,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>
 
 template<>
 void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>
-::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
+::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position [[maybe_unused]], bool Erasing [[maybe_unused]], double Pressure [[maybe_unused]])
 {
    if (Button == Qt::LeftButton) {
       StateMachine.SetNewState(&StateMachine.Idle);
@@ -588,8 +584,8 @@ void StateClass<State::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Butt
            return; // ignore small movements (probably use penwidth*2)
        }
        // QPoint Offset = event->pos() - SelectedPoint;
-         StateMachine.MyTimer.stop();
-         StateMachine.MyTimer.start(StateMachine.Settings.CopyTimeout);
+         StoppTimer();
+         StartTimer(StateMachine.Settings.CopyTimeout);
 
          StateMachine.Context.MyDatas.setSelectedCurrentPosition(Position);
          StateMachine.Interface.UpdateRequest();
@@ -607,7 +603,7 @@ void StateClass<State::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Butt
 }
 
 template<>
-void StateClass<State::MovingSelection>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
+void StateClass<State::MovingSelection>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing [[maybe_unused]], double Pressure [[maybe_unused]])
 {
    if (Button == Qt::LeftButton) {
       //WaitForPostIt = false;
@@ -617,7 +613,7 @@ void StateClass<State::MovingSelection>::HandleReleaseEventSM(Qt::MouseButton Bu
            StateMachine.Interface.UpdateRequest();
        }
        //DEBUG_LOG << "LeavingSpeed " << (LastDistance + CurrentDistance) << " / " << (DeltaTLastDistance + DeltaTCurrentDistance) << " = " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
-           ;
+
      // QPoint Offset =  - SelectedPoint;
        if (StateMachine.Context.MyDatas.getDiscardSelection() == false) {
           StateMachine.Context.MyDatas.DrawMovedSelection(Position);
@@ -708,7 +704,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving>
 }
 
 template<>
-void StateClass<State::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
+void StateClass<State::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position [[maybe_unused]], bool Erasing [[maybe_unused]], double Pressure [[maybe_unused]])
 {
    if (Button == Qt::LeftButton) {
       StateMachine.SetNewState(&StateMachine.Idle);
@@ -738,7 +734,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving
 }
 
 template<>
-void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
+void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position [[maybe_unused]], bool Erasing [[maybe_unused]], double Pressure [[maybe_unused]])
 {
    if (Button == Qt::LeftButton) {
       StateMachine.Context.MyDatas.ClearSelectedPostit();
@@ -780,8 +776,8 @@ void StateClass<State::MovingPostit>::HandleMoveEventSM(Qt::MouseButtons Buttons
        // ToDo Start Timer to copy postit if position is held for long time
        if (StateMachine.Context.MyDatas.IsAnySelectedPostit()) {
           DEBUG_LOG << "Moving postit " << std::endl;
-          StateMachine.MyTimer.stop();
-          StateMachine.MyTimer.start(StateMachine.Settings.MovePostitPauseTimeout);
+          StoppTimer();
+          StartTimer(StateMachine.Settings.MovePostitPauseTimeout);
 
           StateMachine.Context.MyDatas.MoveSelectedPostits(Position);
           StateMachine.Interface.UpdateRequest();
@@ -794,7 +790,7 @@ void StateClass<State::MovingPostit>::HandleMoveEventSM(Qt::MouseButtons Buttons
 }
 
 template<>
-void StateClass<State::MovingPostit>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
+void StateClass<State::MovingPostit>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing [[maybe_unused]], double Pressure [[maybe_unused]])
 {
    if (Button == Qt::LeftButton) {
       if ((StateMachine.Context.MyDatas.IsAnySelectedPostit())) {
@@ -815,7 +811,7 @@ template<>
 void StateClass<State::MovingPostit>::timeoutSM()
 {
       StateMachine.Interface.setCursor(Qt::DragCopyCursor);
-      StateMachine.MyTimer.start(StateMachine.Settings.PostitCopyTimeout);
+      StartTimer(StateMachine.Settings.PostitCopyTimeout);
       StateMachine.SetNewState(&StateMachine.MovingPostitPaused);
 }
 
@@ -857,7 +853,7 @@ template<>
 void StateClass<State::MovingPostitPaused>::timeoutSM()
 {
       StateMachine.Interface.setCursor(Qt::DragCopyCursor);
-      StateMachine.MyTimer.start(StateMachine.Settings.PostitCopyTimeout);
+      StartTimer(StateMachine.Settings.PostitCopyTimeout);
       StateMachine.SetNewState(&StateMachine.MovingPostitPaused);
       StateMachine.Context.MyDatas.DuplicateSelectedPostits();
       StateMachine.Context.MyDatas.MoveSelectedPostits(StateMachine.Context.LastPointerPosition + QPointF(4,4));
@@ -927,7 +923,7 @@ void StateClass<State::ScrollingDrawingArea>::HandleMoveEventSM(Qt::MouseButtons
 }
 
 template<>
-void StateClass<State::ScrollingDrawingArea>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
+void StateClass<State::ScrollingDrawingArea>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing [[maybe_unused]], double Pressure [[maybe_unused]])
 {
    if (Button == Qt::LeftButton) {
       StateMachine.Context.MyDatas.MoveOrigin(Position - StateMachine.Context.ScrollingLastPosition);
@@ -1014,7 +1010,7 @@ void StateClass<State::WaitingForTouchScrolling>::HandleTouchPressEventSM(int Nu
 /*********** Overviev *******************************/
 
 template<>
-void StateClass<State::WaitingToSelectRegionFromOverview>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
+void StateClass<State::WaitingToSelectRegionFromOverview>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp [[maybe_unused]])
 {
    if (Button == Qt::LeftButton) {
       StateMachine.Context.MyDatas.MoveOrigin(-(StateMachine.Context.MyDatas.TranslateCoordinateOffsetFromOverview(Position)-StateMachine.Context.MyDatas.GetOrigin()));
@@ -1033,13 +1029,13 @@ void StateClass<State::WaitingToSelectRegionFromOverview>::HandleOverviewEventSM
 }
 
 template<>
-void StateClass<State::WaitingToSelectRegionFromOverview>::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+void StateClass<State::WaitingToSelectRegionFromOverview>::HandleTouchMoveEventSM(int NumberOfTouchpoints [[maybe_unused]], QPointF MeanPosition [[maybe_unused]])
 {
    // Ignore in overview
 }
 
 template<>
-void StateClass<State::WaitingToSelectRegionFromOverview>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+void StateClass<State::WaitingToSelectRegionFromOverview>::HandleTouchPressEventSM(int NumberOfTouchpoints [[maybe_unused]], QPointF MeanPosition [[maybe_unused]])
 {
    // Ignore in overview
 }
@@ -1076,7 +1072,7 @@ void StateClass<State::WaitingToPasteClippboardImage>::HandleKeyEventSM(PasteEve
 
 
 template<>
-void StateClass<State::WaitingToPasteClippboardImage>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
+void StateClass<State::WaitingToPasteClippboardImage>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position [[maybe_unused]], ulong Timestamp [[maybe_unused]])
 {
    if (Button == Qt::LeftButton) {
       StateMachine.Context.MyDatas.DoPasteImage(DatabaseClass::PasteDrawing);
@@ -1086,13 +1082,13 @@ void StateClass<State::WaitingToPasteClippboardImage>::HandlePressEventSM(Qt::Mo
 
 
 template<>
-void StateClass<State::WaitingToPasteClippboardImage>::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+void StateClass<State::WaitingToPasteClippboardImage>::HandleTouchMoveEventSM(int NumberOfTouchpoints [[maybe_unused]], QPointF MeanPosition [[maybe_unused]])
 {
    // Ignore in overview
 }
 
 template<>
-void StateClass<State::WaitingToPasteClippboardImage>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
+void StateClass<State::WaitingToPasteClippboardImage>::HandleTouchPressEventSM(int NumberOfTouchpoints [[maybe_unused]], QPointF MeanPosition [[maybe_unused]])
 {
    // Ignore in overview
 }
@@ -1119,7 +1115,7 @@ void ControllingStateMachine::ShowBigPointer()
 {
    if (Settings.PointerHoldon >= 0) {
    Context.ShowPointer = true;
-   PointerTimer.start(Settings.PointerHoldon);
+   PointerTimer.start(static_cast<int>(Settings.PointerHoldon));
    Interface.UpdateRequest();
    }
 }

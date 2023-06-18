@@ -18,6 +18,8 @@
 
 int DatabaseClass::PostIt::NextId = 0;
 
+int ToInt(double d) {return static_cast<int>(d + 0.5);}
+
 bool DatabaseClass::getLastDrawingValid() const
 {
    return LastDrawingValid;
@@ -224,7 +226,7 @@ void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
    constexpr double dx = MaxPenForce*MaxPenForce - MinPenForce*MinPenForce;
    constexpr double dy = MaxPenScaling - MinPenScaling;
 
-   int ModifiedPenWidth = myPenWidth * qMax(MinPenScaling, Pressure*Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*MinPenForce*dy/dx)));
+   int ModifiedPenWidth = static_cast<int>(myPenWidth * qMax(MinPenScaling, Pressure*Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*MinPenForce*dy/dx))) + 0.5);
 //   int ModifiedPenWidth = myPenWidth * qMax(1.0, Pressure*Pressure*4);
     QPainter painter(&LastDrawnObject);
     painter.setCompositionMode(QPainter::CompositionMode_Source);
@@ -246,7 +248,7 @@ void DatabaseClass::EraseLineTo(const QPointF &endPoint, double Pressure)
 {
     DEBUG_LOG << "Erasing ";
     QPainter painter(&LastDrawnObject);
-    int ModifiedPenWidth = (myPenWidth+myEraserWidth)*3*(1.0 + Pressure*Pressure*10);
+    int ModifiedPenWidth = static_cast<int>((myPenWidth+myEraserWidth)*3*(1.0 + Pressure*Pressure*10) + 0.5);
     painter.setPen(QPen(BackGroundColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
    // painter.setCompositionMode(QPainter::CompositionMode_Source);
@@ -299,25 +301,26 @@ void DatabaseClass::DrawLastDrawnPicture()
 }
 
 
+
 void DatabaseClass::GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size)
 {
    if (Origin.x() < 0) {
-       Size.setWidth(image.size().width() - Origin.x());
-       Offset.setX(- Origin.x());
+       Size.setWidth(ToInt(Image.size().width() - Origin.x()));
+       Offset.setX(ToInt(- Origin.x()));
        Origin.setX(0);
-   } else if (Origin.x()+Parent.width() > image.size().width()){
-       Size.setWidth(Origin.x()+Parent.width());
+   } else if (Origin.x()+Parent.width() > Image.size().width()){
+       Size.setWidth(ToInt(Origin.x()+Parent.width()));
    } else {
-       Size.setWidth(image.size().width());
+       Size.setWidth(Image.size().width());
    }
    if (Origin.y() < 0) {
-       Size.setHeight(image.size().height() - Origin.y());
-       Offset.setY(- Origin.y());
+       Size.setHeight(ToInt(Image.size().height() - Origin.y()));
+       Offset.setY(ToInt(- Origin.y()));
        Origin.setY(0);
-   } else if (Origin.y()+Parent.height() > image.size().height()){
-       Size.setHeight(Origin.y()+Parent.height());
+   } else if (Origin.y()+Parent.height() > Image.size().height()){
+       Size.setHeight(ToInt(Origin.y()+Parent.height()));
    } else {
-       Size.setHeight(image.size().height());
+       Size.setHeight(Image.size().height());
    }
 }
 
@@ -326,8 +329,8 @@ void DatabaseClass::GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPo
 void DatabaseClass::resizeScrolledImage()
 //! [19] //! [20]
 {
-    int NewWidth;
-    int NewHeight;
+   // int NewWidth;
+   // int NewHeight;
    // int OffsetX = 0;
    // int OffsetY = 0;
     QPoint Offset;
@@ -389,16 +392,16 @@ void DatabaseClass::setPenColor(const QColor &newColor)
 //! [6]
 //!
 
-void DatabaseClass::UpdateGUI(int NumberOfLayers)
+void DatabaseClass::UpdateGUIElements(unsigned long NumberOfLayers)
 {
    std::vector<bool> Visibilities;
-   for (int i = 0; i < NumberOfLayers; i++) {
+   for (unsigned int i = 0; i < NumberOfLayers; i++) {
             Visibilities.push_back( BackgroundImages[i].IsVisible());
    }
    Parent.UpdateGUI(Visibilities);
 }
 
-bool DatabaseClass::SetLayerVisibility(int SelectedLayer, bool Visibility)
+bool DatabaseClass::SetLayerVisibility(unsigned int SelectedLayer, bool Visibility)
 {
    if (SelectedLayer < BackgroundImages.size()) {
       BackgroundImages[SelectedLayer].SetVisible(Visibility);
@@ -422,7 +425,7 @@ void DatabaseClass::MoveImageToBackgroundLayer()
    CompleteImage();
    BackgroundImages.push_back(std::make_unique<QImage>(image));
    clearImage();
-   UpdateGUI(BackgroundImages.size());
+   UpdateGUIElements(BackgroundImages.size());
 }
 
 void DatabaseClass::MoveTopBackgroundLayerToImage()
@@ -443,7 +446,7 @@ void DatabaseClass::MoveTopBackgroundLayerToImage()
       //Set combined image as new image
       image = newImage;
    }
-   UpdateGUI(BackgroundImages.size());
+   UpdateGUIElements(BackgroundImages.size());
 
 }
 
@@ -468,7 +471,7 @@ void DatabaseClass::CollapseBackgroundLayers()
       }
       BackgroundImages.push_back(std::make_unique<QImage>(newImage));
    }
-   UpdateGUI(BackgroundImages.size());
+   UpdateGUIElements(BackgroundImages.size());
 }
 
 void DatabaseClass::CollapseAllVisibleLayersToTop()
@@ -489,7 +492,7 @@ void DatabaseClass::CollapseAllVisibleLayersToTop()
       painter.drawImage(QPoint(0,0), image);
       image = newImage;
    }
-   UpdateGUI(BackgroundImages.size());
+   UpdateGUIElements(BackgroundImages.size());
 }
 //! [8]
 
@@ -578,8 +581,8 @@ bool DatabaseClass::SaveDatabase(const QString &fileName)
    QDataStream out(&file);
 
    // Write a header with a "magic number" and a version
-   out << (quint32)0x139A1A7F;
-   out << (qint32)110;
+   out << static_cast<quint32>(0x139A1A7F);
+   out << static_cast<quint32>(110);
 
    out.setVersion(QDataStream::Qt_6_0);
    CompleteImage();
@@ -589,14 +592,14 @@ bool DatabaseClass::SaveDatabase(const QString &fileName)
    out << Origin;
    out << BackgroundImagesOrigin;
    // Now save all postits
-   out << (qint32)(PostIts.size());
+   out << static_cast<quint32>(PostIts.size());
    for (auto &&Picture: PostIts) {
       out << Picture.Position;
       out << Picture.Image;
       out << Picture.Box;
       out << Picture.BorderPath;
    }
-   out << (qint32)(BackgroundImages.size());
+   out << static_cast<quint32>(BackgroundImages.size());
    for (auto &Picture: BackgroundImages) {
       out << Picture.IsVisible();
       out << *Picture;
@@ -997,7 +1000,7 @@ void DatabaseClass::DoPasteImage(PasteEvent Event)
             QPainter painter(&NewImage);
             painter.drawImage(Destination, ImageToPaste);
             BackgroundImages.push_back(std::make_unique<QImage>(NewImage));
-            UpdateGUI(BackgroundImages.size());
+            UpdateGUIElements(BackgroundImages.size());
          }
          break;
       case DatabaseClass::PasteBottomLayer:
@@ -1007,7 +1010,7 @@ void DatabaseClass::DoPasteImage(PasteEvent Event)
             QPainter painter(&NewImage);
             painter.drawImage(Destination, ImageToPaste);
             BackgroundImages.push_front(std::make_unique<QImage>(NewImage));
-            UpdateGUI(BackgroundImages.size());
+            UpdateGUIElements(BackgroundImages.size());
          }
          break;
       case DatabaseClass::PasteDrawing:
@@ -1020,6 +1023,7 @@ void DatabaseClass::DoPasteImage(PasteEvent Event)
       case DatabaseClass::CancelPasting:
       case DatabaseClass::MakeBigger:
       case DatabaseClass::MakeSmaller:
+      case DatabaseClass::MakeOriginalSize:
          // Ignore
          break;
    }
