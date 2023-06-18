@@ -577,6 +577,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
             case Qt::TaskButton:
               break;
             case Qt::ExtraButton4:
+           default:
               break;
 
         }
@@ -585,7 +586,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
        case QEvent::TabletMove:
           // Tablett move also called on pressure or tilt changes
           if (LastTablettMovePosition != event->position()) {
-             DEBUG_LOG << "Tablett move " << event->type() << "/"<< event->buttons() << " <" << event->pos().x() << ";" << event->pos().y() << ">:" << event->pressure() << std::endl;
+             DEBUG_LOG << "Tablett move " << event->type() << "/"<< event->buttons() << " <" << event->position().x() << ";" << event->position().y() << ">:" << event->pressure() << std::endl;
 #ifdef USE_NEW_STATEMACHINE
              StateMachine.HandleMoveEventSM(event->buttons(), event->position(), event->timestamp(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
 #else
@@ -610,21 +611,21 @@ bool ScribbleArea::TouchEvent(QTouchEvent *event)
          for (auto &p: event->points()) {
             MeanPosition += p.position();
          }
-         MeanPosition *= TouchScaling/event->pointCount();
+         MeanPosition *= TouchScaling/static_cast<double>(event->pointCount());
 #ifdef USE_NEW_STATEMACHINE
-         StateMachine.HandleTouchPressEventSM(event->pointCount(), MeanPosition);
+         StateMachine.HandleTouchPressEventSM(static_cast<int>(event->pointCount()), MeanPosition);
 #else
          HandleTouchPressEventSM(event->pointCount(), MeanPosition);
 #endif
          }
          event->accept();
          return true;
-         break;
+
       case QEvent::TouchCancel:
          DEBUG_LOG << "Got touch Cancel" << std::endl;
          event->accept();
          return true;
-         break;
+
       case QEvent::TouchEnd:
          DEBUG_LOG << "Got touch End" << std::endl;
          {
@@ -632,16 +633,16 @@ bool ScribbleArea::TouchEvent(QTouchEvent *event)
             for (auto &p: event->points()) {
                MeanPosition += p.position();
             }
-            MeanPosition *= TouchScaling/event->pointCount();
+            MeanPosition *= TouchScaling/static_cast<double>(event->pointCount());
 #ifdef USE_NEW_STATEMACHINE
-            StateMachine.HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
+            StateMachine.HandleTouchReleaseEventSM(static_cast<int>(event->pointCount()), MeanPosition);
 #else
             HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
 #endif
          }
          event->accept();
          return true;
-         break;
+
       case QEvent::TouchUpdate:
          DEBUG_LOG << "Got touch Update" << std::endl;
          {
@@ -649,22 +650,22 @@ bool ScribbleArea::TouchEvent(QTouchEvent *event)
          for (auto &p: event->points()) {
             MeanPosition += p.position();
          }
-         MeanPosition *= TouchScaling/event->pointCount();
+         MeanPosition *= TouchScaling/static_cast<double>(event->pointCount());
          if (event->isBeginEvent()) {
 #ifdef USE_NEW_STATEMACHINE
-            StateMachine.HandleTouchPressEventSM(event->pointCount(), MeanPosition);
+            StateMachine.HandleTouchPressEventSM(static_cast<int>(event->pointCount()), MeanPosition);
 #else
             HandleTouchPressEventSM(event->pointCount(), MeanPosition);
 #endif
          } else if (event->isEndEvent()) {
 #ifdef USE_NEW_STATEMACHINE
-            StateMachine.HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
+            StateMachine.HandleTouchReleaseEventSM(static_cast<int>(event->pointCount()), MeanPosition);
 #else
             HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
 #endif
          } else {
 #ifdef USE_NEW_STATEMACHINE
-            StateMachine.HandleTouchMoveEventSM(event->pointCount(), MeanPosition);
+            StateMachine.HandleTouchMoveEventSM(static_cast<int>(event->pointCount()), MeanPosition);
 #else
             HandleTouchMoveEventSM(event->pointCount(), MeanPosition);
 #endif
@@ -682,7 +683,6 @@ bool ScribbleArea::TouchEvent(QTouchEvent *event)
          event->accept();
          return true;
 
-         break;
       default:
          return QWidget::event(event);
 
@@ -706,7 +706,7 @@ bool ScribbleArea::event(QEvent *event)
             return QWidget::event(event);
          }
          }
-         break;
+
       case QEvent::Gesture:
          DEBUG_LOG << "Gesrture" << std::endl;
          return QWidget::event(event);
