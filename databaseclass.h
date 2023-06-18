@@ -25,6 +25,7 @@ class DatabaseClass
       QPainterPath BorderPath;
       int Id;
       PostIt(const QImage &NewImage, const QPointF &Pos, BoundingBoxClass NewBox, QPainterPath &Path) : Image(NewImage), Position(Pos), Box(NewBox), BorderPath(Path), Id(NextId++) {}
+      PostIt(const PostIt &Src) : Image(Src.Image), Position(Src.Position), Box(Src.Box), BorderPath(Src.BorderPath), Id(NextId++) {}
    };
 
    std::list<PostIt> PostIts;
@@ -192,7 +193,8 @@ public:
    void setPostItBackgroundColor(const QColor &newColor) {PostItBackgroundColor = newColor; update();}
    void setSelectionHintColor(const QColor &newColor) {SelectionHintColor = newColor;}
 
-   bool PostItSelected(QPointF Position);
+   enum SelectMode {All, First, Last};
+   bool FindSelectedPostIts(QPointF Position, SelectMode Mode = First);
    bool IsInsideAnyPostIt(QPointF Position);
 
    void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundImagesOrigin);
@@ -251,7 +253,7 @@ public:
    }
 
 
-   void DuplicateSelectedPostits(QPointF Position);
+   void DuplicateSelectedPostits();
 private:
    void update();
    void update(const QRect &r);

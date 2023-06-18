@@ -681,15 +681,29 @@ bool DatabaseClass::LoadDatabase(const QString &fileName)
 #endif
 }
 
-bool DatabaseClass::PostItSelected(QPointF Position)
+bool DatabaseClass::FindSelectedPostIts(QPointF Position, SelectMode Mode)
 {
    bool Found = false;
    SelectedPostit.clear();
    Position += Origin;
+#if 0
+   std::list<PostIt>::iterator Start = PostIts.begin();
+   auto End = PostIts.end();
+   if (Mode == Last) {
+      Start = PostIts.rbegin();
+      End = PostIts.rend();
+   }
+#endif
+
    for (auto PostIt = PostIts.begin(); PostIt != PostIts.end(); PostIt++) {
      if (PostIt->Box.IsInside(PositionClass(Position.x(), Position.y()))) {
         SelectedPostit.push_back({PostIt, PostIt->Position});
         Found = true;
+        if (Mode == First) {
+           // Only select first (Bottom one)
+           return true;
+        }
+        // Select last not implemented yet (Probably use reverse iterator for this case)
      }
    }
    return Found;
@@ -930,16 +944,10 @@ void DatabaseClass::FinishMovingSelectedPostits(QPointF Position)
    }
 }
 
-void DatabaseClass::DuplicateSelectedPostits(QPointF Position)
+void DatabaseClass::DuplicateSelectedPostits()
 {
    for (auto &r: SelectedPostit) {
-      BoundingBoxClass TranslatedBox = r.postit->Box;
-      QPointF LastPosition = r.postit->Position;
-      QPointF pPosition = r.StartPosition + (Position - ButtonDownPosition);
-      TranslatedBox.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
-
-      //CreatePostit(r.postit->Image, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBox, r.postit->BorderPath);
-
+      PostIts.push_back(*r.postit);
    }
 }
 

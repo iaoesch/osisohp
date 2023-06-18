@@ -86,6 +86,7 @@ enum ScribblingState {
    MovingSelection,
    MovingSelectionPaused,
    MovingPostit,
+   MovingPostitPaused,
    ScrollingDrawingArea,
    WaitingForTouchScrolling,
    TouchScrollingDrawingArea,
@@ -211,6 +212,7 @@ private:
    MakeStateObject(MovingSelection);
    MakeStateObject(MovingSelectionPaused);
    MakeStateObject(MovingPostit);
+   MakeStateObject(MovingPostitPaused);
    MakeStateObject(ScrollingDrawingArea);
    MakeStateObject(WaitingForTouchScrolling);
    MakeStateObject(TouchScrollingDrawingArea);
