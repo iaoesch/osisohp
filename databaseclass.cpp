@@ -194,13 +194,13 @@ void DatabaseClass::CreeatePostitFromSelection()
 
    BoundingBoxClass TranslatedBoundingBox (SelectedImageBoundingBox);
    TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
-   CreatePostit(SelectedImagePart, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox, SelectedImagePartPath);
+   CreatePostit(HintSelectedImagePart, SelectedImagePart, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox, SelectedImagePartPath);
    SelectedPostit.push_back({std::prev(PostIts.end()), PostIts.back().Position});
 }
 
-void DatabaseClass::CreatePostit(QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path)
+void DatabaseClass::CreatePostit(QImage BackgroundImage, QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path)
 {
-   QImage NewPostit(Image);
+   QImage NewPostit(BackgroundImage);
    // Here we could add a different background for postits
    QPainter painter(&NewPostit);
    painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
@@ -938,7 +938,7 @@ void DatabaseClass::DuplicateSelectedPostits(QPointF Position)
       QPointF pPosition = r.StartPosition + (Position - ButtonDownPosition);
       TranslatedBox.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
 
-      CreatePostit(r.postit->Image, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBox, r.postit->BorderPath);
+      //CreatePostit(r.postit->Image, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBox, r.postit->BorderPath);
 
    }
 }

@@ -256,7 +256,7 @@ private:
    void update();
    void update(const QRect &r);
    void UpdateGUI(int NumberOfLayers);
-   void CreatePostit(QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path);
+   void CreatePostit(QImage BackgroundImage, QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path);
 };
 
 #endif // DATABASECLASS_H
