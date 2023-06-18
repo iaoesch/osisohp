@@ -542,7 +542,7 @@ void DatabaseClass::PasteImage(QImage ImageToPaste)
 
 
    QRectF Destination(Origin, DestSize);
-   QSize RequiredSize = image.size().expandedTo(DestSize.toSize() + QSize(Origin.x(), Origin.y()));
+   QSize RequiredSize = image.size().expandedTo(DestSize.toSize() + QSize(ToInt(Origin.x()), ToInt(Origin.y())));
     resizeImage(&image, RequiredSize);
     QPainter painter(&image);
     painter.drawImage(Destination, ImageToPaste);
@@ -734,7 +734,7 @@ void DatabaseClass::PaintOverview(QPainter &p, QSize const &OutputSize)
                        Qt::RoundJoin));
    painter.setBrush(QBrush(ScrollHintColor));
 
-   painter.drawRect(Origin.x(), Origin.y(), OutputSize.width(), OutputSize.height());
+   painter.drawRect(ToInt(Origin.x()), ToInt(Origin.y()), OutputSize.width(), OutputSize.height());
    p.drawImage(QPointF(0,0), Overview.scaled(OutputSize, Qt::KeepAspectRatio));
 }
 
@@ -899,11 +899,11 @@ void DatabaseClass::ResizeAll(int width, int height)
    if (width > LastDrawnObject.width() || height > LastDrawnObject.height()) {
       int newWidth = qMax(width + 128, image.width());
       int newHeight = qMax(height + 128, image.height());
-      resizeImage(&image, QSize(newWidth+Origin.x(), newHeight+Origin.y()));
+      resizeImage(&image, QSize(newWidth+ToInt(Origin.x()), newHeight+ToInt(Origin.y())));
       resizeImage(&LastDrawnObject, QSize(newWidth, newHeight));
       if (!Frozen) {
          for (auto &p: BackgroundImages) {
-            resizeImage(&*p, QSize(newWidth+BackgroundImagesOrigin.x(), newHeight+BackgroundImagesOrigin.y()));
+            resizeImage(&*p, QSize(newWidth+ToInt(BackgroundImagesOrigin.x()), ToInt(newHeight+BackgroundImagesOrigin.y())));
          }
       }
       update();
@@ -982,7 +982,7 @@ void DatabaseClass::DoPasteImage(PasteEvent Event)
    QSizeF DestSize = ImageToPaste.size();
    DestSize *= ScalingFactorOfImageToPaste;
    QRectF Destination(Origin, DestSize);
-   QSize RequiredSize = image.size().expandedTo(DestSize.toSize() + QSize(Origin.x(), Origin.y()));
+   QSize RequiredSize = image.size().expandedTo(DestSize.toSize() + QSize(ToInt(Origin.x()), ToInt(Origin.y())));
    resizeImage(&image, RequiredSize);
    // Should also resize all layers
    if (!Frozen && !BackgroundImages.empty()) {

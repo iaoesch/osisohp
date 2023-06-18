@@ -10,7 +10,6 @@ HEADERS       = mainwindow.h \
                 scribblearea.h \
     box.hpp \
     position.hpp \
-    PaintingArea.h \
    scribbleareaStateMachine.h
 SOURCES       = main.cpp \
    databaseclass.cpp \
@@ -19,7 +18,6 @@ SOURCES       = main.cpp \
                 scribblearea.cpp \
     Box.cpp \
     position.cpp \
-    PaintingArea.cpp \
    scribbleareaStateMachine.cpp\
    interface.cpp
 

@@ -118,9 +118,9 @@ void ScribbleArea::setPenColor(const QColor &newColor)
 
 void ScribbleArea::UpdateGUI(std::vector<bool> const &Visibilities)
 {
-   emit (NumberOfLayerChanged(Visibilities.size()));
-          for (int i = 0; i < Visibilities.size(); i++) {
-            emit(SetVisibilityIndicatorOfLayer(i, Visibilities[i]));
+   emit (NumberOfLayerChanged(static_cast<int>(Visibilities.size())));
+          for (size_t i = 0; i < Visibilities.size(); i++) {
+            emit(SetVisibilityIndicatorOfLayer(static_cast<int>(i), Visibilities[i]));
           }
    }
 
@@ -176,7 +176,7 @@ void ScribbleArea::HandleToolAction(QAction *action)
 
 void ScribbleArea::HandleLayerVisibilityAction(QAction *action)
 {
-   unsigned int SelectedLayer = action->data().value<int>();
+   unsigned int SelectedLayer = action->data().value<unsigned int>();
    if (MyDatas.SetLayerVisibility(SelectedLayer, action->isChecked())) {
       update();
    }
