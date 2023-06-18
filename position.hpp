@@ -56,7 +56,7 @@ class PositionClass
    // Methods
    public:
             PositionClass(int newX, int newY) : X(newX), Y(newY) {}
-            PositionClass(double newX, double newY) : X(static_cast<int>(newX+0.5)), Y(static_cast<int>(newY+0.5)) {}
+            PositionClass(double newX, double newY) : X(static_cast<int>(newX+0.0)), Y(static_cast<int>(newY+0.0)) {}
             PositionClass(const PositionClass &Pos) : X(Pos.X), Y(Pos.Y)  {}
            ~PositionClass(void){}
 
