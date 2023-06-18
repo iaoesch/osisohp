@@ -102,6 +102,7 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent)
 
    TransparentColor = QColor(255, 255, 255, 0);
    BackGroundColor = QColor(230,230, 200,255);
+   AdjustMarkercolor();
    ScrollHintColor = QColor(0, 30, 0, 50);
    ScrollHintBorderColor = QColor(90, 0, 0, 50);
    SelectionHintColor = QColor(0, 30, 0, 50);
@@ -804,7 +805,7 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
        painter.drawImage(Picture.Position-Origin, Picture.Image);
        if (ShowPostitsFrame == true) {
           painter.setBrush(QBrush(Qt::NoBrush));
-          painter.setPen(Qt::black);
+          painter.setPen(Markercolor);
           painter.drawRect(Picture.Box.QRectangle().translated(-Origin.toPoint()));
           painter.drawText(Picture.Box.QRectangle().translated(-Origin.toPoint()), QString::number(Picture.Id));
        }

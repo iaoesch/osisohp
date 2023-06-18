@@ -760,7 +760,7 @@ void StateClass<State::MovingPostit>::HandleMoveEventSM(Qt::MouseButtons Buttons
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
-
+       // ToDo Start Timer to copy postit if position is held for long time
        if (StateMachine.Context.MyDatas.IsAnySelectedPostit()) {
           DEBUG_LOG << "Moving postit " << std::endl;
           StateMachine.Context.MyDatas.MoveSelectedPostits(Position);

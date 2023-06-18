@@ -79,6 +79,7 @@ class DatabaseClass
 
    QColor TransparentColor;
    QColor BackGroundColor;
+   QColor Markercolor;
    QColor DefaultBackGroundColor;
    QColor ScrollHintColor;
    QColor ScrollHintBorderColor;
@@ -186,7 +187,8 @@ public:
    void ToggleShowOverview(bool Mode);
 
    QColor GetBackGroundColor() const { return BackGroundColor; }
-   void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; update();}
+   void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; AdjustMarkercolor(); update();}
+   void AdjustMarkercolor() {Markercolor = QColor(BackGroundColor.red()^0xFF, BackGroundColor.green()^0xFF, BackGroundColor.blue()^0xFF);}
    void setPostItBackgroundColor(const QColor &newColor) {PostItBackgroundColor = newColor; update();}
    void setSelectionHintColor(const QColor &newColor) {SelectionHintColor = newColor;}
 
