@@ -76,6 +76,8 @@ private slots:
     void SetVisibilityIndicatorOfLayer(int Layer, bool Visibility);
     void ShowOverviewChanged(bool OverviewEnabled);
 
+    void ShowSettings();
+
 
 
     void UpdatePasteState();
@@ -125,6 +127,7 @@ private:
     QAction *ShowOverviewAct;
     QAction *printAct;
     QAction *clearScreenAct;
+    QAction *SettingsAct;
     QAction *aboutAct;
     QAction *aboutQtAct;
 

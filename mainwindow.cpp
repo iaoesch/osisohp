@@ -42,6 +42,7 @@
 
 #include "mainwindow.h"
 #include "scribblearea.h"
+#include "SettingsDialog.h"
 
 
 //! [0]
@@ -433,6 +434,11 @@ void MainWindow::createActions()
     connect(clearScreenAct, SIGNAL(triggered()),
             scribbleArea, SLOT(clearImage()));
 
+    SettingsAct = new QAction(tr("&Settings"), this);
+    SettingsAct->setShortcut(tr("Ctrl+O"));
+    connect(SettingsAct, SIGNAL(triggered()),
+            this, SLOT(ShowSettings()));
+
     aboutAct = new QAction(tr("&About"), this);
     connect(aboutAct, SIGNAL(triggered()), this, SLOT(about()));
 
@@ -465,6 +471,29 @@ void MainWindow::SetVisibilityIndicatorOfLayer(int Layer, bool Visibility)
 void MainWindow::ShowOverviewChanged(bool OverviewEnabled)
 {
    ShowOverviewAct->setChecked(OverviewEnabled);
+}
+
+void MainWindow::ShowSettings()
+{
+    TabDialogDescriptor Descriptor;
+    Descriptor.Title = "Test";
+    Descriptor.Tabs[0].TabName = "Tab1";
+    Descriptor.Tabs[0].Entries[0].Title = "Val 1";
+    Descriptor.Tabs[0].Entries[0].HelpText = "Help for Val 1";
+    Descriptor.Tabs[0].Entries[0].Value = true;
+    Descriptor.Tabs[0].Entries[1].Title = "Val 2";
+    Descriptor.Tabs[0].Entries[1].HelpText = "Help for Val 2";
+    Descriptor.Tabs[0].Entries[1].Value = 128;
+    Descriptor.Tabs[0].Entries[2].Title = "Val 3";
+    Descriptor.Tabs[0].Entries[2].HelpText = "Help for Val 3";
+    Descriptor.Tabs[0].Entries[2].Value = 3.14;
+    Descriptor.Tabs[0].Entries[3].Title = "Val 4";
+    Descriptor.Tabs[0].Entries[3].HelpText = "Help for Val 4";
+    Descriptor.Tabs[0].Entries[3].Value = "Fritz";
+
+    SettingsDialog MySettings(Descriptor);
+    MySettings.show();
+
 }
 
 //! [15]
@@ -506,6 +535,8 @@ void MainWindow::createMenus()
     optionMenu->addAction(DirectPostitSelectAct);
     optionMenu->addSeparator();
     optionMenu->addAction(clearScreenAct);
+    optionMenu->addAction(SettingsAct);
+
 
 
     DebugMenu = new QMenu(tr("&Debug"), this);
