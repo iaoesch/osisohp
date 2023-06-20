@@ -4,6 +4,7 @@ qtHaveModule(printsupport): QT += printsupport
 HEADERS       = mainwindow.h \
    DebugStream.hpp \
    Settings.hpp \
+   SettingsDialog.h \
    databaseclass.h \
    gesturetracker.hpp \
    interface.hpp \
@@ -13,6 +14,7 @@ HEADERS       = mainwindow.h \
     PaintingArea.h \
    scribbleareaStateMachine.h
 SOURCES       = main.cpp \
+   SettingsDialog.cpp \
    databaseclass.cpp \
    gesturetracker.cpp \
                 mainwindow.cpp \
