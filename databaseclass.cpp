@@ -215,10 +215,8 @@ void DatabaseClass::CreatePostit(QImage BackgroundImage, QImage Image, QPointF P
    PostIts.push_back(PostIt(NewPostit, Position, Box, Path));
 }
 
-void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
-//! [17] //! [18]
+double DatabaseClass::CalculatePenWidthQuadratic(double Pressure, int BaseWidth)
 {
-   DEBUG_LOG << "Drawing Pressure: " << Pressure << std::endl;
    constexpr double MaxPenScaling = 11.0;
    constexpr double MinPenScaling = 1.0;
    constexpr double MaxPenForce = 0.9;
@@ -226,7 +224,31 @@ void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
    constexpr double dx = MaxPenForce*MaxPenForce - MinPenForce*MinPenForce;
    constexpr double dy = MaxPenScaling - MinPenScaling;
 
-   int ModifiedPenWidth = static_cast<int>(myPenWidth * qMax(MinPenScaling, Pressure*Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*MinPenForce*dy/dx))) + 0.5);
+   return (BaseWidth * qMax(MinPenScaling, Pressure*Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*MinPenForce*dy/dx))) + 0.5);
+
+}
+
+double DatabaseClass::CalculatePenWidthLinear(double Pressure, int BaseWidth)
+{
+   constexpr double MaxPenScaling = 11.0;
+   constexpr double MinPenScaling = 1.0;
+   constexpr double MaxPenForce = 0.9;
+   constexpr double MinPenForce = DatabaseClass::JitterPressureLimit;
+   constexpr double dx = MaxPenForce - MinPenForce;
+   constexpr double dy = MaxPenScaling - MinPenScaling;
+
+   return (BaseWidth * qMax(MinPenScaling, Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*dy/dx))) + 0.5);
+
+}
+
+void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
+//! [17] //! [18]
+{
+   DEBUG_LOG << "Drawing Pressure: " << Pressure << std::endl;
+
+
+    double ModifiedPenWidth = CalculatePenWidthLinear(Pressure, myPenWidth);
+//    double ModifiedPenWidth = CalculatePenWidthQuadratic(Pressure, myPenWidth);
 //   int ModifiedPenWidth = myPenWidth * qMax(1.0, Pressure*Pressure*4);
     QPainter painter(&LastDrawnObject);
     painter.setCompositionMode(QPainter::CompositionMode_Source);

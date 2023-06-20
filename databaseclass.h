@@ -255,6 +255,9 @@ public:
 
    void DuplicateSelectedPostits();
 private:
+private:
+   double CalculatePenWidthLinear(double Pressure, int BaseWidth);
+   double CalculatePenWidthQuadratic(double Pressure, int BaseWidth);
    void update();
    void update(const QRect &r);
    void UpdateGUIElements(unsigned long NumberOfLayers);
