@@ -54,6 +54,7 @@
 #include <QDialog>
 
 QT_BEGIN_NAMESPACE
+class QLineEdit;
 class QDialogButtonBox;
 class QFileInfo;
 class QTabWidget;
@@ -61,15 +62,28 @@ QT_END_NAMESPACE
 
 class EntityDescriptor {
 public:
+   typedef std::variant<bool, int, double, std::string> ValueType;
+
    std::string Title;
    std::string HelpText;
-   std::variant<bool, int, double, std::string> Value;
+   struct {
+      ValueType Lower;
+      ValueType Upper;
+
+   } Limits;
+   ValueType Value;
 };
 
 class TabDescriptor {
-public:
+private:
    std::string TabName;
    std::vector<EntityDescriptor> Entries;
+
+public:
+   void AddEntry(std::string const &Name, std::string const &Help, bool Value);
+   void AddEntry(std::string const &Name, std::string const &Help, int Value, int LowerLimit = 0, int UpperLimit = 32767);
+   void AddEntry(std::string const &Name, std::string const &Help, double Value, double LowerLimit = 0.0, double UpperLimit = 100.0E10);
+   void AddEntry(std::string const &Name, std::string const &Help, std::string Value);
 };
 
 class TabDialogDescriptor {
@@ -85,7 +99,15 @@ class GeneralTab : public QWidget
     Q_OBJECT
 
 public:
-    explicit GeneralTab(const TabDescriptor &Descriptor, QWidget *parent = nullptr);
+    explicit GeneralTab(TabDescriptor &Descriptor, QWidget *parent = nullptr);
+
+private slots:
+    void NewInput();
+    void NewState(int State);
+
+private:
+    std::map<QWidget *, EntityDescriptor *> DescriptorMap;
+
 };
 //! [0]
 
@@ -97,11 +119,13 @@ class SettingsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit SettingsDialog(const TabDialogDescriptor &Descriptor, QWidget *parent = nullptr);
+    explicit SettingsDialog(TabDialogDescriptor &Descriptor, QWidget *parent = nullptr);
 
 private:
+
     QTabWidget *tabWidget;
     QDialogButtonBox *buttonBox;
+
 };
 //! [3]
 

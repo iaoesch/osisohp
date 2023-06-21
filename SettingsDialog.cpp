@@ -53,7 +53,7 @@
 #include "SettingsDialog.h"
 
 //! [0]
-SettingsDialog::SettingsDialog(const TabDialogDescriptor &Descriptor, QWidget *parent)
+SettingsDialog::SettingsDialog(TabDialogDescriptor &Descriptor, QWidget *parent)
     : QDialog(parent)
 {
 
@@ -92,47 +92,94 @@ overloaded(Ts...) -> overloaded<Ts...>;
 
 
 //! [6]
-GeneralTab::GeneralTab(const TabDescriptor &Descriptor, QWidget *parent)
+GeneralTab::GeneralTab( TabDescriptor &Descriptor, QWidget *parent)
     : QWidget(parent)
 {
-    Descriptor.TabName;
     QVBoxLayout *mainLayout = new QVBoxLayout;
 
     for (auto &d: Descriptor.Entries) {
        // Switch on type in variant
        QLabel *NameLabel = new QLabel(QString::fromStdString(d.Title));
+       QHBoxLayout *HBoxLayout = new QHBoxLayout;
+       HBoxLayout->addWidget(NameLabel);
        std::visit(overloaded{
                [&](bool b){
                         QCheckBox *CheckBox = new QCheckBox(tr("Writable"));
                         if ( b )
                             CheckBox->setChecked(true);
                         CheckBox->setToolTip(QString::fromStdString(d.HelpText));
-                        mainLayout->addWidget(NameLabel);
-                        mainLayout->addWidget(CheckBox);
+                        HBoxLayout->addWidget(CheckBox);
+                        DescriptorMap[CheckBox] = &d;
+                        connect(CheckBox, &QCheckBox::stateChanged, this, &GeneralTab::NewState);
+
                      },
                [&](int i){
                         QLineEdit *Edit = new QLineEdit(QString::number(i));
                         Edit->setToolTip(QString::fromStdString(d.HelpText));
-                        mainLayout->addWidget(NameLabel);
-                        mainLayout->addWidget(Edit);
+                        Edit->setValidator( new QIntValidator(std::get<int>(d.Limits.Lower), std::get<int>(d.Limits.Upper), this));
+                        HBoxLayout->addWidget(Edit);
+                        DescriptorMap[Edit] = &d;
+                        connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
                      },
                [&](double f){
                                        QLineEdit *Edit = new QLineEdit(QString::number(f));
                         Edit->setToolTip(QString::fromStdString(d.HelpText));
-                                       mainLayout->addWidget(NameLabel);
-                                       mainLayout->addWidget(Edit);
+                        Edit->setValidator( new QDoubleValidator(std::get<double>(d.Limits.Lower), std::get<double>(d.Limits.Upper), 4, this));
+                                       HBoxLayout->addWidget(Edit);
+                        DescriptorMap[Edit] = &d;
+                        connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
                     },
                [&](std::string const &s){
                         QLineEdit *Edit = new QLineEdit(QString::fromStdString(s));
                         Edit->setToolTip(QString::fromStdString(d.HelpText));
-                        mainLayout->addWidget(NameLabel);
-                        mainLayout->addWidget(Edit);
+                        HBoxLayout->addWidget(Edit);
+                        DescriptorMap[Edit] = &d;
+                        connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
                      }
            }, d.Value);
+       mainLayout->addLayout(HBoxLayout);
+
     }
 
     mainLayout->addStretch(1);
     setLayout(mainLayout);
+}
+
+void GeneralTab::NewInput()
+{
+   QLineEdit* edit = qobject_cast<QLineEdit*>(sender());
+   if (edit)
+   {
+      // Do something with QLineEdit
+      auto &Val = DescriptorMap[edit]->Value;
+      std::visit(overloaded{
+                    [&](bool b){
+                       Val=false;
+                    },
+                    [&](int i){
+                       Val = edit->text().toInt();
+                    },
+                    [&](double f){
+                       Val = edit->text().toDouble();
+                    },
+                    [&](std::string const &s){
+                       Val = edit->text().toStdString() ;
+                    }
+                 }, DescriptorMap[edit]->Value);
+
+   }
+}
+
+void GeneralTab::NewState(int State)
+{
+   QCheckBox* Checkbox = qobject_cast<QCheckBox*>(sender());
+   if (Checkbox) {
+      if (State == Qt::Checked) {
+         DescriptorMap[Checkbox]->Value = true;
+      } else {
+         DescriptorMap[Checkbox]->Value = false;
+      }
+   }
 }
 //! [6]
 

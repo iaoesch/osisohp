@@ -434,8 +434,8 @@ void MainWindow::createActions()
     connect(clearScreenAct, SIGNAL(triggered()),
             scribbleArea, SLOT(clearImage()));
 
-    SettingsAct = new QAction(tr("&Settings"), this);
-    SettingsAct->setShortcut(tr("Ctrl+O"));
+    SettingsAct = new QAction(tr("SSettings"), this);
+    //SettingsAct->setShortcut(tr("Ctrl+"));
     connect(SettingsAct, SIGNAL(triggered()),
             this, SLOT(ShowSettings()));
 
@@ -476,8 +476,10 @@ void MainWindow::ShowOverviewChanged(bool OverviewEnabled)
 void MainWindow::ShowSettings()
 {
     TabDialogDescriptor Descriptor;
+    Descriptor.Tabs.resize(1);
     Descriptor.Title = "Test";
     Descriptor.Tabs[0].TabName = "Tab1";
+    Descriptor.Tabs[0].Entries.resize(4);
     Descriptor.Tabs[0].Entries[0].Title = "Val 1";
     Descriptor.Tabs[0].Entries[0].HelpText = "Help for Val 1";
     Descriptor.Tabs[0].Entries[0].Value = true;
@@ -492,7 +494,7 @@ void MainWindow::ShowSettings()
     Descriptor.Tabs[0].Entries[3].Value = "Fritz";
 
     SettingsDialog MySettings(Descriptor);
-    MySettings.show();
+    MySettings.exec();
 
 }
 
@@ -533,14 +535,16 @@ void MainWindow::createMenus()
     optionMenu->addAction(WhiteBoardColorAct);
     optionMenu->addAction(BlackBoardColorAct);
     optionMenu->addAction(DirectPostitSelectAct);
+    optionMenu->addAction(SettingsAct);
     optionMenu->addSeparator();
     optionMenu->addAction(clearScreenAct);
-    optionMenu->addAction(SettingsAct);
 
 
 
     DebugMenu = new QMenu(tr("&Debug"), this);
     DebugMenu->addAction(ShowPostitsFrameAct);
+    DebugMenu->addAction(SettingsAct);
+
 
     helpMenu = new QMenu(tr("&Help"), this);
     helpMenu->addAction(aboutAct);
