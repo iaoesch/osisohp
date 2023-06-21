@@ -475,23 +475,14 @@ void MainWindow::ShowOverviewChanged(bool OverviewEnabled)
 
 void MainWindow::ShowSettings()
 {
-    TabDialogDescriptor Descriptor;
-    Descriptor.Tabs.resize(1);
-    Descriptor.Title = "Test";
-    Descriptor.Tabs[0].TabName = "Tab1";
-    Descriptor.Tabs[0].Entries.resize(4);
-    Descriptor.Tabs[0].Entries[0].Title = "Val 1";
-    Descriptor.Tabs[0].Entries[0].HelpText = "Help for Val 1";
-    Descriptor.Tabs[0].Entries[0].Value = true;
-    Descriptor.Tabs[0].Entries[1].Title = "Val 2";
-    Descriptor.Tabs[0].Entries[1].HelpText = "Help for Val 2";
-    Descriptor.Tabs[0].Entries[1].Value = 128;
-    Descriptor.Tabs[0].Entries[2].Title = "Val 3";
-    Descriptor.Tabs[0].Entries[2].HelpText = "Help for Val 3";
-    Descriptor.Tabs[0].Entries[2].Value = 3.14;
-    Descriptor.Tabs[0].Entries[3].Title = "Val 4";
-    Descriptor.Tabs[0].Entries[3].HelpText = "Help for Val 4";
-    Descriptor.Tabs[0].Entries[3].Value = "Fritz";
+    TabDialogDescriptor Descriptor("Test");
+    Descriptor.AddTab("Tab1");
+    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", true);
+    Descriptor.GetTab().AddEntry("Val 2", "Help for Val 2", 128);
+    Descriptor.GetTab().AddEntry("Val 3", "Help for Val 3", 3.14);
+    Descriptor.GetTab().AddEntry("Val 4", "Help for Val 4", "Fritz");
+    Descriptor.AddTab("Tab2");
+    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", "guess");
 
     SettingsDialog MySettings(Descriptor);
     MySettings.exec();

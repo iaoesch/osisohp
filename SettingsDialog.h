@@ -71,7 +71,11 @@ public:
       ValueType Upper;
 
    } Limits;
-   ValueType Value;
+   mutable ValueType Value;
+
+   EntityDescriptor(std::string const &Name, std::string const &Help, EntityDescriptor::ValueType Val, EntityDescriptor::ValueType LimitLow, EntityDescriptor::ValueType LimitHigh) :
+   Title(Name), HelpText(Help), Limits{LimitLow, LimitHigh}, Value(Val) {}
+
 };
 
 class TabDescriptor {
@@ -80,17 +84,45 @@ private:
    std::vector<EntityDescriptor> Entries;
 
 public:
+   TabDescriptor(std::string Name) : TabName(Name) {}
    void AddEntry(std::string const &Name, std::string const &Help, bool Value);
    void AddEntry(std::string const &Name, std::string const &Help, int Value, int LowerLimit = 0, int UpperLimit = 32767);
    void AddEntry(std::string const &Name, std::string const &Help, double Value, double LowerLimit = 0.0, double UpperLimit = 100.0E10);
+   void AddEntry(std::string const &Name, std::string const &Help, const char *Value) {AddEntry(Name, Help, std::string(Value));}
    void AddEntry(std::string const &Name, std::string const &Help, std::string Value);
+
+   const std::string &getTabName() const
+   {
+      return TabName;
+   }
+
+   const std::vector<EntityDescriptor> &getEntries() const
+   {
+      return Entries;
+   }
+
+private:
+   void AddEntry(std::string const &Name, std::string const &Help, EntityDescriptor::ValueType Value, EntityDescriptor::ValueType LimitLow, EntityDescriptor::ValueType LimitHigh);
 };
 
 class TabDialogDescriptor {
-public:
+private:
    std::string Title;
    std::vector<TabDescriptor> Tabs;
 
+public:
+   TabDialogDescriptor(std::string Name) : Title(Name) {}
+   TabDescriptor &AddTab(std::string Title);
+   TabDescriptor &GetTab(size_t Index) {return Tabs[Index];}
+   TabDescriptor &GetTab() {return Tabs.back();}
+   const std::string &getTitle() const
+   {
+      return Title;
+   }
+   const std::vector<TabDescriptor> &getTabs() const
+   {
+      return Tabs;
+   }
 };
 
 //! [0]
@@ -99,14 +131,14 @@ class GeneralTab : public QWidget
     Q_OBJECT
 
 public:
-    explicit GeneralTab(TabDescriptor &Descriptor, QWidget *parent = nullptr);
+    explicit GeneralTab(const TabDescriptor &Descriptor, QWidget *parent = nullptr);
 
 private slots:
     void NewInput();
     void NewState(int State);
 
 private:
-    std::map<QWidget *, EntityDescriptor *> DescriptorMap;
+    std::map<QWidget *, const EntityDescriptor *> DescriptorMap;
 
 };
 //! [0]

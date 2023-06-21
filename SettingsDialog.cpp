@@ -58,8 +58,8 @@ SettingsDialog::SettingsDialog(TabDialogDescriptor &Descriptor, QWidget *parent)
 {
 
     tabWidget = new QTabWidget;
-    for (auto &Tab: Descriptor.Tabs) {
-       tabWidget->addTab(new GeneralTab(Tab), QString::fromStdString(Tab.TabName));
+    for (auto &Tab: Descriptor.getTabs()) {
+       tabWidget->addTab(new GeneralTab(Tab), QString::fromStdString(Tab.getTabName()));
     }
 //! [0]
 
@@ -80,7 +80,7 @@ SettingsDialog::SettingsDialog(TabDialogDescriptor &Descriptor, QWidget *parent)
 //! [4]
 
 //! [5]
-    setWindowTitle(QString::fromStdString(Descriptor.Title));
+    setWindowTitle(QString::fromStdString(Descriptor.getTitle()));
 }
 //! [5]
 template<class... Ts>
@@ -92,12 +92,12 @@ overloaded(Ts...) -> overloaded<Ts...>;
 
 
 //! [6]
-GeneralTab::GeneralTab( TabDescriptor &Descriptor, QWidget *parent)
+GeneralTab::GeneralTab(const TabDescriptor &Descriptor, QWidget *parent)
     : QWidget(parent)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout;
 
-    for (auto &d: Descriptor.Entries) {
+    for (auto &d: Descriptor.getEntries()) {
        // Switch on type in variant
        QLabel *NameLabel = new QLabel(QString::fromStdString(d.Title));
        QHBoxLayout *HBoxLayout = new QHBoxLayout;
@@ -183,3 +183,42 @@ void GeneralTab::NewState(int State)
 }
 //! [6]
 
+
+
+
+
+
+void TabDescriptor::AddEntry(const std::string &Name, const std::string &Help, bool Value)
+{
+   AddEntry(Name, Help, EntityDescriptor::ValueType(Value), EntityDescriptor::ValueType(false), EntityDescriptor::ValueType(true));
+}
+
+void TabDescriptor::AddEntry(const std::string &Name, const std::string &Help, int Value, int LowerLimit, int UpperLimit)
+{
+   AddEntry(Name, Help, EntityDescriptor::ValueType(Value), EntityDescriptor::ValueType(LowerLimit), EntityDescriptor::ValueType(UpperLimit));
+}
+
+void TabDescriptor::AddEntry(const std::string &Name, const std::string &Help, double Value, double LowerLimit, double UpperLimit)
+{
+   AddEntry(Name, Help, EntityDescriptor::ValueType(Value), EntityDescriptor::ValueType(LowerLimit), EntityDescriptor::ValueType(UpperLimit));
+}
+
+void TabDescriptor::AddEntry(const std::string &Name, const std::string &Help, std::string Value)
+{
+   AddEntry(Name, Help, EntityDescriptor::ValueType(Value), EntityDescriptor::ValueType(""), EntityDescriptor::ValueType(""));
+}
+
+void TabDescriptor::AddEntry(const std::string &Name, const std::string &Help, EntityDescriptor::ValueType Value, EntityDescriptor::ValueType LimitLow, EntityDescriptor::ValueType LimitHigh)
+{
+   Entries.push_back(EntityDescriptor(Name, Help, Value, LimitLow, LimitHigh));
+}
+
+
+
+
+
+TabDescriptor &TabDialogDescriptor::AddTab(std::string Title)
+{
+   Tabs.push_back(TabDescriptor(Title));
+   return Tabs.back();
+}
