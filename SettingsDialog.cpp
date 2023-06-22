@@ -102,8 +102,8 @@ GeneralTab::GeneralTab(const TabDescriptor &Descriptor, QWidget *parent)
        QLabel *NameLabel = new QLabel(QString::fromStdString(d.Title));
        QHBoxLayout *HBoxLayout = new QHBoxLayout;
        HBoxLayout->addWidget(NameLabel);
-       std::visit(overloaded{
-               [&](bool b){
+       d.Visit<bool, int, double, std::string>(
+               [&](bool &b, bool b1, bool b2){
                         QCheckBox *CheckBox = new QCheckBox(tr("Writable"));
                         if ( b )
                             CheckBox->setChecked(true);
@@ -113,30 +113,30 @@ GeneralTab::GeneralTab(const TabDescriptor &Descriptor, QWidget *parent)
                         connect(CheckBox, &QCheckBox::stateChanged, this, &GeneralTab::NewState);
 
                      },
-               [&](int i){
+               [&](int &i, int i2, int i3){
                         QLineEdit *Edit = new QLineEdit(QString::number(i));
                         Edit->setToolTip(QString::fromStdString(d.HelpText));
-                        Edit->setValidator( new QIntValidator(std::get<int>(d.Limits.Lower), std::get<int>(d.Limits.Upper), this));
+                    //    Edit->setValidator( new QIntValidator(std::get<int>(d.Limits.Lower), std::get<int>(d.Limits.Upper), this));
                         HBoxLayout->addWidget(Edit);
                         DescriptorMap[Edit] = &d;
                         connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
                      },
-               [&](double f){
+               [&](double &f, double f1, double f2){
                                        QLineEdit *Edit = new QLineEdit(QString::number(f));
                         Edit->setToolTip(QString::fromStdString(d.HelpText));
-                        Edit->setValidator( new QDoubleValidator(std::get<double>(d.Limits.Lower), std::get<double>(d.Limits.Upper), 4, this));
+                      //  Edit->setValidator( new QDoubleValidator(std::get<double>(d.Limits.Lower), std::get<double>(d.Limits.Upper), 4, this));
                                        HBoxLayout->addWidget(Edit);
                         DescriptorMap[Edit] = &d;
                         connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
                     },
-               [&](std::string const &s){
+               [&](std::string  &s, std::string  s2, std::string  s3){
                         QLineEdit *Edit = new QLineEdit(QString::fromStdString(s));
                         Edit->setToolTip(QString::fromStdString(d.HelpText));
                         HBoxLayout->addWidget(Edit);
                         DescriptorMap[Edit] = &d;
                         connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
                      }
-           }, d.Value);
+           );
        mainLayout->addLayout(HBoxLayout);
 
     }
@@ -152,9 +152,10 @@ void GeneralTab::NewInput()
    {
       // Do something with QLineEdit
       auto &Val = DescriptorMap[edit]->Value;
+      DescriptorMap[edit]->Value.
       std::visit(overloaded{
                     [&](bool b){
-                       Val=false;
+                       Val.setValue(false);
                     },
                     [&](int i){
                        Val = edit->text().toInt();
@@ -187,7 +188,7 @@ void GeneralTab::NewState(int State)
 
 
 
-
+#if 0
 void TabDescriptor::AddEntry(const std::string &Name, const std::string &Help, bool Value)
 {
    AddEntry(Name, Help, EntityDescriptor::ValueType(Value), EntityDescriptor::ValueType(false), EntityDescriptor::ValueType(true));
@@ -202,7 +203,7 @@ void TabDescriptor::AddEntry(const std::string &Name, const std::string &Help, d
 {
    AddEntry(Name, Help, EntityDescriptor::ValueType(Value), EntityDescriptor::ValueType(LowerLimit), EntityDescriptor::ValueType(UpperLimit));
 }
-
+#endif
 void TabDescriptor::AddEntry(const std::string &Name, const std::string &Help, std::string Value)
 {
    AddEntry(Name, Help, EntityDescriptor::ValueType(Value), EntityDescriptor::ValueType(""), EntityDescriptor::ValueType(""));
@@ -222,3 +223,4 @@ TabDescriptor &TabDialogDescriptor::AddTab(std::string Title)
    Tabs.push_back(TabDescriptor(Title));
    return Tabs.back();
 }
+

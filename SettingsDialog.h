@@ -51,6 +51,11 @@
 #ifndef SETTINGSDIALOG_H
 #define SETTINGSDIALOG_H
 
+// explicit deduction guide (not needed as of C++20)
+template<class... Ts>
+overloaded_osi(Ts...) -> overloaded_osi<Ts...>;
+
+
 #include <QDialog>
 
 QT_BEGIN_NAMESPACE
@@ -60,23 +65,70 @@ class QFileInfo;
 class QTabWidget;
 QT_END_NAMESPACE
 
-class EntityDescriptor {
-public:
-   typedef std::variant<bool, int, double, std::string> ValueType;
+template <class... Types>
+class EntityDescriptorTemplate {
+   template <class T>
+   class ValueDescriptor {
+      mutable T  NewValue;
+      T &Source;
+      struct {
+         T Lower;
+         T Upper;
 
+      } Limits;
+
+   public:
+      ValueDescriptor(T &Src, T LowerLimit, T UpperLimit) : NewValue(Src), Source(Src), Limits({LowerLimit, UpperLimit}) {}
+
+      const T &getValue() const { return NewValue;}
+      void setValue(const T &newNewValue) {  NewValue = newNewValue;}
+      void Update() {  Source = NewValue;}
+   };
+   template<class V, class ...Ts>
+   struct overloaded_osi;
+
+   template<class V>
+   struct overloaded_osi<V>  {
+      V Vistor;
+      overloaded_osi(V visitor) : Vistor(visitor) {}
+   };
+
+   template<class V, class T, class ...Ts>
+   struct overloaded_osi<V, T,  Ts...> : overloaded_osi<V, Ts...> {
+      using overloaded_osi<V, Ts...>::operator();
+      using overloaded_osi<V, Ts...>::overloaded_osi;
+      void operator() (ValueDescriptor<T> &v) {vistor(v.getValue());}
+   };
+
+   template<class... Ts>
+   struct overloaded_osili : Ts... { using Ts::operator()...; };
+   // explicit deduction guide (not needed as of C++20)
+   template<class... Ts>
+   overloaded_osili(Ts...) -> overloaded_osili<Ts...>;
+
+public:
+   typedef std::variant<ValueDescriptor<Types>...> ValueType;
+ //  typedef std::variant<ValueDescriptor<bool>, ValueDescriptor<int>, ValueDescriptor<double>, ValueDescriptor<std::string>> ValueType2;
+
+  // ValueType2 NewVal;
    std::string Title;
    std::string HelpText;
-   struct {
-      ValueType Lower;
-      ValueType Upper;
+   ValueType Value;
 
-   } Limits;
-   mutable ValueType Value;
+   template <class U>
+   EntityDescriptorTemplate(std::string const &Name, std::string const &Help, U Val, U LimitLow, U LimitHigh) :
+ //  EntityDescriptorTemplate(std::string const &Name, std::string const &Help, EntityDescriptor::ValueType Val, EntityDescriptor::ValueType LimitLow, EntityDescriptor::ValueType LimitHigh) :
+ //  NewVal(Val, Val, LimitLow, LimitHigh),
+   Title(Name), HelpText(Help), Value(Val, LimitLow, LimitHigh) {}
 
-   EntityDescriptor(std::string const &Name, std::string const &Help, EntityDescriptor::ValueType Val, EntityDescriptor::ValueType LimitLow, EntityDescriptor::ValueType LimitHigh) :
-   Title(Name), HelpText(Help), Limits{LimitLow, LimitHigh}, Value(Val) {}
+   template <class... U>
+   void Visit(std::function<void(U &Value, U Lower, U Upper)>... func) const{
+      std::visit(overloaded_osi{func...}, Value);
+   }
 
 };
+
+typedef EntityDescriptorTemplate<bool, int, double, std::string> EntityDescriptor;
 
 class TabDescriptor {
 private:
@@ -85,9 +137,13 @@ private:
 
 public:
    TabDescriptor(std::string Name) : TabName(Name) {}
-   void AddEntry(std::string const &Name, std::string const &Help, bool Value);
-   void AddEntry(std::string const &Name, std::string const &Help, int Value, int LowerLimit = 0, int UpperLimit = 32767);
-   void AddEntry(std::string const &Name, std::string const &Help, double Value, double LowerLimit = 0.0, double UpperLimit = 100.0E10);
+   template <class U>
+   void AddEntry(std::string const &Name, std::string const &Help, U Value, U LowerLimit = std::numeric_limits<U>::lowest(), U UpperLimit = std::numeric_limits<U>::max())
+   {
+      AddEntry(Name, Help, EntityDescriptor::ValueType(Value), EntityDescriptor::ValueType(LowerLimit), EntityDescriptor::ValueType(UpperLimit));
+   }
+
+   //void AddEntry(std::string const &Name, std::string const &Help, double Value, double LowerLimit = 0.0, double UpperLimit = 100.0E10);
    void AddEntry(std::string const &Name, std::string const &Help, const char *Value) {AddEntry(Name, Help, std::string(Value));}
    void AddEntry(std::string const &Name, std::string const &Help, std::string Value);
 
