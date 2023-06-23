@@ -51,9 +51,6 @@
 #ifndef SETTINGSDIALOG_H
 #define SETTINGSDIALOG_H
 
-// explicit deduction guide (not needed as of C++20)
-template<class... Ts>
-overloaded_osi(Ts...) -> overloaded_osi<Ts...>;
 
 
 #include <QDialog>
@@ -64,6 +61,18 @@ class QDialogButtonBox;
 class QFileInfo;
 class QTabWidget;
 QT_END_NAMESPACE
+
+template<typename VariantType, typename T, std::size_t index = 0>
+constexpr std::size_t variant_index() {
+    static_assert(std::variant_size_v<VariantType> > index, "Type not found in variant");
+    if constexpr (index == std::variant_size_v<VariantType>) {
+        return index;
+    } else if constexpr (std::is_same_v<std::variant_alternative_t<index, VariantType>, T>) {
+        return index;
+    } else {
+        return variant_index<VariantType, T, index + 1>();
+    }
+}
 
 template <class... Types>
 class EntityDescriptorTemplate {
@@ -80,8 +89,9 @@ class EntityDescriptorTemplate {
    public:
       ValueDescriptor(T &Src, T LowerLimit, T UpperLimit) : NewValue(Src), Source(Src), Limits({LowerLimit, UpperLimit}) {}
 
+      const auto &getLimits() const { return Limits;}
       const T &getValue() const { return NewValue;}
-      void setValue(const T &newNewValue) {  NewValue = newNewValue;}
+      void setValue(const T &newNewValue) const {  NewValue = newNewValue;}
       void Update() {  Source = NewValue;}
    };
    template<class V, class ...Ts>
@@ -106,9 +116,37 @@ class EntityDescriptorTemplate {
    template<class... Ts>
    overloaded_osili(Ts...) -> overloaded_osili<Ts...>;
 
+   template<class ...Ts>
+   struct overloaded_Update;
+
+   template<>
+   struct overloaded_Update<>  {
+      void operator() () {}
+   };
+
+   template<class T, class ...Ts>
+   struct overloaded_Update<T,  Ts...> : overloaded_Update<Ts...> {
+      using overloaded_Update<Ts...>::operator();
+      void operator() (ValueDescriptor<T> &v) {v.Update();}
+   };
+
 public:
    typedef std::variant<ValueDescriptor<Types>...> ValueType;
- //  typedef std::variant<ValueDescriptor<bool>, ValueDescriptor<int>, ValueDescriptor<double>, ValueDescriptor<std::string>> ValueType2;
+
+   void Update() {std::visit(overloaded_Update<Types...>(),Value);}
+   template <class T>
+   static constexpr int IdOf() {return variant_index<ValueType, ValueDescriptor<T>>();}
+   int CurrentTypeId() const {return Value.index();}
+   template <class T>
+   const ValueDescriptor<T> &GetDescriptor() const {return std::get<ValueDescriptor<T>>(Value);}
+
+   template <class T>
+   const auto &GetLimits() const {return GetDescriptor<T>().getLimits();}
+   template <class T>
+   const T &GetValue() const {return GetDescriptor<T>().getValue();}
+   template <class T>
+   void SetValue(const T &Value) const {GetDescriptor<T>().setValue(Value);}
+   //  typedef std::variant<ValueDescriptor<bool>, ValueDescriptor<int>, ValueDescriptor<double>, ValueDescriptor<std::string>> ValueType2;
 
   // ValueType2 NewVal;
    std::string Title;
@@ -116,10 +154,10 @@ public:
    ValueType Value;
 
    template <class U>
-   EntityDescriptorTemplate(std::string const &Name, std::string const &Help, U Val, U LimitLow, U LimitHigh) :
+   EntityDescriptorTemplate(std::string const &Name, std::string const &Help, U &Val, U LimitLow, U LimitHigh) :
  //  EntityDescriptorTemplate(std::string const &Name, std::string const &Help, EntityDescriptor::ValueType Val, EntityDescriptor::ValueType LimitLow, EntityDescriptor::ValueType LimitHigh) :
  //  NewVal(Val, Val, LimitLow, LimitHigh),
-   Title(Name), HelpText(Help), Value(Val, LimitLow, LimitHigh) {}
+   Title(Name), HelpText(Help), Value(ValueDescriptor<U>(Val, LimitLow, LimitHigh)) {}
 
    template <class... U>
    void Visit(std::function<void(U &Value, U Lower, U Upper)>... func) const{
@@ -138,14 +176,16 @@ private:
 public:
    TabDescriptor(std::string Name) : TabName(Name) {}
    template <class U>
-   void AddEntry(std::string const &Name, std::string const &Help, U Value, U LowerLimit = std::numeric_limits<U>::lowest(), U UpperLimit = std::numeric_limits<U>::max())
+   void AddEntry(std::string const &Name, std::string const &Help, U &Value, U LowerLimit = std::numeric_limits<U>::lowest(), U UpperLimit = std::numeric_limits<U>::max())
    {
-      AddEntry(Name, Help, EntityDescriptor::ValueType(Value), EntityDescriptor::ValueType(LowerLimit), EntityDescriptor::ValueType(UpperLimit));
+      Entries.push_back(EntityDescriptor(Name, Help, Value, LowerLimit, UpperLimit));
    }
 
    //void AddEntry(std::string const &Name, std::string const &Help, double Value, double LowerLimit = 0.0, double UpperLimit = 100.0E10);
-   void AddEntry(std::string const &Name, std::string const &Help, const char *Value) {AddEntry(Name, Help, std::string(Value));}
-   void AddEntry(std::string const &Name, std::string const &Help, std::string Value);
+  // void AddEntry(std::string const &Name, std::string const &Help, const char *&Value) {AddEntry(Name, Help, std::string(Value));}
+   void AddEntry(std::string const &Name, std::string const &Help, std::string &Value) {
+      AddEntry<std::string>(Name, Help, Value, std::string(), std::string());
+   }
 
    const std::string &getTabName() const
    {
@@ -157,8 +197,9 @@ public:
       return Entries;
    }
 
+   void Update();
 private:
-   void AddEntry(std::string const &Name, std::string const &Help, EntityDescriptor::ValueType Value, EntityDescriptor::ValueType LimitLow, EntityDescriptor::ValueType LimitHigh);
+  // void AddEntry(std::string const &Name, std::string const &Help, EntityDescriptor::ValueType Value, EntityDescriptor::ValueType LimitLow, EntityDescriptor::ValueType LimitHigh);
 };
 
 class TabDialogDescriptor {
@@ -168,6 +209,7 @@ private:
 
 public:
    TabDialogDescriptor(std::string Name) : Title(Name) {}
+   void Update();
    TabDescriptor &AddTab(std::string Title);
    TabDescriptor &GetTab(size_t Index) {return Tabs[Index];}
    TabDescriptor &GetTab() {return Tabs.back();}

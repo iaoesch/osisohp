@@ -95,90 +95,96 @@ overloaded(Ts...) -> overloaded<Ts...>;
 GeneralTab::GeneralTab(const TabDescriptor &Descriptor, QWidget *parent)
     : QWidget(parent)
 {
-    QVBoxLayout *mainLayout = new QVBoxLayout;
+   QVBoxLayout *mainLayout = new QVBoxLayout;
 
-    for (auto &d: Descriptor.getEntries()) {
-       // Switch on type in variant
-       QLabel *NameLabel = new QLabel(QString::fromStdString(d.Title));
-       QHBoxLayout *HBoxLayout = new QHBoxLayout;
-       HBoxLayout->addWidget(NameLabel);
-       d.Visit<bool, int, double, std::string>(
-               [&](bool &b, bool b1, bool b2){
-                        QCheckBox *CheckBox = new QCheckBox(tr("Writable"));
-                        if ( b )
-                            CheckBox->setChecked(true);
-                        CheckBox->setToolTip(QString::fromStdString(d.HelpText));
-                        HBoxLayout->addWidget(CheckBox);
-                        DescriptorMap[CheckBox] = &d;
-                        connect(CheckBox, &QCheckBox::stateChanged, this, &GeneralTab::NewState);
+   for (auto &d: Descriptor.getEntries()) {
+      // Switch on type in variant
+      QLabel *NameLabel = new QLabel(QString::fromStdString(d.Title));
+      QHBoxLayout *HBoxLayout = new QHBoxLayout;
+      HBoxLayout->addWidget(NameLabel);
+      switch(d.CurrentTypeId()) {
+         case EntityDescriptor::IdOf<bool>():
+            {
+               QCheckBox *CheckBox = new QCheckBox();
+               if ( d.GetValue<bool>() ) {
+                  CheckBox->setChecked(true);
+               }
+               CheckBox->setToolTip(QString::fromStdString(d.HelpText));
+               HBoxLayout->addWidget(CheckBox);
+               DescriptorMap[CheckBox] = &d;
+               connect(CheckBox, &QCheckBox::stateChanged, this, &GeneralTab::NewState);
 
-                     },
-               [&](int &i, int i2, int i3){
-                        QLineEdit *Edit = new QLineEdit(QString::number(i));
-                        Edit->setToolTip(QString::fromStdString(d.HelpText));
-                    //    Edit->setValidator( new QIntValidator(std::get<int>(d.Limits.Lower), std::get<int>(d.Limits.Upper), this));
-                        HBoxLayout->addWidget(Edit);
-                        DescriptorMap[Edit] = &d;
-                        connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
-                     },
-               [&](double &f, double f1, double f2){
-                                       QLineEdit *Edit = new QLineEdit(QString::number(f));
-                        Edit->setToolTip(QString::fromStdString(d.HelpText));
-                      //  Edit->setValidator( new QDoubleValidator(std::get<double>(d.Limits.Lower), std::get<double>(d.Limits.Upper), 4, this));
-                                       HBoxLayout->addWidget(Edit);
-                        DescriptorMap[Edit] = &d;
-                        connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
-                    },
-               [&](std::string  &s, std::string  s2, std::string  s3){
-                        QLineEdit *Edit = new QLineEdit(QString::fromStdString(s));
-                        Edit->setToolTip(QString::fromStdString(d.HelpText));
-                        HBoxLayout->addWidget(Edit);
-                        DescriptorMap[Edit] = &d;
-                        connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
-                     }
-           );
-       mainLayout->addLayout(HBoxLayout);
+            }
+         break;
+         case EntityDescriptor::IdOf<int>():
+            {
+               QLineEdit *Edit = new QLineEdit(QString::number(d.GetValue<int>()));
+               Edit->setToolTip(QString::fromStdString(d.HelpText));
+               Edit->setValidator( new QIntValidator(d.GetLimits<int>().Lower, d.GetLimits<int>().Upper, this));
+               HBoxLayout->addWidget(Edit);
+               DescriptorMap[Edit] = &d;
+               connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
+            }
+            break;
+         case EntityDescriptor::IdOf<double>():
+            {
 
-    }
+               QLineEdit *Edit = new QLineEdit(QString::number(d.GetValue<double>()));
+               Edit->setToolTip(QString::fromStdString(d.HelpText));
+               Edit->setValidator( new QDoubleValidator(d.GetLimits<double>().Lower, d.GetLimits<double>().Upper, 4, this));
+               HBoxLayout->addWidget(Edit);
+               DescriptorMap[Edit] = &d;
+               connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
+            }
+         break;
+         case EntityDescriptor::IdOf<std::string>():
+            {
+               QLineEdit *Edit = new QLineEdit(QString::fromStdString(d.GetValue<std::string>()));
+               Edit->setToolTip(QString::fromStdString(d.HelpText));
+               HBoxLayout->addWidget(Edit);
+               DescriptorMap[Edit] = &d;
+               connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
+            }
+      }
 
-    mainLayout->addStretch(1);
-    setLayout(mainLayout);
+      mainLayout->addLayout(HBoxLayout);
+
+   }
+
+   mainLayout->addStretch(1);
+   setLayout(mainLayout);
 }
 
 void GeneralTab::NewInput()
 {
    QLineEdit* edit = qobject_cast<QLineEdit*>(sender());
-   if (edit)
-   {
+   if (edit) {
       // Do something with QLineEdit
-      auto &Val = DescriptorMap[edit]->Value;
-      DescriptorMap[edit]->Value.
-      std::visit(overloaded{
-                    [&](bool b){
-                       Val.setValue(false);
-                    },
-                    [&](int i){
-                       Val = edit->text().toInt();
-                    },
-                    [&](double f){
-                       Val = edit->text().toDouble();
-                    },
-                    [&](std::string const &s){
-                       Val = edit->text().toStdString() ;
-                    }
-                 }, DescriptorMap[edit]->Value);
+      auto Val = DescriptorMap[edit];
+      switch(Val->CurrentTypeId()) {
+         case EntityDescriptor::IdOf<bool>():
+            Val->SetValue<bool>(false);
+            break;
+         case EntityDescriptor::IdOf<int>():
+            Val->SetValue<int>(edit->text().toInt());
+            break;
+         case EntityDescriptor::IdOf<double>():
+            Val->SetValue<double>(edit->text().toDouble());
+            break;
+         case EntityDescriptor::IdOf<std::string>():
+            Val->SetValue<std::string>(edit->text().toStdString()) ;
 
+      }
    }
 }
-
 void GeneralTab::NewState(int State)
 {
    QCheckBox* Checkbox = qobject_cast<QCheckBox*>(sender());
    if (Checkbox) {
       if (State == Qt::Checked) {
-         DescriptorMap[Checkbox]->Value = true;
+         DescriptorMap[Checkbox]->SetValue<bool>(true);
       } else {
-         DescriptorMap[Checkbox]->Value = false;
+         DescriptorMap[Checkbox]->SetValue<bool>(false);
       }
    }
 }
@@ -204,6 +210,7 @@ void TabDescriptor::AddEntry(const std::string &Name, const std::string &Help, d
    AddEntry(Name, Help, EntityDescriptor::ValueType(Value), EntityDescriptor::ValueType(LowerLimit), EntityDescriptor::ValueType(UpperLimit));
 }
 #endif
+#if 0
 void TabDescriptor::AddEntry(const std::string &Name, const std::string &Help, std::string Value)
 {
    AddEntry(Name, Help, EntityDescriptor::ValueType(Value), EntityDescriptor::ValueType(""), EntityDescriptor::ValueType(""));
@@ -213,10 +220,17 @@ void TabDescriptor::AddEntry(const std::string &Name, const std::string &Help, E
 {
    Entries.push_back(EntityDescriptor(Name, Help, Value, LimitLow, LimitHigh));
 }
+#endif
 
 
 
 
+void TabDialogDescriptor::Update()
+{
+   for(auto &t: Tabs) {
+      t.Update();
+   }
+}
 
 TabDescriptor &TabDialogDescriptor::AddTab(std::string Title)
 {
@@ -224,3 +238,10 @@ TabDescriptor &TabDialogDescriptor::AddTab(std::string Title)
    return Tabs.back();
 }
 
+
+void TabDescriptor::Update()
+{
+   for(auto &e: Entries) {
+      e.Update();
+   }
+}
