@@ -475,17 +475,27 @@ void MainWindow::ShowOverviewChanged(bool OverviewEnabled)
 
 void MainWindow::ShowSettings()
 {
+   static struct Settings {
+    bool Value1 = true;
+    int Value2 = 128;
+    double Value3 = 3.14;
+    std::string Value4 = "Fritz";
+    std::string Value5 = "guess";
+   } MyLocalSettings;
     TabDialogDescriptor Descriptor("Test");
     Descriptor.AddTab("Tab1");
-    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", true);
-    Descriptor.GetTab().AddEntry("Val 2", "Help for Val 2", 128);
-    Descriptor.GetTab().AddEntry("Val 3", "Help for Val 3", 3.14);
-    Descriptor.GetTab().AddEntry("Val 4", "Help for Val 4", "Fritz");
+    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value1);
+    Descriptor.GetTab().AddEntry("Val 2", "Help for Val 2", MyLocalSettings.Value2);
+    Descriptor.GetTab().AddEntry("Val 3", "Help for Val 3", MyLocalSettings.Value3);
+    Descriptor.GetTab().AddEntry("Val 4", "Help for Val 4", MyLocalSettings.Value4);
     Descriptor.AddTab("Tab2");
-    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", "guess");
+    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value5);
 
     SettingsDialog MySettings(Descriptor);
-    MySettings.exec();
+    auto Result  = MySettings.exec();
+    if (Result == QDialog::Accepted) {
+       Descriptor.Update();
+    }
 
 }
 
