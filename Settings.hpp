@@ -21,15 +21,26 @@
 /*****************************************************************************/
 
 /* imports */
+#include <map>
+#include <string>
+#include "SettingsDialog.h"
+
 
 /* Class constant declaration  */
 
 /* Class Type declaration      */
+class TabDescriptor;
 
 /* Class data declaration      */
 
 /* Class definition            */
-class Settings {
+class SettingClass {
+   struct SettingInfo {
+      std::string Name;
+      std::string Helptext;
+   };
+
+   std::map<void *, SettingInfo> Infos;
 public:
    double Touchscaling = 4.0;
    double DirectSelectTimeout = 10.0;
@@ -43,6 +54,14 @@ public:
    int    EraserSize = 2;
    int    SpongeSize = 15;
 
+   void getSettings(TabDescriptor &Descriptor);
+   SettingClass();
+   void SetDefaultValues();
+private:
+   template<class U>
+   void AddSettingsEntry(TabDescriptor &Descriptor, U &Value) {
+      Descriptor.AddEntry(Infos[&Value].Name, Infos[&Value].Helptext, Value);
+   }
 };
 /*****************************************************************************/
 /*  End Header  : Settings                                           */

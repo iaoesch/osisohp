@@ -43,6 +43,7 @@
 
 #include <QList>
 #include <QMainWindow>
+#include "Settings.hpp"
 
 class ScribbleArea;
 
@@ -89,6 +90,8 @@ private:
     bool ExportFile(const QByteArray &fileFormat);
 
     ScribbleArea *scribbleArea;
+    class SettingClass Settings;
+
 
     QMenu *saveAsMenu;
     QMenu *fileMenu;

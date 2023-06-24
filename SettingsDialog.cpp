@@ -66,10 +66,11 @@ SettingsDialog::SettingsDialog(TabDialogDescriptor &Descriptor, QWidget *parent)
 //! [1] //! [2]
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
 //! [1] //! [3]
-                                     | QDialogButtonBox::Cancel);
+                                     | QDialogButtonBox::RestoreDefaults | QDialogButtonBox::Cancel);
 
     connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
+   // connect(buttonBox, &QDialogButtonBox::HelpRequested, this, &QDialog::reject);
 //! [2] //! [3]
 
 //! [4]

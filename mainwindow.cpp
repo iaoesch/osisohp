@@ -50,7 +50,7 @@ MainWindow::MainWindow()
 {
     SetWhiteBoardColors();
     readSettings();
-    scribbleArea = new ScribbleArea;
+    scribbleArea = new ScribbleArea(Settings);
     setCentralWidget(scribbleArea);
     QWidget::setAttribute(Qt::WA_AcceptTouchEvents);
     //QWidget::setAttribute(Qt::WA_TouchPadAcceptSingleTouchEvents);
@@ -490,6 +490,8 @@ void MainWindow::ShowSettings()
     Descriptor.GetTab().AddEntry("Val 4", "Help for Val 4", MyLocalSettings.Value4);
     Descriptor.AddTab("Tab2");
     Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value5);
+    Descriptor.AddTab("Timings");
+    this->Settings.getSettings(Descriptor.GetTab());
 
     SettingsDialog MySettings(Descriptor);
     auto Result  = MySettings.exec();

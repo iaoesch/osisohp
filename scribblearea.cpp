@@ -49,8 +49,8 @@
 
 
 //! [0]
-ScribbleArea::ScribbleArea(QWidget *parent)
-    : QWidget(parent), MyDatas(*this), Interface(this), StateMachine(MyDatas, Interface)
+ScribbleArea::ScribbleArea(class SettingClass &MySettings, QWidget *parent)
+    : QWidget(parent), MyDatas(*this, MySettings), Interface(this), StateMachine(MyDatas, Interface, MySettings), Settings(MySettings)
 {
     setAttribute(Qt::WA_StaticContents);
     setFocusPolicy(Qt::StrongFocus);
@@ -62,6 +62,28 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     PointerShape = QImage(":/images/HandWithPen.png");
     SpongeShape = QImage(":/images/HandWithSponge.png");
     EraserShape = QImage(":/images/HandWithEraser.png");
+
+    AnimatedPointerCursor[0] = QPixmap(":/images/MousPointers/left_ptr.png").scaled(16,16);
+    for (int i = 1; i < NumberOfFrames; i++) {
+       AnimatedPointerCursor[i] = AnimatedPointerCursor[0];
+    }
+    for (int i = 0; i < NumberOfFrames; i++) {
+      QPainter IconPainter(&AnimatedPointerCursor[i]);
+      IconPainter.setPen(Qt::white);
+      IconPainter.setBrush(QBrush(Qt::white));
+      IconPainter.drawEllipse(4,4,12,12);
+      IconPainter.setPen(Qt::black);
+      IconPainter.setBrush(QBrush(Qt::black));
+      int StartAngle = 0*16;
+      int SpanAngle = 16*360*i/NumberOfFrames;
+
+      IconPainter.drawPie(5,5,10,10, StartAngle, SpanAngle);
+      //IconPainter.drawEllipse(6,6,8,8);
+    }
+    CurrentAnimatedPointerShape = 0;
+
+    connect(&AnimatedPointerTimer, &QTimer::timeout, this, &ScribbleArea::AnimatedPointerTimetick);
+    AnimatedPointerTimer.setInterval(20);
 #ifndef USE_NEW_STATEMACHINE
     ShowPointer = false;
     connect(&MyTimer, SIGNAL(timeout()), this, SLOT(timeoutSM()));
@@ -264,6 +286,24 @@ void ScribbleArea::PointerTimeout()
    ShowPointer = false;
 #endif
    update();
+}
+
+void ScribbleArea::AnimatedPointerTimetick()
+{
+   CurrentAnimatedPointerShape++;
+   if (CurrentAnimatedPointerShape < NumberOfFrames) {
+      setCursor(QCursor(AnimatedPointerCursor[CurrentAnimatedPointerShape]));
+   } else {
+      AnimatedPointerTimer.stop();
+      CurrentAnimatedPointerShape = 0;
+   }
+}
+
+void ScribbleArea::SetSpecialCursor()
+{
+   setCursor(QCursor(AnimatedPointerCursor[0]));
+   AnimatedPointerTimer.start();
+   CurrentAnimatedPointerShape = 0;
 }
 
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)

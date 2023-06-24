@@ -77,6 +77,7 @@ public:
    void CreeatePostitFromSelection();
 #endif
    void setCursor(QCursor const &Cursor);
+   void setSpeciallCursor();
 
 
 };

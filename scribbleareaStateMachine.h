@@ -80,6 +80,7 @@ enum ScribblingState {
    WaitingToLeaveJitterProtectionForScrolling,
    WaitingToLeaveJitterProtectionWithCreatedPostitForMoving,
    WaitingToLeaveJitterProtectionWithSelectedPostitForMoving,
+   WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving,
    Drawing,
    DrawingPaused,
    DrawingFillRequested,
@@ -198,7 +199,7 @@ private:
       Context(DatabaseClass &db) : MyDatas(db) {}
 
    } Context;
-   Settings Settings;
+   SettingClass &Settings;
 
    GuiInterface Interface;
    StateBaseClass *CurrentState;
@@ -209,6 +210,7 @@ private:
    MakeStateObject(WaitingToLeaveJitterProtectionForScrolling);
    MakeStateObject(WaitingToLeaveJitterProtectionWithCreatedPostitForMoving);
    MakeStateObject(WaitingToLeaveJitterProtectionWithSelectedPostitForMoving);
+   MakeStateObject(WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving);
    MakeStateObject(Drawing);
    MakeStateObject(DrawingPaused);
    MakeStateObject(DrawingFillRequested);
@@ -248,7 +250,7 @@ public:
    void HandlePasteEventSM(QImage ImageToPaste);
    void HandleKeyEventSM(DatabaseClass::PasteEvent Event);
 
-   ControllingStateMachine(DatabaseClass &Database, GuiInterface &Interface);
+   ControllingStateMachine(DatabaseClass &Database, GuiInterface &Interface, class SettingClass &MySettings);
 public slots:
    void timeoutSM();
 

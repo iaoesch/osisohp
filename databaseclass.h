@@ -16,7 +16,7 @@ class ScribbleArea;
 class DatabaseClass
 {
    ScribbleArea &Parent;
-   Settings Settings;
+   SettingClass &Settings;
    struct PostIt {
       static int NextId;
       QImage Image;
@@ -129,7 +129,7 @@ public:
    }
    QPointF GetOrigin() {return Origin;}
 
-   DatabaseClass(ScribbleArea &Parent);
+   DatabaseClass(ScribbleArea &Parent, class SettingClass &MySettings);
    bool ImportImage(const QString &fileName);
 
    void drawLineTo(const QPointF &endPoint, double Pressure);

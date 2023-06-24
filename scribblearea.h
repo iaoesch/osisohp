@@ -76,7 +76,7 @@ class ScribbleArea : public QWidget
 #endif
 
 public:
-    ScribbleArea(QWidget *parent = 0);
+    ScribbleArea(SettingClass &MySettings, QWidget *parent = nullptr);
 
     bool ImportImage(const QString &fileName);
     bool LoadImage(const QString &fileName);
@@ -137,11 +137,12 @@ protected:
 
 private slots:
     void PointerTimeout();
+    void AnimatedPointerTimetick();
 private:
 
 
 
-    Settings Settings;
+    SettingClass &Settings;
     bool SelectPostitsDirectly;
 
 #ifdef USE_NEW_STATEMACHINE
@@ -186,6 +187,11 @@ private:
     QImage EraserShape;
     QImage SpongeShape;
 
+    static const int NumberOfFrames = 30;
+    QPixmap AnimatedPointerCursor[NumberOfFrames];
+    int CurrentAnimatedPointerShape;
+    void SetSpecialCursor();
+
  /*
     int CopyTimeout;
     int GestureTimeout;
@@ -195,6 +201,7 @@ private:
 
     QPointF LastTablettMovePosition;
 
+    QTimer AnimatedPointerTimer;
 
 
 

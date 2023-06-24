@@ -174,5 +174,10 @@ void GuiInterface::setCursor(const QCursor &Cursor)
    Scribler->setCursor(Cursor);
 }
 
+void GuiInterface::setSpeciallCursor()
+{
+   Scribler->SetSpecialCursor();
+}
+
 GuiInterface::GuiInterface(ScribbleArea *Scribler) : Scribler(Scribler)
 {}

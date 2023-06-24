@@ -852,7 +852,8 @@ void StateClass<State::MovingPostitPaused>::HandleReleaseEventSM(Qt::MouseButton
 template<>
 void StateClass<State::MovingPostitPaused>::timeoutSM()
 {
-      StateMachine.Interface.setCursor(Qt::DragCopyCursor);
+      //StateMachine.Interface.setCursor(Qt::DragCopyCursor);
+      StateMachine.Interface.setSpeciallCursor();
       StartTimer(StateMachine.Settings.PostitCopyTimeout);
       StateMachine.SetNewState(&StateMachine.MovingPostitPaused);
       StateMachine.Context.MyDatas.DuplicateSelectedPostits();
@@ -1186,8 +1187,9 @@ void ControllingStateMachine::Timeout()
 #define InitStateObject(s) s(*this, ##s)
 
 
-ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database, GuiInterface &NewInterface)
+ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database, GuiInterface &NewInterface, class SettingClass &MySettings)
    :   Context(Database),
+       Settings(MySettings),
        Interface(NewInterface),
        Idle(*this),
        WaitingToLeaveJitterProtectionForDrawing(*this),
@@ -1195,6 +1197,7 @@ ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database, GuiInt
        WaitingToLeaveJitterProtectionForScrolling(*this),
        WaitingToLeaveJitterProtectionWithCreatedPostitForMoving(*this),
        WaitingToLeaveJitterProtectionWithSelectedPostitForMoving(*this),
+       WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving(*this),
        Drawing(*this),
        DrawingPaused(*this),
        DrawingFillRequested(*this),

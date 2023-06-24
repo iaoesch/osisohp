@@ -85,8 +85,8 @@ void DatabaseClass::setScrollHintColor(const QColor &newScrollHintColor)
    ScrollHintColor = newScrollHintColor;
 }
 
-DatabaseClass::DatabaseClass(ScribbleArea &Parent)
-   : Parent(Parent)
+DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySettings)
+   : Parent(Parent), Settings(MySettings)
 {
    modified = false;
    LastDrawingValid = false;
