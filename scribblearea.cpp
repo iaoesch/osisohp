@@ -50,7 +50,9 @@
 
 //! [0]
 ScribbleArea::ScribbleArea(class SettingClass &MySettings, QWidget *parent)
-    : QWidget(parent), MyDatas(*this, MySettings), Interface(this), StateMachine(MyDatas, Interface, MySettings), Settings(MySettings)
+    : QWidget(parent), MyDatas(*this, MySettings), Interface(this),
+      StateMachine(MyDatas, Interface, MySettings), Settings(MySettings),
+      AnimatedCursor(24, 24, 30, ":/images/MousPointers/left_ptr.png", 6, 0)
 {
     setAttribute(Qt::WA_StaticContents);
     setFocusPolicy(Qt::StrongFocus);
@@ -62,7 +64,9 @@ ScribbleArea::ScribbleArea(class SettingClass &MySettings, QWidget *parent)
     PointerShape = QImage(":/images/HandWithPen.png");
     SpongeShape = QImage(":/images/HandWithSponge.png");
     EraserShape = QImage(":/images/HandWithEraser.png");
-
+#if 1
+    CurrentAnimatedPointerPercentage = 0;
+#else
     AnimatedPointerCursor[0] = QPixmap(":/images/MousPointers/left_ptr.png").scaled(16,16);
     for (int i = 1; i < NumberOfFrames; i++) {
        AnimatedPointerCursor[i] = AnimatedPointerCursor[0];
@@ -81,7 +85,7 @@ ScribbleArea::ScribbleArea(class SettingClass &MySettings, QWidget *parent)
       //IconPainter.drawEllipse(6,6,8,8);
     }
     CurrentAnimatedPointerShape = 0;
-
+#endif
     connect(&AnimatedPointerTimer, &QTimer::timeout, this, &ScribbleArea::AnimatedPointerTimetick);
     AnimatedPointerTimer.setInterval(20);
 #ifndef USE_NEW_STATEMACHINE
@@ -290,20 +294,27 @@ void ScribbleArea::PointerTimeout()
 
 void ScribbleArea::AnimatedPointerTimetick()
 {
-   CurrentAnimatedPointerShape++;
-   if (CurrentAnimatedPointerShape < NumberOfFrames) {
-      setCursor(QCursor(AnimatedPointerCursor[CurrentAnimatedPointerShape]));
+
+   CurrentAnimatedPointerPercentage++;
+   if (CurrentAnimatedPointerPercentage < 100) {
+      setCursor(QCursor(AnimatedCursor.GetPictureForPercentage(CurrentAnimatedPointerPercentage), AnimatedCursor.HotX(), AnimatedCursor.HotY()));
    } else {
       AnimatedPointerTimer.stop();
-      CurrentAnimatedPointerShape = 0;
+      CurrentAnimatedPointerPercentage = 0;
    }
 }
 
 void ScribbleArea::SetSpecialCursor()
 {
+#if 1
+   CurrentAnimatedPointerPercentage = 0;
+   setCursor(QCursor(AnimatedCursor.GetPictureForPercentage(CurrentAnimatedPointerPercentage), AnimatedCursor.HotX(), AnimatedCursor.HotY()));
+   AnimatedPointerTimer.start();
+#else
    setCursor(QCursor(AnimatedPointerCursor[0]));
    AnimatedPointerTimer.start();
    CurrentAnimatedPointerShape = 0;
+#endif
 }
 
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)

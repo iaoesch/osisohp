@@ -52,6 +52,7 @@
 
 #include "box.hpp"
 #include "Settings.hpp"
+#include "animatedcursorclass.h"
 
 #include "gesturetracker.hpp"
 
@@ -187,9 +188,14 @@ private:
     QImage EraserShape;
     QImage SpongeShape;
 
+#if 1
+    AnimatedCursorClass AnimatedCursor;
+    int CurrentAnimatedPointerPercentage;
+#else
     static const int NumberOfFrames = 30;
     QPixmap AnimatedPointerCursor[NumberOfFrames];
     int CurrentAnimatedPointerShape;
+#endif
     void SetSpecialCursor();
 
  /*
