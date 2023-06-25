@@ -50,7 +50,7 @@
 
 //! [0]
 ScribbleArea::ScribbleArea(class SettingClass &MySettings, QWidget *parent)
-    : QWidget(parent), MyDatas(*this, MySettings), Interface(this),
+    : QWidget(parent), MyDatas(*this, MySettings), MyCursorManager(this), Interface(this, &MyCursorManager),
       StateMachine(MyDatas, Interface, MySettings), Settings(MySettings),
       AnimatedCursor(24, 24, 30, ":/images/MousPointers/left_ptr.png", 6, 0)
 {

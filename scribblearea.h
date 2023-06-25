@@ -71,6 +71,7 @@ class ScribbleArea : public QWidget
 
     friend class GuiInterface;
     DatabaseClass MyDatas;
+    CursorManager MyCursorManager;
 #ifdef USE_NEW_STATEMACHINE
     GuiInterface Interface;
     ControllingStateMachine StateMachine;

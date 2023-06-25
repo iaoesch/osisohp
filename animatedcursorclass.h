@@ -26,4 +26,34 @@ public:
    int HotY() {return HotSpotY;}
 };
 
+class CursorManager {
+   Q_OBJECT
+    QWidget *Parent;
+
+public:
+   enum CursorType {
+      StandardPointer,
+      TimedPointerForScrolling,
+      TimedPointerForCutting,
+      TimedPointerForCopying,
+      TimedPointerForSelectingSingle,
+      TimedPointerForSelectingMultiple,
+      SelectPossiblePointer,
+      CutPossiblePointer,
+      MovingCutoutPointer,
+      DrawingPinter,
+      GoingToFillTimer,
+      FillingPointer,
+      ScrollingPointer,
+      MovingPostitPointer,
+      MovingMultiplePostitPointer,
+      TimedPointerForCopyPostit,
+      TimedPointerForDeletePostit
+   };
+   void SetCursor(CursorType Cursor);
+   CursorManager(QWidget *p) : Parent(p) {}
+   virtual ~CursorManager();
+
+};
+
 #endif // ANIMATEDCURSORCLASS_H

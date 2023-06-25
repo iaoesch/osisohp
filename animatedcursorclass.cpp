@@ -1,6 +1,7 @@
 #include "animatedcursorclass.h"
 
 #include <QPainter>
+#include <QWidget>
 
 AnimatedCursorClass::AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QString FileName, int Hot_x, int Hot_y)
    : HotSpotX(Hot_x), HotSpotY(Hot_y)
@@ -36,3 +37,62 @@ AnimatedCursorClass::AnimatedCursorClass(size_t Width, size_t Height, size_t Num
 }
 
 
+
+void CursorManager::SetCursor(CursorType Cursor)
+{
+   switch(Cursor) {
+      case CursorManager::TimedPointerForCopying:
+         Parent->setCursor(QCursor(Qt::DragCopyCursor));
+         break;
+      case CursorManager::MovingMultiplePostitPointer:
+         break;
+      case CursorManager::StandardPointer:
+         Parent->setCursor(QCursor(Qt::ArrowCursor));
+         break;
+      case CursorManager::TimedPointerForScrolling:
+         Parent->setCursor(QCursor(Qt::SizeAllCursor));
+         break;
+      case CursorManager::TimedPointerForCutting:
+         break;
+
+      case CursorManager::TimedPointerForSelectingSingle:
+         break;
+      case CursorManager::TimedPointerForSelectingMultiple:
+         Parent->setCursor(QCursor(Qt::ClosedHandCursor));
+         break;
+      case CursorManager::SelectPossiblePointer:
+         Parent->setCursor(QCursor(Qt::PointingHandCursor));
+         break;
+      case CursorManager::CutPossiblePointer:
+         Parent->setCursor(QCursor(Qt::UpArrowCursor));
+         break;
+      case CursorManager::MovingCutoutPointer:
+         Parent->setCursor(QCursor(Qt::DragMoveCursor));
+         break;
+      case CursorManager::DrawingPinter:
+         Parent->setCursor(QCursor(Qt::ArrowCursor));
+         break;
+      case CursorManager::GoingToFillTimer:
+         break;
+      case CursorManager::FillingPointer:
+         Parent->setCursor(QCursor(Qt::BusyCursor));
+         break;
+      case CursorManager::ScrollingPointer:
+         Parent->setCursor(QCursor(Qt::SizeAllCursor));
+         break;
+      case CursorManager::MovingPostitPointer:
+         Parent->setCursor(QCursor(Qt::ArrowCursor));
+         break;
+      case CursorManager::TimedPointerForCopyPostit:
+         Parent->setCursor(QCursor(Qt::DragCopyCursor));
+         break;
+      case CursorManager::TimedPointerForDeletePostit:
+         break;
+
+   }
+}
+
+CursorManager::~CursorManager()
+{
+
+}

@@ -33,6 +33,7 @@
 
 #include <QRect>
 #include "box.hpp"
+#include "animatedcursorclass.h"
 
 
 /* Class constant declaration  */
@@ -42,16 +43,16 @@
 /* Class data declaration      */
 
 /* Class definition            */
-class QCursor;
+class CursorManager;
 class QImage;
 class ScribbleArea;
 
 class GuiInterface
 {
    ScribbleArea *Scribler;
-
+   CursorManager *MyCursorManager;
 public:
-   GuiInterface(ScribbleArea *Scribler);
+   GuiInterface(ScribbleArea *Scribler, CursorManager *TheCursorManager);
    void UpdateRequest();
 #if 0
    void modified(); //modified = True;
@@ -76,7 +77,7 @@ public:
    void MakeSelectionFromLastDrawnObject();
    void CreeatePostitFromSelection();
 #endif
-   void setCursor(QCursor const &Cursor);
+   void setCursor(CursorManager::CursorType Cursor);
    void setSpeciallCursor();
 
 
