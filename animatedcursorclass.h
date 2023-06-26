@@ -1,7 +1,9 @@
 #ifndef ANIMATEDCURSORCLASS_H
 #define ANIMATEDCURSORCLASS_H
 
+#include <QTimer>
 #include <QPixmap>
+#include <QObject>
 
 class AnimatedCursorClass
 {
@@ -13,6 +15,7 @@ class AnimatedCursorClass
 
 public:
    AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QString FileName, int Hot_x = -1, int Hot_y = -1);
+   AnimatedCursorClass() : NumberOfFramesToPlay(0) {}
    const QPixmap &GetPictureForPercentage(unsigned int Percentage)
    {
       // + 50 for Rounding
@@ -26,9 +29,13 @@ public:
    int HotY() {return HotSpotY;}
 };
 
-class CursorManager {
+class CursorManager : public QObject{
    Q_OBJECT
     QWidget *Parent;
+
+    int CurrentAnimatedPointerPercentage;
+    QTimer AnimatedPointerTimer;
+
 
 public:
    enum CursorType {
@@ -48,11 +55,22 @@ public:
       MovingPostitPointer,
       MovingMultiplePostitPointer,
       TimedPointerForCopyPostit,
-      TimedPointerForDeletePostit
+      TimedPointerForDeletePostit,
+      CursorEnumEndmarker,
+      NumberOfCursors = CursorEnumEndmarker
    };
    void SetCursor(CursorType Cursor);
-   CursorManager(QWidget *p) : Parent(p) {}
-   virtual ~CursorManager();
+   CursorManager(QWidget *p);
+   virtual ~CursorManager() override;
+
+private slots:
+    void AnimatedPointerTimetick();
+
+private:
+    void StartAnimation();
+
+    std::array<AnimatedCursorClass, NumberOfCursors> AnimatedCursors;
+    AnimatedCursorClass *CurrentAnimatedCursor;
 
 };
 

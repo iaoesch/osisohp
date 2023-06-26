@@ -92,7 +92,35 @@ void CursorManager::SetCursor(CursorType Cursor)
    }
 }
 
+CursorManager::CursorManager(QWidget *p) :  QObject(p) ,Parent(p)
+{
+   connect(&AnimatedPointerTimer, &QTimer::timeout, this, &CursorManager::AnimatedPointerTimetick);
+   AnimatedPointerTimer.setInterval(20);
+   CurrentAnimatedPointerPercentage = 0;
+
+}
+
+void CursorManager::AnimatedPointerTimetick()
+{
+
+   CurrentAnimatedPointerPercentage++;
+   if (CurrentAnimatedPointerPercentage < 100) {
+      Parent->setCursor(QCursor(CurrentAnimatedCursor->GetPictureForPercentage(CurrentAnimatedPointerPercentage), CurrentAnimatedCursor->HotX(), CurrentAnimatedCursor->HotY()));
+   } else {
+      AnimatedPointerTimer.stop();
+      CurrentAnimatedPointerPercentage = 0;
+   }
+}
+
+void CursorManager::StartAnimation()
+{
+   CurrentAnimatedPointerPercentage = 0;
+   Parent->setCursor(QCursor(CurrentAnimatedCursor->GetPictureForPercentage(CurrentAnimatedPointerPercentage), CurrentAnimatedCursor->HotX(), CurrentAnimatedCursor->HotY()));
+   AnimatedPointerTimer.start();
+}
+
 CursorManager::~CursorManager()
 {
 
 }
+
