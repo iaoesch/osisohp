@@ -35,7 +35,14 @@ resources.files = \
     images/MousPointers/all-scroll.png \
     images/MousPointers/hand1.png \
     images/MousPointers/hand2.png \
+    images/MousPointers/hand1plus.png \
+    images/MousPointers/handMoveplus.png \
+    images/MousPointers/bucketfill16.png \
+    images/MousPointers/handMoveMultiple.png \
+    images/MousPointers/scissors24.png \
+    images/MousPointers/scissorscopy24.png \
     images/MousPointers/left_ptr.png
+
 
 
 
