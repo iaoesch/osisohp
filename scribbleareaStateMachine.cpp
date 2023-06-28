@@ -316,6 +316,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
 
        StoppTimer();
        StartTimer(StateMachine.Settings.GestureTimeout);
+       StateMachine.Interface.RestartAnimatedCursor();
        StateMachine.Context.MyDatas.FlushLastDrawnPicture();
       //LastDrawnObject.fill(BackgroundColor);
       if (Erasing) {
@@ -360,7 +361,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
       //scribbling = false;
       StateMachine.Interface.UpdateRequest();
       //WaitForPostIt = true;
-      StateMachine.Interface.SetCursor(CursorManager::MovingCutoutPointer);
+      StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCreatingPostit, StateMachine.Settings.PostItTimeout);
 
       StartTimer(StateMachine.Settings.PostItTimeout);
       StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithSelectedAreaForMoving);
@@ -381,7 +382,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
          //Scrolling = true;
          StateMachine.Context.ScrollingLastPosition = StateMachine.Context.MyDatas.getSelectedCurrentPosition();
          StateMachine.Context.ScrollingOldOrigin = StateMachine.Context.MyDatas.GetOrigin();
-         StateMachine.Interface.SetCursor(CursorManager::TimedPointerForScrolling);
+         StateMachine.Interface.SetCursor(CursorManager::ScrollingPointer);
          //scribbling = false;
          StateMachine.Interface.UpdateRequest();
          StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionForScrolling);
@@ -405,6 +406,8 @@ void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPo
        } else {
           StoppTimer();
           StartTimer(StateMachine.Settings.GestureTimeout);
+          StateMachine.Interface.SetCursor(CursorManager::GoingToFillTimer, StateMachine.Settings.GestureTimeout);
+
        }
        StateMachine.Context.MyDatas.FlushLastDrawnPicture();
       //LastDrawnObject.fill(BackgroundColor);
@@ -432,8 +435,8 @@ void StateClass<State::Drawing>::HandleReleaseEventSM(Qt::MouseButton Button, QP
          StateMachine.Context.MyDatas.drawLineTo(Position, Pressure);
       }
       StateMachine.Context.MyDatas.UpdateBoundingboxesForFinishedShape(Position);
-
       StateMachine.SetNewState(&StateMachine.Idle);
+      StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
    }
 }
 
@@ -560,6 +563,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>
 {
    if (Button == Qt::LeftButton) {
       StateMachine.SetNewState(&StateMachine.Idle);
+      StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
    }
 }
 
@@ -573,6 +577,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>
       //WaitForPostIt = false;
       StateMachine.Context.MyDatas.CreeatePostitFromSelection();
       StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithCreatedPostitForMoving);
+      StateMachine.Interface.SetCursor(CursorManager::MovingPostitPointer);
       StateMachine.Interface.UpdateRequest();
    }
 
@@ -592,7 +597,7 @@ void StateClass<State::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Butt
        // QPoint Offset = event->pos() - SelectedPoint;
          StoppTimer();
          StartTimer(StateMachine.Settings.CopyTimeout);
-
+         StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCopying, StateMachine.Settings.CopyTimeout);
          StateMachine.Context.MyDatas.setSelectedCurrentPosition(Position);
          StateMachine.Interface.UpdateRequest();
        // DrawMovedSelection(Offset);
@@ -631,6 +636,7 @@ void StateClass<State::MovingSelection>::HandleReleaseEventSM(Qt::MouseButton Bu
       StateMachine.Context.MyDatas.setLastDrawingValid(false);
       //        drawrectangle(BoundingBoxClass(LastPaintedObjectBoundingBox).Move(PositionClass(Offset.x(), Offset.y())));
       StateMachine.SetNewState(&StateMachine.Idle);
+      StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
    }
 }
 
@@ -650,6 +656,8 @@ void StateClass<State::MovingSelection>::timeoutSM()
 
       }
       StateMachine.SetNewState(&StateMachine.MovingSelectionPaused);
+      StateMachine.Interface.SetCursor(CursorManager::MovingCutoutPointer);
+
    }
 
 }

@@ -3,27 +3,29 @@
 #include <QPainter>
 #include <QWidget>
 
+
+
 AnimatedCursorClass::AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QString FileName, int Hot_x, int Hot_y)
-   : AnimatedCursorClass( Width,  Height,  NumberOfFramesToPlay, QPixmap(FileName).scaled(Width, Height), QPixmap(),  Hot_x,  Hot_y)
+   : AnimatedCursorClass( Width,  Height,  NumberOfFramesToPlay, QPixmap(FileName).scaled(Width, Height),  Hot_x,  Hot_y, QPixmap())
 {
 
 }
 
 AnimatedCursorClass::AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QPixmap IconPicture, int Hot_x, int Hot_y)
-   : AnimatedCursorClass( Width,  Height,  NumberOfFramesToPlay, IconPicture, QPixmap(),  Hot_x,  Hot_y)
+   : AnimatedCursorClass( Width,  Height,  NumberOfFramesToPlay, IconPicture,  Hot_x,  Hot_y, QPixmap())
 {
 
 }
 
-AnimatedCursorClass::AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QString FileName, QString FileNameInitialPointer, int Hot_x, int Hot_y)
-   : AnimatedCursorClass( Width,  Height,  NumberOfFramesToPlay, QPixmap(FileName).scaled(Width, Height), QPixmap(FileNameInitialPointer).scaled(Width, Height),  Hot_x,  Hot_y)
+AnimatedCursorClass::AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QString FileName, int Hot_x, int Hot_y, QString FileNameInitialPointer, int Hot_x_initial, int Hot_y_initial)
+   : AnimatedCursorClass( Width,  Height,  NumberOfFramesToPlay, QPixmap(FileName).scaled(Width, Height), Hot_x, Hot_y, QPixmap(FileNameInitialPointer).scaled(Width, Height),  Hot_x_initial,  Hot_y_initial)
 {
 
 }
 
 
-AnimatedCursorClass::AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QPixmap IconPicture, QPixmap ImageInitialPointer, int Hot_x, int Hot_y)
-   : HotSpotX(Hot_x), HotSpotY(Hot_y)
+AnimatedCursorClass::AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QPixmap IconPicture, int Hot_x, int Hot_y, QPixmap ImageInitialPointer, int Hot_x_initial, int Hot_y_initial)
+   : HotSpotX(Hot_x), HotSpotY(Hot_y), HotSpotInitialX(Hot_x_initial), HotSpotInitialY(Hot_y_initial)
 {
    this->NumberOfFramesToPlay = NumberOfFramesToPlay;
    AnimatedPointerCursor.resize(NumberOfFramesToPlay);
@@ -76,6 +78,7 @@ void CursorManager::SetCursor(CursorType Cursor, std::chrono::milliseconds Durat
    DelaytimeLeft = StartupDelay;
    TimeLeft      = Duration;
    TotalDuration = Duration;
+   TotalDelay    = StartupDelay;
 
    switch(Cursor) {
       case CursorManager::TimedPointerForCopying:
@@ -144,24 +147,36 @@ void CursorManager::SetCursor(CursorType Cursor, std::chrono::milliseconds Durat
          break;
 
    }
+   LastAnimatedCursor = CurrentAnimatedCursor;
+
+}
+
+void CursorManager::RestartAnimatedCursor()
+{
+   AnimatedPointerTimer.stop();
+   CurrentAnimatedCursor = LastAnimatedCursor;
+   DelaytimeLeft = TotalDelay;
+   TimeLeft      = TotalDuration;
+   StartAnimation();
 }
 
 CursorManager::CursorManager(QWidget *p) :  QObject(p) ,Parent(p),
-   AnimatedTimedPointerForScrolling(24, 24, 30, ":/images/MousPointers/all-scroll.png", ":/images/MousPointers/pencil.png", 6, 0),
-   AnimatedTimedPointerForCutting(24, 24, 30, ":/images/MousPointers/scissors24.png", ":/images/MousPointers/pencil.png", 6, 0),
-   AnimatedTimedPointerForCopying(24, 24, 30, ":/images/MousPointers/scissorscopy24.png", ":/images/MousPointers/scissors24.png", 6, 0),
-   AnimatedTimedPointerForSelectingSingle(24, 24, 30, ":/images/MousPointers/hand1.png", ":/images/MousPointers/left_ptr.png", 6, 0),
-   AnimatedTimedPointerForSelectingMultiple(24, 24, 30, ":/images/MousPointers/hand1plus.png", ":/images/MousPointers/hand1.png", 6, 0),
-   AnimatedTimedPointerForCopyPostit(24, 24, 30, ":/images/MousPointers/handMoveplus.png", ":/images/MousPointers/move.png", 6, 0),
-   AnimatedTimedPointerForDeletePostit(24, 24, 30, ":/images/MousPointers/X_cursor.png", ":/images/MousPointers/hand1plus.png", 6, 0),
-   AnimatedGoingToFillTimer(24, 24, 30, ":/images/MousPointers/bucketfill16.png", ":/images/MousPointers/pencil.png", 6, 0)
+   AnimatedTimedPointerForScrolling(24, 24, 30, ":/images/MousPointers/all-scroll.png", 6, 0, ":/images/MousPointers/pencil.png", 3, 21),
+   AnimatedTimedPointerForCutting(24, 24, 30, ":/images/MousPointers/scissors24.png", 6, 0, ":/images/MousPointers/pencil.png", 3, 21),
+   AnimatedTimedPointerForCreatingPostit(24, 24, 30, ":/images/MousPointers/scissorscopy24.png", 6, 0, ":/images/MousPointers/scissors24.png", 6, 0),
+   AnimatedTimedPointerForCopying(24, 24, 30, ":/images/MousPointers/scissorscopy24.png", 6, 0, ":/images/MousPointers/scissors24.png", 6, 0),
+   AnimatedTimedPointerForSelectingSingle(24, 24, 30, ":/images/MousPointers/hand1.png", 6, 0, ":/images/MousPointers/left_ptr.png", 6, 0),
+   AnimatedTimedPointerForSelectingMultiple(24, 24, 30, ":/images/MousPointers/hand1plus.png", 6, 0, ":/images/MousPointers/hand1.png", 6, 0),
+   AnimatedTimedPointerForCopyPostit(24, 24, 30, ":/images/MousPointers/handMoveplus.png", 6, 0, ":/images/MousPointers/move.png", 6, 0),
+   AnimatedTimedPointerForDeletePostit(24, 24, 30, ":/images/MousPointers/X_cursor.png", 6, 0, ":/images/MousPointers/hand1plus.png", 6, 0),
+   AnimatedGoingToFillTimer(24, 24, 30, ":/images/MousPointers/bucketfill16.png", 6, 0, ":/images/MousPointers/pencil.png", 3, 21)
 {
    connect(&AnimatedPointerTimer, &QTimer::timeout, this, &CursorManager::AnimatedPointerTimetick);
    AnimatedPointerTimer.setInterval(TimeTic);
    CurrentAnimatedPointerPercentage = 0;
    MovingMultiplePostitPointerCursor = QCursor(QPixmap(":/images/MousPointers/handMoveMultiple.png").scaled(24, 24));
    CutPossiblePointerCursor = QCursor(QPixmap(":/images/MousPointers/scissors24.png").scaled(24, 24));
-   DrawingPinterCursor = QCursor(QPixmap(":/images/MousPointers/pencil.png").scaled(24, 24));
+   DrawingPinterCursor = QCursor(QPixmap(":/images/MousPointers/pencil.png").scaled(24, 24),3,21);
    FillingPointerCursor = QCursor(QPixmap(":/images/MousPointers/bucketfill16.png").scaled(24, 24));
   // MovingPostitPointerCursor = QCursor(QPixmap(":/images/MousPointers/bucketfill16.png").scaled(24, 24));
 
@@ -188,7 +203,7 @@ void CursorManager::StartAnimation()
 {
    constexpr uint32_t BaseTime = 8192;
    if (DelaytimeLeft > 0us) {
-      Parent->setCursor(QCursor(CurrentAnimatedCursor->GetBasePicture(), CurrentAnimatedCursor->HotX(), CurrentAnimatedCursor->HotY()));
+      Parent->setCursor(QCursor(CurrentAnimatedCursor->GetInitialPicture(), CurrentAnimatedCursor->getHotSpotInitialX(), CurrentAnimatedCursor->getHotSpotInitialY()));
    } else if (TimeLeft > 0us) {
       Parent->setCursor(QCursor(CurrentAnimatedCursor->GetPictureForPercentage<BaseTime>(0), CurrentAnimatedCursor->HotX(), CurrentAnimatedCursor->HotY()));
    }

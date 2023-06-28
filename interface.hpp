@@ -93,6 +93,9 @@ public:
    {
       MyCursorManager->SetCursor(Cursor, Duration, StartupDelay);
    }
+   void RestartAnimatedCursor() {
+      MyCursorManager->RestartAnimatedCursor();
+   }
    void setSpeciallCursor();
 
 

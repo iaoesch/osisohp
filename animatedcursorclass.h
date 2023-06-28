@@ -10,6 +10,8 @@ class AnimatedCursorClass
 {
    int HotSpotX;
    int HotSpotY;
+   int HotSpotInitialX;
+   int HotSpotInitialY;
    unsigned int NumberOfFramesToPlay;
    QPixmap InitialPicture;
    QPixmap BasePicture;
@@ -19,8 +21,8 @@ class AnimatedCursorClass
 public:
    AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QString FileName, int Hot_x = -1, int Hot_y = -1);
    AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QPixmap Image, int Hot_x = -1, int Hot_y = -1);
-   AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QString FileName, QString FileNameInitialPointer, int Hot_x = -1, int Hot_y = -1);
-   AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QPixmap IconPicture, QPixmap ImageInitialPointer, int Hot_x = -1, int Hot_y = -1);
+   AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QString FileName, int Hot_x, int Hot_y, QString FileNameInitialPointer, int Hot_x_Initial = -1, int Hot_y_Initial = -1);
+   AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QPixmap IconPicture, int Hot_x, int Hot_y, QPixmap ImageInitialPointer, int Hot_x_Initial = -1, int Hot_y_Initial = -1);
    AnimatedCursorClass() : NumberOfFramesToPlay(0) {}
    AnimatedCursorClass(const AnimatedCursorClass&) = default;
    AnimatedCursorClass(AnimatedCursorClass&&) = default;
@@ -47,8 +49,10 @@ public:
          return BasePicture;
       }
    }
-   int HotX() {return HotSpotX;}
-   int HotY() {return HotSpotY;}
+   int HotX() const {return HotSpotX;}
+   int HotY() const {return HotSpotY;}
+   int getHotSpotInitialX() const { return HotSpotInitialX; }
+   int getHotSpotInitialY() const { return HotSpotInitialY; }
 };
 
 using namespace std::chrono_literals;
@@ -61,6 +65,7 @@ class CursorManager : public QObject{
     QTimer AnimatedPointerTimer;
     static constexpr std::chrono::milliseconds TimeTic = 20ms;
     std::chrono::microseconds TotalDuration;
+    std::chrono::microseconds TotalDelay;
     std::chrono::microseconds DelaytimeLeft;
     std::chrono::microseconds TimeLeft;
 
@@ -69,6 +74,7 @@ public:
       StandardPointer,
       TimedPointerForScrolling,
       TimedPointerForCutting,
+      TimedPointerForCreatingPostit,
       TimedPointerForCopying,
       TimedPointerForSelectingSingle,
       TimedPointerForSelectingMultiple,
@@ -87,6 +93,7 @@ public:
       NumberOfCursors = CursorEnumEndmarker
    };
    void SetCursor(CursorType Cursor, std::chrono::milliseconds Duration = 0ms, std::chrono::milliseconds StartupDelay = 0ms);
+   void RestartAnimatedCursor();
    CursorManager(QWidget *p);
    virtual ~CursorManager() override;
 
@@ -99,6 +106,7 @@ private:
     //std::array<AnimatedCursorClass, NumberOfCursors> AnimatedCursors;
     AnimatedCursorClass       AnimatedTimedPointerForScrolling;
     AnimatedCursorClass       AnimatedTimedPointerForCutting;
+    AnimatedCursorClass       AnimatedTimedPointerForCreatingPostit;
     AnimatedCursorClass       AnimatedTimedPointerForCopying;
     AnimatedCursorClass       AnimatedTimedPointerForSelectingSingle;
     AnimatedCursorClass       AnimatedTimedPointerForSelectingMultiple;
@@ -107,6 +115,7 @@ private:
     AnimatedCursorClass       AnimatedGoingToFillTimer;
 
     AnimatedCursorClass *CurrentAnimatedCursor;
+    AnimatedCursorClass *LastAnimatedCursor;
 
     QCursor CutPossiblePointerCursor;
     QCursor MovingCutoutPointerCursor;
