@@ -76,14 +76,14 @@ void StateBaseClass::HandleMoveNoLeftButtonEvent(Qt::MouseButtons Buttons, QPoin
 {
    if (Buttons == Qt::NoButton) {
       if (StateMachine.Context.MyDatas.IsInsideLastPaintedObjectBoundingBox(Position)) {
-         StateMachine.Interface.setCursor(CursorManager::CutPossiblePointer );
+         StateMachine.Interface.SetCursor(CursorManager::CutPossiblePointer );
       }  else if (StateMachine.Context.MyDatas.IsInsideAnyPostIt(Position)) {
-         StateMachine.Interface.setCursor(CursorManager::SelectPossiblePointer);
+         StateMachine.Interface.SetCursor(CursorManager::SelectPossiblePointer);
       }  else {
-         StateMachine.Interface.setCursor(CursorManager::StandardPointer);
+         StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
       }
    } else {
-      StateMachine.Interface.setCursor(CursorManager::StandardPointer);
+      StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
    }
 }
 
@@ -212,7 +212,7 @@ void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF
 {
     DEBUG_LOG << "Button Down: " << Button  << std::endl;
     if (Button == Qt::LeftButton) {
-       StateMachine.Interface.setCursor(CursorManager::DrawingPinter);
+        StateMachine.Interface.SetCursor(CursorManager::DrawingPinter);
 
         StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionForDrawing);
 
@@ -234,8 +234,14 @@ void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF
 
 
            if (StateMachine.Context.MyDatas.IsInsideLastPaintedObjectBoundingBox(Position)) {
+              StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCutting, StateMachine.Settings.SelectTimeout);
               StateMachine.Context.DownInsideObject = true;
            } else {
+              if (StateMachine.Context.MyDatas.FindSelectedPostIts(Position)) {
+                 StateMachine.Interface.SetCursor(CursorManager::TimedPointerForSelectingSingle, StateMachine.Settings.SelectTimeout);
+              } else {
+                 StateMachine.Interface.SetCursor(CursorManager::TimedPointerForScrolling, StateMachine.Settings.SelectTimeout);
+              }
               StateMachine.Context.DownInsideObject = false;
            }
         }
@@ -354,7 +360,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
       //scribbling = false;
       StateMachine.Interface.UpdateRequest();
       //WaitForPostIt = true;
-      StateMachine.Interface.setCursor(CursorManager::MovingCutoutPointer);
+      StateMachine.Interface.SetCursor(CursorManager::MovingCutoutPointer);
 
       StartTimer(StateMachine.Settings.PostItTimeout);
       StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithSelectedAreaForMoving);
@@ -364,7 +370,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
       if (StateMachine.Context.MyDatas.FindSelectedPostIts(StateMachine.Context.MyDatas.getSelectedCurrentPosition())) {
          //scribbling = false;
          //NewDrawingStarted = false;
-         StateMachine.Interface.setCursor(CursorManager::TimedPointerForSelectingMultiple);
+         StateMachine.Interface.SetCursor(CursorManager::TimedPointerForSelectingMultiple, StateMachine.Settings.PostItTimeout);
          DEBUG_LOG << "Selected postit " << std::endl;
          StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithSelectedPostitForMoving);
          StartTimer(StateMachine.Settings.PostItTimeout);
@@ -375,7 +381,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
          //Scrolling = true;
          StateMachine.Context.ScrollingLastPosition = StateMachine.Context.MyDatas.getSelectedCurrentPosition();
          StateMachine.Context.ScrollingOldOrigin = StateMachine.Context.MyDatas.GetOrigin();
-         StateMachine.Interface.setCursor(CursorManager::TimedPointerForScrolling);
+         StateMachine.Interface.SetCursor(CursorManager::TimedPointerForScrolling);
          //scribbling = false;
          StateMachine.Interface.UpdateRequest();
          StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionForScrolling);
@@ -439,7 +445,7 @@ void StateClass<State::Drawing>::timeoutSM()
 
    //FillPolygon = true;
    StateMachine.Context.FillPolygonStartPosition = StateMachine.Context.MyDatas.getLastPoint();
-   StateMachine.Interface.setCursor(CursorManager::FillingPointer);
+   StateMachine.Interface.SetCursor(CursorManager::FillingPointer);
    StateMachine.Interface.UpdateRequest();
    StateMachine.SetNewState(&StateMachine.DrawingPaused);
 
@@ -495,7 +501,7 @@ void StateClass<State::DrawingFillRequested>::HandleMoveEventSM(Qt::MouseButtons
 
        if (StateMachine.Context.MyDatas.IsJitter(Position, StateMachine.Context.FillPolygonStartPosition, Pressure)) {
           StateMachine.SetNewState(&StateMachine.Drawing);
-          StateMachine.Interface.setCursor(CursorManager::DrawingPinter);
+          StateMachine.Interface.SetCursor(CursorManager::DrawingPinter);
 
        }
        StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
@@ -512,7 +518,7 @@ void StateClass<State::DrawingFillRequested>::HandleReleaseEventSM(Qt::MouseButt
    if (Button == Qt::LeftButton) {
       StateMachine.Drawing.HandleReleaseEventSM(Button, Position, Erasing, Pressure);
       StateMachine.Context.MyDatas.FilllastDrawnShape();
-      StateMachine.Interface.setCursor(CursorManager::StandardPointer);
+      StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
       //FillPolygon = false;
 
       StateMachine.Interface.UpdateRequest();
@@ -535,7 +541,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
-       StateMachine.Interface.setCursor(CursorManager::MovingCutoutPointer);
+       StateMachine.Interface.SetCursor(CursorManager::MovingCutoutPointer);
 
        StateMachine.SetNewState(&StateMachine.MovingSelection);
        StateMachine.MovingSelection.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
@@ -738,7 +744,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving
 {
    if (Button == Qt::LeftButton) {
       StateMachine.Context.MyDatas.ClearSelectedPostit();
-      StateMachine.Interface.setCursor(CursorManager::StandardPointer);
+      StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
 
       StateMachine.SetNewState(&StateMachine.Idle);
 
@@ -751,7 +757,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving
    if (StateMachine.Context.MyDatas.FindSelectedPostIts(StateMachine.Context.MyDatas.getSelectedCurrentPosition(), DatabaseClass::All)) {
       //scribbling = false;
       //NewDrawingStarted = false;
-      StateMachine.Interface.setCursor(CursorManager::MovingMultiplePostitPointer);
+      StateMachine.Interface.SetCursor(CursorManager::MovingMultiplePostitPointer);
       DEBUG_LOG << "Selected postit " << std::endl;
 
       //Just Stay in State
@@ -800,7 +806,7 @@ void StateClass<State::MovingPostit>::HandleReleaseEventSM(Qt::MouseButton Butto
          //  MoveSelected = false;
          StateMachine.Context.MyDatas.setLastDrawingValid(false);
          StateMachine.Context.MyDatas.ClearSelectedPostit();
-         StateMachine.Interface.setCursor(CursorManager::StandardPointer);
+         StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
          StateMachine.Interface.UpdateRequest();
       }
       StateMachine.SetNewState(&StateMachine.Idle);
@@ -810,7 +816,7 @@ void StateClass<State::MovingPostit>::HandleReleaseEventSM(Qt::MouseButton Butto
 template<>
 void StateClass<State::MovingPostit>::timeoutSM()
 {
-      StateMachine.Interface.setCursor(CursorManager::TimedPointerForCopyPostit);
+      StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCopyPostit);
       StartTimer(StateMachine.Settings.PostitCopyTimeout);
       StateMachine.SetNewState(&StateMachine.MovingPostitPaused);
 }
@@ -826,7 +832,7 @@ void StateClass<State::MovingPostitPaused>::HandleMoveEventSM(Qt::MouseButtons B
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
-       StateMachine.Interface.setCursor(CursorManager::MovingPostitPointer);
+       StateMachine.Interface.SetCursor(CursorManager::MovingPostitPointer);
        StateMachine.SetNewState(&StateMachine.MovingPostit);
        StateMachine.MovingPostit.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
@@ -841,7 +847,7 @@ void StateClass<State::MovingPostitPaused>::HandleReleaseEventSM(Qt::MouseButton
 {
    if (Button == Qt::LeftButton) {
 
-      StateMachine.Interface.setCursor(CursorManager::StandardPointer);
+      StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
 
       StateMachine.SetNewState(&StateMachine.MovingPostit);
       StateMachine.MovingPostit.HandleReleaseEventSM(Button, Position, Erasing, Pressure);
@@ -852,7 +858,7 @@ void StateClass<State::MovingPostitPaused>::HandleReleaseEventSM(Qt::MouseButton
 template<>
 void StateClass<State::MovingPostitPaused>::timeoutSM()
 {
-      StateMachine.Interface.setCursor(CursorManager::TimedPointerForCopyPostit);
+      StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCopyPostit);
       //StateMachine.Interface.setSpeciallCursor();
       StartTimer(StateMachine.Settings.PostitCopyTimeout);
       StateMachine.SetNewState(&StateMachine.MovingPostitPaused);

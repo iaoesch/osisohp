@@ -169,10 +169,7 @@ void GuiInterface::CreeatePostitFromSelection()
 
 }
 #endif
-void GuiInterface::setCursor(CursorManager::CursorType Cursor)
-{
-   MyCursorManager->SetCursor(Cursor);
-}
+
 
 void GuiInterface::setSpeciallCursor()
 {

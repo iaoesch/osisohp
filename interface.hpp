@@ -77,7 +77,22 @@ public:
    void MakeSelectionFromLastDrawnObject();
    void CreeatePostitFromSelection();
 #endif
-   void setCursor(CursorManager::CursorType Cursor);
+   void SetCursor(CursorManager::CursorType Cursor)
+   {
+       MyCursorManager->SetCursor(Cursor, 0ms, 0ms);
+   }
+   void SetCursor(CursorManager::CursorType Cursor, double Duration)
+   {
+      SetCursor(Cursor, std::chrono::milliseconds(static_cast<int>(Duration)));
+   }
+   void SetCursor(CursorManager::CursorType Cursor, std::chrono::milliseconds Duration)
+   {
+      MyCursorManager->SetCursor(Cursor, 3*Duration/4, Duration/4);
+   }
+   void SetCursor(CursorManager::CursorType Cursor, std::chrono::milliseconds Duration, std::chrono::milliseconds StartupDelay)
+   {
+      MyCursorManager->SetCursor(Cursor, Duration, StartupDelay);
+   }
    void setSpeciallCursor();
 
 
