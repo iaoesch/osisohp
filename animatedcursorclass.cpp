@@ -170,23 +170,23 @@ void CursorManager::RestartAnimatedCursor()
 }
 
 CursorManager::CursorManager(QWidget *p) :  QObject(p) ,Parent(p),
-   AnimatedTimedPointerForScrolling(24, 24, 30, ":/images/MousPointers/all-scroll.png", 6, 0, ":/images/MousPointers/pencil.png", 3, 21),
-   AnimatedTimedPointerForCutting(24, 24, 30, ":/images/MousPointers/scissors24.png", 6, 0, ":/images/MousPointers/pencil.png", 3, 21),
-   AnimatedTimedPointerForCreatingPostit(24, 24, 30, ":/images/MousPointers/scissorscopy24.png", 6, 0, ":/images/MousPointers/hand1.png", 6, 0),
-   AnimatedTimedPointerForCopying(24, 24, 30, ":/images/MousPointers/hand1plus.png", 6, 0, ":/images/MousPointers/hand1.png", 6, 0),
-   AnimatedTimedPointerForSelectingSingle(24, 24, 30, ":/images/MousPointers/hand1.png", 6, 0, ":/images/MousPointers/left_ptr.png", 6, 0),
-   AnimatedTimedPointerForSelectingMultiple(24, 24, 30, ":/images/MousPointers/hand1plus.png", 6, 0, ":/images/MousPointers/hand1.png", 6, 0),
-   AnimatedTimedPointerForCopyPostit(24, 24, 30, ":/images/MousPointers/handMoveplus.png", 6, 0, ":/images/MousPointers/move.png", 6, 0),
-   AnimatedTimedPointerForDeletePostit(24, 24, 30, ":/images/MousPointers/X_cursor.png", 6, 0, ":/images/MousPointers/hand1plus.png", 6, 0),
-   AnimatedGoingToFillTimer(24, 24, 30, ":/images/MousPointers/bucketfill16.png", 6, 0, ":/images/MousPointers/pencil.png", 3, 21)
+   AnimatedTimedPointerForScrolling(24, 24, 30, ":/images/MousPointers/all-scroll.png", 6, 0, ":/images/MousPointers/pencil.png", 5, 19),
+   AnimatedTimedPointerForCutting(24, 24, 30, ":/images/MousPointers/scissors24.png", 12, 12, ":/images/MousPointers/pencil.png", 5, 19),
+   AnimatedTimedPointerForCreatingPostit(24, 24, 30, ":/images/MousPointers/scissorscopy24.png", 12, 12, ":/images/MousPointers/hand1.png", 12, 12),
+   AnimatedTimedPointerForCopying(24, 24, 30, ":/images/MousPointers/hand1plus.png", 12, 12, ":/images/MousPointers/hand1.png", 12, 12),
+   AnimatedTimedPointerForSelectingSingle(24, 24, 30, ":/images/MousPointers/hand1.png", 12, 12, ":/images/MousPointers/left_ptr.png", 7, 4),
+   AnimatedTimedPointerForSelectingMultiple(24, 24, 30, ":/images/MousPointers/hand1plus.png", 12, 12, ":/images/MousPointers/hand1.png", 12, 12),
+   AnimatedTimedPointerForCopyPostit(24, 24, 30, ":/images/MousPointers/handMoveplus.png", 12, 12, ":/images/MousPointers/move.png", 12, 12),
+   AnimatedTimedPointerForDeletePostit(24, 24, 30, ":/images/MousPointers/X_cursor.png", 12, 12, ":/images/MousPointers/hand1plus.png", 12, 12),
+   AnimatedGoingToFillTimer(24, 24, 30, ":/images/MousPointers/bucketfill16.png", 12, 12, ":/images/MousPointers/pencil.png", 5, 19)
 {
    connect(&AnimatedPointerTimer, &QTimer::timeout, this, &CursorManager::AnimatedPointerTimetick);
    AnimatedPointerTimer.setInterval(TimeTic);
    CurrentAnimatedPointerPercentage = 0;
-   MovingMultiplePostitPointerCursor = QCursor(QPixmap(":/images/MousPointers/handMoveMultiple.png").scaled(24, 24));
-   CutPossiblePointerCursor = QCursor(QPixmap(":/images/MousPointers/scissors24.png").scaled(24, 24));
-   DrawingPinterCursor = QCursor(QPixmap(":/images/MousPointers/pencil.png").scaled(24, 24),3,21);
-   FillingPointerCursor = QCursor(QPixmap(":/images/MousPointers/bucketfill16.png").scaled(24, 24));
+   MovingMultiplePostitPointerCursor = QCursor(QPixmap(":/images/MousPointers/handMoveMultiple.png").scaled(24, 24), 12, 12);
+   CutPossiblePointerCursor = QCursor(QPixmap(":/images/MousPointers/scissors24.png").scaled(24, 24), 12, 12);
+   DrawingPinterCursor = QCursor(QPixmap(":/images/MousPointers/pencil.png").scaled(24, 24),5,19);
+   FillingPointerCursor = QCursor(QPixmap(":/images/MousPointers/bucketfill16.png").scaled(24, 24), 12, 12);
   // MovingPostitPointerCursor = QCursor(QPixmap(":/images/MousPointers/bucketfill16.png").scaled(24, 24));
    TestMode = false;
  }

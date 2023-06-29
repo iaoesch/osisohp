@@ -51,7 +51,8 @@
 //! [0]
 ScribbleArea::ScribbleArea(class SettingClass &MySettings, QWidget *parent)
     : QWidget(parent), MyDatas(*this, MySettings), MyCursorManager(this), Interface(this, &MyCursorManager),
-      StateMachine(MyDatas, Interface, MySettings), Settings(MySettings),
+      StateMachine(MyDatas, Interface, MySettings), ShowDebugCrosshair(false),
+      Settings(MySettings),
       AnimatedCursor(24, 24, 30, ":/images/MousPointers/left_ptr.png", 6, 0)
 {
     setAttribute(Qt::WA_StaticContents);
@@ -970,8 +971,13 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
                break;
 
        }
-
-
+       if (ShowDebugCrosshair) {
+         painter.setPen(QPen(QColor(Qt::black), 1, Qt::SolidLine, Qt::RoundCap,
+                             Qt::RoundJoin));
+         painter.setBrush(QBrush(Qt::black));
+         painter.drawLine(StateMachine.getLastPointerPosition()-QPointF(50,0), StateMachine.getLastPointerPosition()+QPointF(50,0));
+         painter.drawLine(StateMachine.getLastPointerPosition()-QPointF(0,50), StateMachine.getLastPointerPosition()+QPointF(0,50));
+       }
    }
 }
 
