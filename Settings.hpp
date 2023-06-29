@@ -44,12 +44,13 @@ class SettingClass {
 public:
    double Touchscaling = 4.0;
    double DirectSelectTimeout = 10.0;
-   double CopyTimeout = 500;
-   double GestureTimeout = 800;
-   double SelectTimeout = 500;
-   double PostItTimeout = 1000;
-   double MovePostitPauseTimeout = 500;
-   double PostitCopyTimeout = 1000;
+   double CopyTimeout = 500*4;
+   double GestureTimeout = 800*4;
+   double SelectTimeout = 500*4;
+   double PostItTimeout = 1000*4;
+   double MovePostitPauseTimeout = 500*4;
+   double PostitCopyTimeout = 1000*4;
+   double DeletePostItTimeout = 2000*4;
    double PointerHoldon = 250;
    int    EraserSize = 2;
    int    SpongeSize = 15;

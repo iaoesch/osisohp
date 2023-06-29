@@ -9,6 +9,7 @@ void SettingClass::getSettings(TabDescriptor &Descriptor)
    AddSettingsEntry(Descriptor, GestureTimeout);
    AddSettingsEntry(Descriptor, CopyTimeout);
    AddSettingsEntry(Descriptor, SelectTimeout);
+   AddSettingsEntry(Descriptor, DeletePostItTimeout);
    AddSettingsEntry(Descriptor, PostItTimeout);
    AddSettingsEntry(Descriptor, MovePostitPauseTimeout);
    AddSettingsEntry(Descriptor, PostitCopyTimeout);
@@ -42,6 +43,7 @@ SettingClass::SettingClass()
    Infos[&PostItTimeout] = {"PostItTimeout", "PostItTimeout"};
    Infos[&MovePostitPauseTimeout] = {"MovePostitPauseTimeout", "MovePostitPauseTimeout"};
    Infos[&PostitCopyTimeout] = {"PostitCopyTimeout", "PostitCopyTimeout"};
+   Infos[&DeletePostItTimeout] = {"DeletePostItTimeout", "DeletePostItTimeout"};
    Infos[&PointerHoldon] = {"PointerHoldon", "PointerHoldon"};
    Infos[&EraserSize] = {"EraserSize", "EraserSize"};
    Infos[&SpongeSize] = {"SpongeSize", "SpongeSize"};
@@ -50,14 +52,16 @@ SettingClass::SettingClass()
 
 void SettingClass::SetDefaultValues()
 {
+   constexpr int DebugFactor = 4;
    Touchscaling = 4.0;
    DirectSelectTimeout = 10.0;
-   CopyTimeout = 500;
-   GestureTimeout = 800;
-   SelectTimeout = 500;
-   PostItTimeout = 1000;
-   MovePostitPauseTimeout = 500;
-   PostitCopyTimeout = 1000;
+   CopyTimeout = 500 * DebugFactor;
+   DeletePostItTimeout = 2000 * DebugFactor;
+   GestureTimeout = 800 * DebugFactor;
+   SelectTimeout = 500 * DebugFactor;
+   PostItTimeout = 1000 * DebugFactor;
+   MovePostitPauseTimeout = 500 * DebugFactor;
+   PostitCopyTimeout = 1000 * DebugFactor;
    PointerHoldon = 250;
    EraserSize = 2;
    SpongeSize = 15;

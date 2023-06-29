@@ -976,6 +976,13 @@ void DatabaseClass::DuplicateSelectedPostits()
    }
 }
 
+void DatabaseClass::DeleteSelectedPostits()
+{
+   for (auto &r: SelectedPostit) {
+      PostIts.erase(r.postit);
+   }
+}
+
 void DatabaseClass::SetImageToPaste(QImage Image)
 {
    CompleteImage();

@@ -345,6 +345,15 @@ void MainWindow::ShowPostitsFrame()
     scribbleArea->setShowPostitsFrame(ShowPostitsFrameAct->isChecked());
 }
 
+void MainWindow::ShowCursors()
+//! [9] //! [10]
+{
+
+    scribbleArea->setShowCursors(ShowCursorsAct->isChecked());
+}
+
+
+
 void MainWindow::Paste()
 //! [9] //! [10]
 {
@@ -428,6 +437,10 @@ void MainWindow::createActions()
     ShowPostitsFrameAct = new QAction(tr("&Postit Frame"), this);
     ShowPostitsFrameAct->setCheckable(true);
     connect(ShowPostitsFrameAct, SIGNAL(triggered()), this, SLOT(ShowPostitsFrame()));
+
+    ShowCursorsAct = new QAction(tr("&Cycle Pointers"), this);
+    ShowCursorsAct->setCheckable(true);
+    connect(ShowCursorsAct, &QAction::triggered, this, &MainWindow::ShowCursors);
 
     clearScreenAct = new QAction(tr("&Clear Screen"), this);
     clearScreenAct->setShortcut(tr("Ctrl+L"));
@@ -546,6 +559,7 @@ void MainWindow::createMenus()
 
     DebugMenu = new QMenu(tr("&Debug"), this);
     DebugMenu->addAction(ShowPostitsFrameAct);
+    DebugMenu->addAction(ShowCursorsAct);
     DebugMenu->addAction(SettingsAct);
 
 

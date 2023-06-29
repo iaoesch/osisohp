@@ -760,17 +760,70 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving
 }
 
 template<>
-void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving>::timeoutSM()
+void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving>
+::timeoutSM()
 {
    if (StateMachine.Context.MyDatas.FindSelectedPostIts(StateMachine.Context.MyDatas.getSelectedCurrentPosition(), DatabaseClass::All)) {
       //scribbling = false;
       //NewDrawingStarted = false;
-      StateMachine.Interface.SetCursor(CursorManager::MovingMultiplePostitPointer);
+      StateMachine.Interface.SetCursor(CursorManager::TimedPointerForDeletePostit, StateMachine.Settings.DeletePostItTimeout);
       DEBUG_LOG << "Selected postit " << std::endl;
 
       //Just Stay in State
-      //StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithSelectedPostitForMoving);
-      //StateMachine.MyTimer.start(StateMachine.Settings.PostItTimeout);
+      StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving);
+      StateMachine.MyTimer.start(StateMachine.Settings.DeletePostItTimeout);
+   }
+
+}
+
+/***************  WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving  *****************/
+template<>
+void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving>
+::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+{
+   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+   if ((Buttons & Qt::LeftButton)) {
+       if (StateMachine.Context.MyDatas.IsSelectionJitter(Position, StateMachine.Context.MyDatas.getLastPoint(), Pressure)) {
+           return; // ignore small movements (probably use penwidth*2)
+       }
+
+       StateMachine.SetNewState(&StateMachine.MovingPostit);
+       StateMachine.MovingPostit.HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
+
+
+   }  else {
+      HandleMoveNoLeftButtonEvent(Buttons, Position);
+   }
+
+}
+
+template<>
+void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position [[maybe_unused]], bool Erasing [[maybe_unused]], double Pressure [[maybe_unused]])
+{
+   if (Button == Qt::LeftButton) {
+      StateMachine.Context.MyDatas.ClearSelectedPostit();
+      StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
+
+      StateMachine.SetNewState(&StateMachine.Idle);
+
+   }
+}
+
+template<>
+void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving>
+::timeoutSM()
+{
+   if (StateMachine.Context.MyDatas.FindSelectedPostIts(StateMachine.Context.MyDatas.getSelectedCurrentPosition(), DatabaseClass::All)) {
+      //scribbling = false;
+      //NewDrawingStarted = false;
+      StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
+      DEBUG_LOG << "Selected postit " << std::endl;
+
+      StateMachine.Context.MyDatas.DeleteSelectedPostits();
+      StateMachine.Interface.UpdateRequest();
+      StateMachine.SetNewState(&StateMachine.Idle);
+      //StateMachine.MyTimer.start(StateMachine.Settings.DeletePostItTimeout);
    }
 
 }
@@ -792,7 +845,7 @@ void StateClass<State::MovingPostit>::HandleMoveEventSM(Qt::MouseButtons Buttons
           DEBUG_LOG << "Moving postit " << std::endl;
           StoppTimer();
           StartTimer(StateMachine.Settings.MovePostitPauseTimeout);
-
+          StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCopyPostit, StateMachine.Settings.MovePostitPauseTimeout);
           StateMachine.Context.MyDatas.MoveSelectedPostits(Position);
           StateMachine.Interface.UpdateRequest();
        }
@@ -824,7 +877,7 @@ void StateClass<State::MovingPostit>::HandleReleaseEventSM(Qt::MouseButton Butto
 template<>
 void StateClass<State::MovingPostit>::timeoutSM()
 {
-      StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCopyPostit);
+      StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCopyPostit, StateMachine.Settings.PostitCopyTimeout);
       StartTimer(StateMachine.Settings.PostitCopyTimeout);
       StateMachine.SetNewState(&StateMachine.MovingPostitPaused);
 }
@@ -866,7 +919,7 @@ void StateClass<State::MovingPostitPaused>::HandleReleaseEventSM(Qt::MouseButton
 template<>
 void StateClass<State::MovingPostitPaused>::timeoutSM()
 {
-      StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCopyPostit);
+      StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCopyPostit, StateMachine.Settings.PostitCopyTimeout);
       //StateMachine.Interface.setSpeciallCursor();
       StartTimer(StateMachine.Settings.PostitCopyTimeout);
       StateMachine.SetNewState(&StateMachine.MovingPostitPaused);

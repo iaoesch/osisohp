@@ -88,6 +88,7 @@ public:
     void setPenWidth(int newWidth);
     void setDirectSelect(bool Mode) {SelectPostitsDirectly = Mode;}
     void setShowPostitsFrame(bool Mode) {MyDatas.setShowPostitsFrame(Mode); update();}
+    void setShowCursors(bool Mode) { MyCursorManager.TestCursors(Mode);}
 
     QColor GetBackGroundColor() const { return MyDatas.GetBackGroundColor(); }
     void setBackGroundColor(const QColor &newColor) {MyDatas.setBackGroundColor(newColor);}

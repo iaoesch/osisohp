@@ -73,6 +73,7 @@ AnimatedCursorClass::AnimatedCursorClass(size_t Width, size_t Height, size_t Num
 
 void CursorManager::SetCursor(CursorType Cursor, std::chrono::milliseconds Duration, std::chrono::milliseconds StartupDelay)
 {
+   if (!TestMode) {
    AnimatedPointerTimer.stop();
    CurrentAnimatedCursor = nullptr;
    DelaytimeLeft = StartupDelay;
@@ -84,6 +85,11 @@ void CursorManager::SetCursor(CursorType Cursor, std::chrono::milliseconds Durat
       case CursorManager::TimedPointerForCopying:
          //Parent->setCursor(QCursor(Qt::DragCopyCursor));
          CurrentAnimatedCursor = &AnimatedTimedPointerForCopying;
+         StartAnimation();
+         break;
+      case CursorManager::TimedPointerForCreatingPostit:
+         //Parent->setCursor(QCursor(Qt::DragCopyCursor));
+         CurrentAnimatedCursor = &AnimatedTimedPointerForCreatingPostit;
          StartAnimation();
          break;
       case CursorManager::MovingMultiplePostitPointer:
@@ -119,7 +125,7 @@ void CursorManager::SetCursor(CursorType Cursor, std::chrono::milliseconds Durat
          //Parent->setCursor(QCursor(Qt::UpArrowCursor));
          break;
       case CursorManager::MovingCutoutPointer:
-         Parent->setCursor(QCursor(Qt::DragMoveCursor));
+         Parent->setCursor(QCursor(Qt::ClosedHandCursor));
          break;
       case CursorManager::DrawingPinter:
          Parent->setCursor(DrawingPinterCursor);
@@ -135,7 +141,7 @@ void CursorManager::SetCursor(CursorType Cursor, std::chrono::milliseconds Durat
          Parent->setCursor(QCursor(Qt::SizeAllCursor));
          break;
       case CursorManager::MovingPostitPointer:
-         Parent->setCursor(QCursor(Qt::DragMoveCursor));
+         Parent->setCursor(QCursor(Qt::ClosedHandCursor));
          break;
       case CursorManager::TimedPointerForCopyPostit:
          CurrentAnimatedCursor = &AnimatedTimedPointerForCopyPostit;
@@ -148,23 +154,26 @@ void CursorManager::SetCursor(CursorType Cursor, std::chrono::milliseconds Durat
 
    }
    LastAnimatedCursor = CurrentAnimatedCursor;
+   }
 
 }
 
 void CursorManager::RestartAnimatedCursor()
 {
-   AnimatedPointerTimer.stop();
+   if (!TestMode)
+ {   AnimatedPointerTimer.stop();
    CurrentAnimatedCursor = LastAnimatedCursor;
    DelaytimeLeft = TotalDelay;
    TimeLeft      = TotalDuration;
    StartAnimation();
+   }
 }
 
 CursorManager::CursorManager(QWidget *p) :  QObject(p) ,Parent(p),
    AnimatedTimedPointerForScrolling(24, 24, 30, ":/images/MousPointers/all-scroll.png", 6, 0, ":/images/MousPointers/pencil.png", 3, 21),
    AnimatedTimedPointerForCutting(24, 24, 30, ":/images/MousPointers/scissors24.png", 6, 0, ":/images/MousPointers/pencil.png", 3, 21),
-   AnimatedTimedPointerForCreatingPostit(24, 24, 30, ":/images/MousPointers/scissorscopy24.png", 6, 0, ":/images/MousPointers/scissors24.png", 6, 0),
-   AnimatedTimedPointerForCopying(24, 24, 30, ":/images/MousPointers/scissorscopy24.png", 6, 0, ":/images/MousPointers/scissors24.png", 6, 0),
+   AnimatedTimedPointerForCreatingPostit(24, 24, 30, ":/images/MousPointers/scissorscopy24.png", 6, 0, ":/images/MousPointers/hand1.png", 6, 0),
+   AnimatedTimedPointerForCopying(24, 24, 30, ":/images/MousPointers/hand1plus.png", 6, 0, ":/images/MousPointers/hand1.png", 6, 0),
    AnimatedTimedPointerForSelectingSingle(24, 24, 30, ":/images/MousPointers/hand1.png", 6, 0, ":/images/MousPointers/left_ptr.png", 6, 0),
    AnimatedTimedPointerForSelectingMultiple(24, 24, 30, ":/images/MousPointers/hand1plus.png", 6, 0, ":/images/MousPointers/hand1.png", 6, 0),
    AnimatedTimedPointerForCopyPostit(24, 24, 30, ":/images/MousPointers/handMoveplus.png", 6, 0, ":/images/MousPointers/move.png", 6, 0),
@@ -179,7 +188,7 @@ CursorManager::CursorManager(QWidget *p) :  QObject(p) ,Parent(p),
    DrawingPinterCursor = QCursor(QPixmap(":/images/MousPointers/pencil.png").scaled(24, 24),3,21);
    FillingPointerCursor = QCursor(QPixmap(":/images/MousPointers/bucketfill16.png").scaled(24, 24));
   // MovingPostitPointerCursor = QCursor(QPixmap(":/images/MousPointers/bucketfill16.png").scaled(24, 24));
-
+   TestMode = false;
  }
 
 void CursorManager::AnimatedPointerTimetick()
@@ -196,6 +205,16 @@ void CursorManager::AnimatedPointerTimetick()
          Parent->setCursor(QCursor(CurrentAnimatedCursor->GetPictureForPercentage<BaseTime>(BaseTime), CurrentAnimatedCursor->HotX(), CurrentAnimatedCursor->HotY()));
          AnimatedPointerTimer.stop();
       }
+   } else if (CurrentTestedCursor != CursorEnumEndmarker) {
+      CurrentTestedCursor = static_cast<CursorType>(CurrentTestedCursor + 1);
+      if (CurrentTestedCursor == CursorEnumEndmarker) {
+         CurrentTestedCursor = StandardPointer;
+      }
+      TestMode = false;
+      SetCursor(CurrentTestedCursor, 500ms, 500ms);
+      TestMode = true;
+      AnimatedPointerTimer.start();
+      CurrentAnimatedCursor = nullptr;
    }
 }
 
@@ -213,5 +232,25 @@ void CursorManager::StartAnimation()
 CursorManager::~CursorManager()
 {
 
+}
+
+void CursorManager::TestCursors(bool On)
+{
+   if (On) {
+      AnimatedPointerTimer.stop();
+      AnimatedPointerTimer.setInterval(1000ms);
+      CurrentTestedCursor = StandardPointer;
+      SetCursor(CurrentTestedCursor, 500ms, 500ms);
+      CurrentAnimatedCursor = nullptr;
+      TestMode = true;
+      AnimatedPointerTimer.start();
+   } else {
+      SetCursor(StandardPointer);
+      CurrentTestedCursor = CursorEnumEndmarker;
+      AnimatedPointerTimer.stop();
+      AnimatedPointerTimer.setInterval(TimeTic);
+      TestMode = false;
+
+   }
 }
 

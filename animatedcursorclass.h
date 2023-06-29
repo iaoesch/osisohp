@@ -97,6 +97,11 @@ public:
    CursorManager(QWidget *p);
    virtual ~CursorManager() override;
 
+   void TestCursors(bool On);
+private:
+   CursorType CurrentTestedCursor;
+   bool TestMode;
+
 private slots:
     void AnimatedPointerTimetick();
 

@@ -253,6 +253,7 @@ public:
    }
 
 
+   void DeleteSelectedPostits();
    void DuplicateSelectedPostits();
 private:
 private:

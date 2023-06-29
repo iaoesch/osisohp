@@ -55,7 +55,6 @@ class MainWindow : public QMainWindow
 public:
     MainWindow();
 
-public slots:
 protected:
     void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
@@ -73,6 +72,7 @@ private slots:
     void ProtectImage();
     void DirectSelect();
     void ShowPostitsFrame();
+    void ShowCursors();
     void createLayerActions(int Number);
     void SetVisibilityIndicatorOfLayer(int Layer, bool Visibility);
     void ShowOverviewChanged(bool OverviewEnabled);
@@ -127,6 +127,7 @@ private:
     QAction *penWidthAct;
     QAction *DirectPostitSelectAct;
     QAction *ShowPostitsFrameAct;
+    QAction *ShowCursorsAct;
     QAction *ShowOverviewAct;
     QAction *printAct;
     QAction *clearScreenAct;
