@@ -42,7 +42,8 @@ resources.files = \
     images/MousPointers/handMoveMultiple.png \
     images/MousPointers/scissorscopy24.png \
     images/MousPointers/scissors24.png \
-    images/MousPointers/scissorscopy24.png \
+    images/MousPointers/left_ptr_edit_plus.png \
+    images/MousPointers/left_ptr_edit.png \
     images/MousPointers/X_cursor.png \
     images/MousPointers/left_ptr.png
 

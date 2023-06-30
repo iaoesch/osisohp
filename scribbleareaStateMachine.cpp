@@ -76,7 +76,11 @@ void StateBaseClass::HandleMoveNoLeftButtonEvent(Qt::MouseButtons Buttons, QPoin
 {
    if (Buttons == Qt::NoButton) {
       if (StateMachine.Context.MyDatas.IsInsideLastPaintedObjectBoundingBox(Position)) {
-         StateMachine.Interface.SetCursor(CursorManager::CutPossiblePointer );
+         if (StateMachine.Context.MyDatas.IsCutoutActive()) {
+            StateMachine.Interface.SetCursor(CursorManager::CutPossiblePointer );
+         } else {
+            StateMachine.Interface.SetCursor(CursorManager::CopySelectionPossiblePointer );
+         }
       }  else if (StateMachine.Context.MyDatas.IsInsideAnyPostIt(Position)) {
          StateMachine.Interface.SetCursor(CursorManager::SelectPossiblePointer);
       }  else {
@@ -234,7 +238,11 @@ void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF
 
 
            if (StateMachine.Context.MyDatas.IsInsideLastPaintedObjectBoundingBox(Position)) {
-              StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCutting, StateMachine.Settings.SelectTimeout);
+              if (StateMachine.Context.MyDatas.IsCutoutActive()) {
+                  StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCutting, StateMachine.Settings.SelectTimeout);
+              } else  {
+                  StateMachine.Interface.SetCursor(CursorManager::TimedPointerForSelecting, StateMachine.Settings.SelectTimeout);
+              }
               StateMachine.Context.DownInsideObject = true;
            } else {
               if (StateMachine.Context.MyDatas.FindSelectedPostIts(Position)) {
@@ -361,8 +369,11 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
       //scribbling = false;
       StateMachine.Interface.UpdateRequest();
       //WaitForPostIt = true;
-      StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCreatingPostit, StateMachine.Settings.PostItTimeout);
-
+      if (StateMachine.Context.MyDatas.IsCutoutActive()) {
+         StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCreatingPostitFromCutting, StateMachine.Settings.PostItTimeout);
+      } else {
+         StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCreatingPostitFromSelection, StateMachine.Settings.PostItTimeout);
+      }
       StartTimer(StateMachine.Settings.PostItTimeout);
       StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionWithSelectedAreaForMoving);
 
@@ -875,11 +886,15 @@ void StateClass<State::MovingPostit>::HandleReleaseEventSM(Qt::MouseButton Butto
 }
 
 template<>
+void StateClass<State::MovingPostitPaused>::timeoutSM();
+
+template<>
 void StateClass<State::MovingPostit>::timeoutSM()
 {
-      StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCopyPostit, StateMachine.Settings.PostitCopyTimeout);
-      StartTimer(StateMachine.Settings.PostitCopyTimeout);
-      StateMachine.SetNewState(&StateMachine.MovingPostitPaused);
+      StateMachine.MovingPostitPaused.timeoutSM();
+    //  StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCopyPostit, StateMachine.Settings.PostitCopyTimeout);
+    //  StartTimer(StateMachine.Settings.PostitCopyTimeout);
+    //  StateMachine.SetNewState(&StateMachine.MovingPostitPaused);
 }
 
 /***************  MovingPostitPaused  *****************/

@@ -74,12 +74,15 @@ public:
       StandardPointer,
       TimedPointerForScrolling,
       TimedPointerForCutting,
-      TimedPointerForCreatingPostit,
+      TimedPointerForCreatingPostitFromCutting,
+      TimedPointerForSelecting,
+      TimedPointerForCreatingPostitFromSelection,
       TimedPointerForCopying,
       TimedPointerForSelectingSingle,
       TimedPointerForSelectingMultiple,
       SelectPossiblePointer,
       CutPossiblePointer,
+      CopySelectionPossiblePointer,
       MovingCutoutPointer,
       DrawingPinter,
       GoingToFillTimer,
@@ -112,6 +115,9 @@ private:
     AnimatedCursorClass       AnimatedTimedPointerForScrolling;
     AnimatedCursorClass       AnimatedTimedPointerForCutting;
     AnimatedCursorClass       AnimatedTimedPointerForCreatingPostit;
+    AnimatedCursorClass AnimatedTimedPointerForSelecting;
+    AnimatedCursorClass AnimatedTimedPointerForCreatingPostitSelecting;
+
     AnimatedCursorClass       AnimatedTimedPointerForCopying;
     AnimatedCursorClass       AnimatedTimedPointerForSelectingSingle;
     AnimatedCursorClass       AnimatedTimedPointerForSelectingMultiple;
@@ -123,6 +129,7 @@ private:
     AnimatedCursorClass *LastAnimatedCursor;
 
     QCursor CutPossiblePointerCursor;
+    QCursor CopySelectionPossiblePointerCursor;
     QCursor MovingCutoutPointerCursor;
     QCursor DrawingPinterCursor;
     QCursor FillingPointerCursor;
