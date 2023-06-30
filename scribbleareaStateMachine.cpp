@@ -349,7 +349,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
 {
    if (StateMachine.Context.DownInsideObject) {
 
-      StateMachine.Context.MyDatas.MakeSelectionFromLastDrawnObject();
+      StateMachine.Context.MyDatas.MakeSelectionFromLastDrawnObject(StateMachine.Context.MyDatas.IsCutoutActive());
       StateMachine.Context.MyDatas.ClearLastPaintedObjectBoundingBox();
       StateMachine.Context.MyDatas.ClearLastDrawnObjectPoints();
       StateMachine.Context.MyDatas.SetModified();

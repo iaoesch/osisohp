@@ -195,6 +195,8 @@ void ScribbleArea::HandleToolAction(QAction *action)
        CollapseAllVisibleLayersToTop();
     } else if (action->iconText() == "Freeze") {
        Freeze(action->isChecked());
+    } else if (action->iconText() == "Cut") {
+       MyDatas.CutSelection(action->isChecked());
     } else if (action->iconText() == "ShowOverview") {
        //ToggleShowOverview(action->isChecked());
        StateMachine.HandleOverviewEventSM(action->isChecked());

@@ -122,12 +122,15 @@ MainWindow::MainWindow()
     toolBar->addAction("NewPlane");
     toolBar->addAction("Merge")->setToolTip("Merge visible Background");
     toolBar->addAction("ToTop")->setToolTip("Merge all visible to editable");
-    toolBar->addAction("Cut")->setCheckable(true);
+    QPixmap Scissoir = QPixmap(":/images/MousPointers/scissors24.png").scaled(24, 24);
+    QAction *CutAct = toolBar->addAction(Scissoir, "Cut");
+    CutAct->setCheckable(true);
+    CutAct->setChecked(true);
     ShowOverviewAct = toolBar->addAction("ShowOverview");
     ShowOverviewAct->setCheckable(true);
 
-    connect(toolBar, SIGNAL(actionTriggered(QAction *)),
-            scribbleArea, SLOT(HandleToolAction(QAction * )));
+    connect(toolBar, &QToolBar::actionTriggered,
+            scribbleArea, &ScribbleArea::HandleToolAction);
     //  toolBar->insertAction(0, new PushButtonAction(QIcon(":/Search.gif"), "Search"));
 
     addToolBar(Qt::TopToolBarArea, toolBar);

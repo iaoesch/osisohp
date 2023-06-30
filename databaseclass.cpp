@@ -93,6 +93,7 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
    EraseLastDrawnObject = false;
    Frozen = false;
    ShowOverview = false;
+   CutMode = true;
 
    PasteStatus = None;
 
@@ -155,7 +156,7 @@ bool DatabaseClass::ImportImage(const QString &fileName)
     return true;
 }
 
-void DatabaseClass::MakeSelectionFromLastDrawnObject()
+void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
 {
    SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.QRectangle().translated(Origin.toPoint()));
    SelectedImageBoundingBox = LastPaintedObjectBoundingBox;
@@ -164,14 +165,15 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject()
    HintSelectedImagePart.fill(qRgba(0, 0, 0, 0));
    DiscardSelection = false;
 
-   QPainter painter2(&image);
-   painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                        Qt::RoundJoin));
-   painter2.setBrush(QBrush(QColor(0, 0, 0, 0)));
-   painter2.setCompositionMode(QPainter::CompositionMode_Source);
-   // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
-   painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
-
+   if (Cutout == true) {
+      QPainter painter2(&image);
+      painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                           Qt::RoundJoin));
+      painter2.setBrush(QBrush(QColor(0, 0, 0, 0)));
+      painter2.setCompositionMode(QPainter::CompositionMode_Source);
+      // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
+      painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+   }
    QPainter painter(&HintSelectedImagePart);
    painter.setPen(QPen(SelectionHintBorderColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                        Qt::RoundJoin));
