@@ -76,7 +76,7 @@ class DatabaseClass
 
    QPointF SelectedOffset;
    QPointF SelectedCurrentPosition;
-   QPointF lastPoint;
+   QPointF lastPointDrawn;
    QPointF ButtonDownPosition;
 
 
@@ -114,7 +114,7 @@ public:
    enum PasteEvent {PasteTopLayer, PasteBottomLayer, PasteDrawing, CancelPasting, MakeBigger, MakeSmaller, MakeOriginalSize};
 
 
-   void SetSelectedOffset() {SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPoint;}
+   void SetSelectedOffset() {SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPointDrawn;}
 
    void RestartCurrentPaintedObjectBoundingBox(QPointF const &StartPoint) {  CurrentPaintedObjectBoundingBox.Clear();
                                                           CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(StartPoint.x(), StartPoint.y()));
@@ -226,7 +226,7 @@ public:
    void setLastDrawingValid(bool newLastDrawingValid);
 
    void setLastPoint(QPointF newLastPoint);
-   QPointF getLastPoint() {return lastPoint;}
+   QPointF getLastPointDrawn() {return lastPointDrawn;}
 
    void setButtonDownPosition(QPointF newButtonDownPosition);
 
@@ -256,6 +256,7 @@ public:
       return ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()+2));
    }
 
+   void ClearLastDrawnPicture();
 
    void DeleteSelectedPostits();
    void DuplicateSelectedPostits();

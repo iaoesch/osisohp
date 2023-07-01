@@ -46,6 +46,9 @@ public:
    double DirectSelectTimeout = 10.0;
    double CopyTimeout = 500*4;
    double GestureTimeout = 800*4;
+   double GoingToFillTimeout = 800*4;
+   double CancelFillTimeout = 1600*4;
+   double GoingToKillTimeout = 1600*4;
    double SelectTimeout = 500*4;
    double PostItTimeout = 1000*4;
    double MovePostitPauseTimeout = 500*4;

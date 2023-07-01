@@ -84,6 +84,7 @@ enum ScribblingState {
    Drawing,
    DrawingPaused,
    DrawingFillRequested,
+   DrawingKillRequested,
    MovingSelection,
    MovingSelectionPaused,
    MovingPostit,
@@ -214,6 +215,7 @@ private:
    MakeStateObject(Drawing);
    MakeStateObject(DrawingPaused);
    MakeStateObject(DrawingFillRequested);
+   MakeStateObject(DrawingKillRequested);
    MakeStateObject(MovingSelection);
    MakeStateObject(MovingSelectionPaused);
    MakeStateObject(MovingPostit);

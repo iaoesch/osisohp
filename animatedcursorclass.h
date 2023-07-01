@@ -86,6 +86,8 @@ public:
       MovingCutoutPointer,
       DrawingPinter,
       GoingToFillTimer,
+      TimedPointerForDeleteCurrentDrawing,
+      TimedPointerForCancelFilling,
       FillingPointer,
       ScrollingPointer,
       MovingPostitPointer,
@@ -124,6 +126,9 @@ private:
     AnimatedCursorClass       AnimatedTimedPointerForCopyPostit;
     AnimatedCursorClass       AnimatedTimedPointerForDeletePostit;
     AnimatedCursorClass       AnimatedGoingToFillTimer;
+    AnimatedCursorClass       AnimatedTimedPointerForCancelFilling;
+    AnimatedCursorClass AnimatedTimedPointerForDeleteCurrentDrawing;
+
 
     AnimatedCursorClass *CurrentAnimatedCursor;
     AnimatedCursorClass *LastAnimatedCursor;

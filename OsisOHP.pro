@@ -39,6 +39,8 @@ resources.files = \
     images/MousPointers/handMoveplus.png \
     images/MousPointers/move.png \
     images/MousPointers/bucketfill16.png \
+    images/MousPointers/bucketfill200.png \
+    images/MousPointers/bucketfillstop200.png \
     images/MousPointers/handMoveMultiple.png \
     images/MousPointers/scissorscopy24.png \
     images/MousPointers/scissors24.png \

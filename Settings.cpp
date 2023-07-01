@@ -7,6 +7,9 @@ void SettingClass::getSettings(TabDescriptor &Descriptor)
    AddSettingsEntry(Descriptor, Touchscaling);
    AddSettingsEntry(Descriptor, DirectSelectTimeout);
    AddSettingsEntry(Descriptor, GestureTimeout);
+   AddSettingsEntry(Descriptor, GoingToFillTimeout);
+   AddSettingsEntry(Descriptor, CancelFillTimeout);
+   AddSettingsEntry(Descriptor, GoingToKillTimeout);
    AddSettingsEntry(Descriptor, CopyTimeout);
    AddSettingsEntry(Descriptor, SelectTimeout);
    AddSettingsEntry(Descriptor, DeletePostItTimeout);
@@ -38,6 +41,9 @@ SettingClass::SettingClass()
    Infos[&Touchscaling] = {"Touchscaling", "Lausanne: Mobilis 2 Zonen Badi Fleurie Wandern Uferweg"};
    Infos[&DirectSelectTimeout] = {"DirectSelectTimeout", "DirectSelectTimeout"};
    Infos[&GestureTimeout] = {"GestureTimeout", "GestureTimeout"};
+   Infos[&GoingToFillTimeout] = {"GoingToFillTimeout", "GoingToFillTimeoutGoingToFillTimeout"};
+   Infos[&CancelFillTimeout] = {"CancelFillTimeout", "CancelFillTimeout"};
+   Infos[&GoingToKillTimeout] = {"GoingToKillTimeout", "GoingToKillTimeout"};
    Infos[&CopyTimeout] = {"CopyTimeout", "CopyTimeout"};
    Infos[&SelectTimeout] = {"SelectTimeout", "SelectTimeout"};
    Infos[&PostItTimeout] = {"PostItTimeout", "PostItTimeout"};
@@ -52,12 +58,15 @@ SettingClass::SettingClass()
 
 void SettingClass::SetDefaultValues()
 {
-   constexpr int DebugFactor = 4;
+   constexpr int DebugFactor = 1;
    Touchscaling = 4.0;
    DirectSelectTimeout = 10.0;
    CopyTimeout = 500 * DebugFactor;
    DeletePostItTimeout = 2000 * DebugFactor;
    GestureTimeout = 800 * DebugFactor;
+   GoingToFillTimeout = 800*4;
+   CancelFillTimeout = 1600*4;
+   GoingToKillTimeout = 1000*4;
    SelectTimeout = 500 * DebugFactor;
    PostItTimeout = 1000 * DebugFactor;
    MovePostitPauseTimeout = 500 * DebugFactor;

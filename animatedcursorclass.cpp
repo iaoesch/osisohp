@@ -49,8 +49,8 @@ AnimatedCursorClass::AnimatedCursorClass(size_t Width, size_t Height, size_t Num
    for (size_t i = 0; i < NumberOfFramesToPlay; i++) {
       int TimerPosX = 16;
       int TimerPosY = 16;
-      int TimerWidth = 10;
-      int TimerHeight = 10;
+      int TimerWidth = 14;
+      int TimerHeight = 14;
       AnimatedPointerCursor[i] = BasePicture;
       QPainter IconPainter(&AnimatedPointerCursor[i]);
       IconPainter.setPen(Qt::white);
@@ -82,6 +82,15 @@ void CursorManager::SetCursor(CursorType Cursor, std::chrono::milliseconds Durat
    TotalDelay    = StartupDelay;
 
    switch(Cursor) {
+      case CursorManager::TimedPointerForCancelFilling:
+         CurrentAnimatedCursor = &AnimatedTimedPointerForCancelFilling;
+         StartAnimation();
+         break;
+
+      case CursorManager::TimedPointerForDeleteCurrentDrawing:
+               CurrentAnimatedCursor = &AnimatedTimedPointerForDeleteCurrentDrawing;
+               StartAnimation();
+               break;
       case CursorManager::TimedPointerForCreatingPostitFromSelection:
          CurrentAnimatedCursor = &AnimatedTimedPointerForCreatingPostitSelecting;
          StartAnimation();
@@ -195,7 +204,9 @@ CursorManager::CursorManager(QWidget *p) :  QObject(p) ,Parent(p),
    AnimatedTimedPointerForSelectingMultiple(24, 24, 30, ":/images/MousPointers/hand1plus.png", 12, 12, ":/images/MousPointers/hand1.png", 12, 12),
    AnimatedTimedPointerForCopyPostit(24, 24, 30, ":/images/MousPointers/handMoveplus.png", 12, 12, ":/images/MousPointers/move.png", 12, 12),
    AnimatedTimedPointerForDeletePostit(24, 24, 30, ":/images/MousPointers/X_cursor.png", 12, 12, ":/images/MousPointers/hand1plus.png", 12, 12),
-   AnimatedGoingToFillTimer(24, 24, 30, ":/images/MousPointers/bucketfill16.png", 12, 12, ":/images/MousPointers/pencil.png", 5, 19)
+   AnimatedGoingToFillTimer(24, 24, 30, ":/images/MousPointers/bucketfill200.png", 12, 12, ":/images/MousPointers/pencil.png", 5, 19),
+   AnimatedTimedPointerForCancelFilling (24, 24, 30, ":/images/MousPointers/bucketfillstop200.png", 12, 12, ":/images/MousPointers/bucketfill200.png", 12, 12),
+   AnimatedTimedPointerForDeleteCurrentDrawing(24, 24, 30, ":/images/MousPointers/X_cursor.png", 12, 12, ":/images/MousPointers/bucketfillstop200.png", 12, 12)
 {
    connect(&AnimatedPointerTimer, &QTimer::timeout, this, &CursorManager::AnimatedPointerTimetick);
    AnimatedPointerTimer.setInterval(TimeTic);
@@ -204,7 +215,7 @@ CursorManager::CursorManager(QWidget *p) :  QObject(p) ,Parent(p),
    CutPossiblePointerCursor = QCursor(QPixmap(":/images/MousPointers/scissors24.png").scaled(24, 24), 12, 12);
    CopySelectionPossiblePointerCursor = QCursor(QPixmap(":/images/MousPointers/left_ptr_edit.png").scaled(24, 24), 12, 12);
    DrawingPinterCursor = QCursor(QPixmap(":/images/MousPointers/pencil.png").scaled(24, 24),5,19);
-   FillingPointerCursor = QCursor(QPixmap(":/images/MousPointers/bucketfill16.png").scaled(24, 24), 12, 12);
+   FillingPointerCursor = QCursor(QPixmap(":/images/MousPointers/bucketfill200.png").scaled(24, 24), 12, 12);
   // MovingPostitPointerCursor = QCursor(QPixmap(":/images/MousPointers/bucketfill16.png").scaled(24, 24));
    TestMode = false;
  }
