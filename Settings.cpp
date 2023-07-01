@@ -65,7 +65,7 @@ void SettingClass::SetDefaultValues()
    DeletePostItTimeout = 2000 * DebugFactor;
    GestureTimeout = 800 * DebugFactor;
    GoingToFillTimeout = 800*4;
-   CancelFillTimeout = 1600*4;
+   CancelFillTimeout = 800*4;
    GoingToKillTimeout = 1000*4;
    SelectTimeout = 500 * DebugFactor;
    PostItTimeout = 1000 * DebugFactor;

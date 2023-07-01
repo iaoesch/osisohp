@@ -469,7 +469,7 @@ void StateClass<State::Drawing>::timeoutSM()
 
 /***************  DrawingPaused  *****************/
 
-
+#if 0
 template<>
 void StateClass<State::DrawingPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
 {
@@ -515,7 +515,7 @@ void StateClass<State::DrawingPaused>::timeoutSM()
    StartTimer(StateMachine.Settings.GestureTimeout);
    StateMachine.Interface.SetCursor(CursorManager::TimedPointerForCancelFilling, StateMachine.Settings.GestureTimeout);
 }
-
+#endif
 
 /***************  DrawingFillRequested  *****************/
 
@@ -1372,7 +1372,7 @@ ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database, GuiInt
        WaitingToLeaveJitterProtectionWithSelectedPostitForMoving(*this),
        WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving(*this),
        Drawing(*this),
-       DrawingPaused(*this),
+     //  DrawingPaused(*this),
        DrawingFillRequested(*this),
        DrawingKillRequested(*this),
        MovingSelection(*this),

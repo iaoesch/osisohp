@@ -64,6 +64,7 @@ private slots:
     void penColor();
     void BackGroundColorColor();
     void BackGroundColorWhiteBoard();
+    void BackGroundColorOHP();
     void BackGroundColorBlackBoard();
     void penWidth();
     void about();
@@ -123,6 +124,7 @@ private:
     QAction *penColorAct;
     QAction *BackGroundColorAct;
     QAction *WhiteBoardColorAct;
+    QAction *OHPColorAct;
     QAction *BlackBoardColorAct;
     QAction *penWidthAct;
     QAction *DirectPostitSelectAct;
@@ -137,6 +139,8 @@ private:
 
     bool SaveFile(const QByteArray &fileFormat);
     void SetWhiteBoardColors();
+    void SetOHPColors();
+
     void readSettings();
     void writeSettings();
     void SetBlackBoardColors();

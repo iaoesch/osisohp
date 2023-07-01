@@ -161,6 +161,22 @@ MainWindow::MainWindow()
 }
 //! [0]
 
+
+void MainWindow::SetOHPColors(void)
+{
+   PenInfo[0].PenColor = Qt::blue;
+   PenInfo[1].PenColor = Qt::darkGreen;
+   PenInfo[2].PenColor = Qt::darkYellow;
+   PenInfo[3].PenColor = QColor(255, 128, 0);
+   PenInfo[4].PenColor = Qt::red;
+   PenInfo[5].PenColor = QColor(255, 88, 255);//Qt::magenta;
+   PenInfo[6].PenColor = Qt::black;
+   PenInfo[7].PenColor = Qt::yellow;
+   BackgroundColor = QColor(230,230, 200,255);
+   ScrollHintColor = QColor(200, 230, 200, 50);
+   PostItBackgroundColor = QColor(100, 0, 0, 50);
+   SelectionHintColor = QColor(200, 230, 200, 50);
+}
 void MainWindow::SetWhiteBoardColors(void)
 {
    PenInfo[0].PenColor = Qt::blue;
@@ -168,10 +184,10 @@ void MainWindow::SetWhiteBoardColors(void)
    PenInfo[2].PenColor = Qt::darkYellow;
    PenInfo[3].PenColor = QColor(255, 128, 0);
    PenInfo[4].PenColor = Qt::red;
-   PenInfo[5].PenColor = Qt::magenta;
+   PenInfo[5].PenColor = QColor(255, 88, 255);//Qt::magenta;
    PenInfo[6].PenColor = Qt::black;
    PenInfo[7].PenColor = Qt::yellow;
-   BackgroundColor = QColor(230,230, 200,255);
+   BackgroundColor = QColor(255,255, 255, 255);
    ScrollHintColor = QColor(200, 230, 200, 50);
    PostItBackgroundColor = QColor(100, 0, 0, 50);
    SelectionHintColor = QColor(200, 230, 200, 50);
@@ -184,7 +200,7 @@ void MainWindow::SetBlackBoardColors(void)
    PenInfo[2].PenColor = Qt::yellow;
    PenInfo[3].PenColor = QColor(255, 128, 0);
    PenInfo[4].PenColor = Qt::red;
-   PenInfo[5].PenColor = Qt::magenta;
+   PenInfo[5].PenColor = QColor(255, 88, 255);//Qt::magenta;
    PenInfo[6].PenColor = Qt::white;
    PenInfo[7].PenColor = Qt::yellow;
    BackgroundColor = QColor(30, 30, 30, 255);
@@ -305,6 +321,12 @@ void MainWindow::BackGroundColorColor()
 
     }
 
+}
+
+void MainWindow::BackGroundColorOHP()
+{
+   SetOHPColors();
+   UpdateColors();
 }
 
 void MainWindow::BackGroundColorWhiteBoard()
@@ -429,6 +451,9 @@ void MainWindow::createActions()
     WhiteBoardColorAct = new QAction(tr("&Whiteboard"), this);
     connect(WhiteBoardColorAct, SIGNAL(triggered()), this, SLOT(BackGroundColorWhiteBoard()));
 
+    OHPColorAct = new QAction(tr("&OHP"), this);
+    connect(OHPColorAct, SIGNAL(triggered()), this, SLOT(BackGroundColorOHP()));
+
     BlackBoardColorAct = new QAction(tr("&Blackboard"), this);
     connect(BlackBoardColorAct, SIGNAL(triggered()), this, SLOT(BackGroundColorBlackBoard()));
 
@@ -552,6 +577,7 @@ void MainWindow::createMenus()
     optionMenu->addAction(penWidthAct);
     optionMenu->addAction(BackGroundColorAct);
     optionMenu->addAction(WhiteBoardColorAct);
+    optionMenu->addAction(OHPColorAct);
     optionMenu->addAction(BlackBoardColorAct);
     optionMenu->addAction(DirectPostitSelectAct);
     optionMenu->addAction(SettingsAct);

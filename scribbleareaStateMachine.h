@@ -82,7 +82,7 @@ enum ScribblingState {
    WaitingToLeaveJitterProtectionWithSelectedPostitForMoving,
    WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving,
    Drawing,
-   DrawingPaused,
+ //  DrawingPaused,
    DrawingFillRequested,
    DrawingKillRequested,
    MovingSelection,
@@ -213,7 +213,7 @@ private:
    MakeStateObject(WaitingToLeaveJitterProtectionWithSelectedPostitForMoving);
    MakeStateObject(WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving);
    MakeStateObject(Drawing);
-   MakeStateObject(DrawingPaused);
+ //  MakeStateObject(DrawingPaused);
    MakeStateObject(DrawingFillRequested);
    MakeStateObject(DrawingKillRequested);
    MakeStateObject(MovingSelection);
