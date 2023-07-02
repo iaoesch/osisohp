@@ -4,6 +4,8 @@ qtHaveModule(printsupport): QT += printsupport
 HEADERS       = mainwindow.h \
    DebugStream.hpp \
    Settings.hpp \
+   SettingsDialog.h \
+   animatedcursorclass.h \
    databaseclass.h \
    gesturetracker.hpp \
    interface.hpp \
@@ -12,6 +14,9 @@ HEADERS       = mainwindow.h \
     position.hpp \
    scribbleareaStateMachine.h
 SOURCES       = main.cpp \
+   Settings.cpp \
+   SettingsDialog.cpp \
+   animatedcursorclass.cpp \
    databaseclass.cpp \
    gesturetracker.cpp \
                 mainwindow.cpp \
@@ -25,7 +30,25 @@ resources.files = \
     images/HandWithPen.png \
     images/HandWithEraser.png \
     images/HandWithSponge.png \
-    images/spongeicon.png
+    images/spongeicon.png\
+    images/MousPointers/pencil.png\
+    images/MousPointers/all-scroll.png \
+    images/MousPointers/hand1.png \
+    images/MousPointers/hand2.png \
+    images/MousPointers/hand1plus.png \
+    images/MousPointers/handMoveplus.png \
+    images/MousPointers/move.png \
+    images/MousPointers/bucketfill16.png \
+    images/MousPointers/bucketfill200.png \
+    images/MousPointers/bucketfillstop200.png \
+    images/MousPointers/handMoveMultiple.png \
+    images/MousPointers/scissorscopy24.png \
+    images/MousPointers/scissors24.png \
+    images/MousPointers/left_ptr_edit_plus.png \
+    images/MousPointers/left_ptr_edit.png \
+    images/MousPointers/X_cursor.png \
+    images/MousPointers/left_ptr.png
+
 
 
 

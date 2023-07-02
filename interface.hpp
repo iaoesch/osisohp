@@ -33,6 +33,7 @@
 
 #include <QRect>
 #include "box.hpp"
+#include "animatedcursorclass.h"
 
 
 /* Class constant declaration  */
@@ -42,16 +43,16 @@
 /* Class data declaration      */
 
 /* Class definition            */
-class QCursor;
+class CursorManager;
 class QImage;
 class ScribbleArea;
 
 class GuiInterface
 {
    ScribbleArea *Scribler;
-
+   CursorManager *MyCursorManager;
 public:
-   GuiInterface(ScribbleArea *Scribler);
+   GuiInterface(ScribbleArea *Scribler, CursorManager *TheCursorManager);
    void UpdateRequest();
 #if 0
    void modified(); //modified = True;
@@ -76,7 +77,26 @@ public:
    void MakeSelectionFromLastDrawnObject();
    void CreeatePostitFromSelection();
 #endif
-   void setCursor(QCursor const &Cursor);
+   void SetCursor(CursorManager::CursorType Cursor)
+   {
+       MyCursorManager->SetCursor(Cursor, 0ms, 0ms);
+   }
+   void SetCursor(CursorManager::CursorType Cursor, double Duration)
+   {
+      SetCursor(Cursor, std::chrono::milliseconds(static_cast<int>(Duration)));
+   }
+   void SetCursor(CursorManager::CursorType Cursor, std::chrono::milliseconds Duration)
+   {
+      MyCursorManager->SetCursor(Cursor, 3*Duration/4, Duration/4);
+   }
+   void SetCursor(CursorManager::CursorType Cursor, std::chrono::milliseconds Duration, std::chrono::milliseconds StartupDelay)
+   {
+      MyCursorManager->SetCursor(Cursor, Duration, StartupDelay);
+   }
+   void RestartAnimatedCursor() {
+      MyCursorManager->RestartAnimatedCursor();
+   }
+   void setSpeciallCursor();
 
 
 };

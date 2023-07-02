@@ -16,7 +16,7 @@ class ScribbleArea;
 class DatabaseClass
 {
    ScribbleArea &Parent;
-   Settings Settings;
+   SettingClass &Settings;
    struct PostIt {
       static int NextId;
       QImage Image;
@@ -71,10 +71,12 @@ class DatabaseClass
    bool ShowPostitsFrame;
    bool ShowOverview;
 
+   bool CutMode;
+
 
    QPointF SelectedOffset;
    QPointF SelectedCurrentPosition;
-   QPointF lastPoint;
+   QPointF lastPointDrawn;
    QPointF ButtonDownPosition;
 
 
@@ -112,13 +114,14 @@ public:
    enum PasteEvent {PasteTopLayer, PasteBottomLayer, PasteDrawing, CancelPasting, MakeBigger, MakeSmaller, MakeOriginalSize};
 
 
-   void SetSelectedOffset() {SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPoint;}
+   void SetSelectedOffset() {SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPointDrawn;}
 
    void RestartCurrentPaintedObjectBoundingBox(QPointF const &StartPoint) {  CurrentPaintedObjectBoundingBox.Clear();
                                                           CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(StartPoint.x(), StartPoint.y()));
    }
 
    bool IsInsideLastPaintedObjectBoundingBox(QPointF const &Point) { return LastPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));}
+   bool IsCutoutActive() {return CutMode;}
    void ClearLastPaintedObjectBoundingBox() { LastPaintedObjectBoundingBox.Clear();}
    void MoveOrigin(QPointF Offset) {
 
@@ -129,7 +132,7 @@ public:
    }
    QPointF GetOrigin() {return Origin;}
 
-   DatabaseClass(ScribbleArea &Parent);
+   DatabaseClass(ScribbleArea &Parent, class SettingClass &MySettings);
    bool ImportImage(const QString &fileName);
 
    void drawLineTo(const QPointF &endPoint, double Pressure);
@@ -141,7 +144,7 @@ public:
    void DrawLastDrawnPicture();
    void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
    void resizeScrolledImage();
-   void MakeSelectionFromLastDrawnObject();
+   void MakeSelectionFromLastDrawnObject(bool Cutout = false);
    void CompleteImage();
    void FilllastDrawnShape();
 
@@ -167,6 +170,7 @@ public:
    bool SetLayerVisibility(unsigned int SelectedLayer, bool Visibility);
    void setPenWidth(int newWidth);
    void UseSpongeAsEraser(bool UseSponge) {if (UseSponge) {myEraserWidth = Settings.SpongeSize;} else {myEraserWidth = Settings.EraserSize;}}
+   void CutSelection(bool DoCut) {CutMode = DoCut;}
    void RestorePenWidth() {myPenWidth = SelectedPenWidth;}
    void ExtendPenWidthForMarker() {myPenWidth = SelectedPenWidth * 5 + 2;}
    void PasteImage(QImage ImageToPaste);
@@ -222,7 +226,7 @@ public:
    void setLastDrawingValid(bool newLastDrawingValid);
 
    void setLastPoint(QPointF newLastPoint);
-   QPointF getLastPoint() {return lastPoint;}
+   QPointF getLastPointDrawn() {return lastPointDrawn;}
 
    void setButtonDownPosition(QPointF newButtonDownPosition);
 
@@ -252,7 +256,9 @@ public:
       return ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()+2));
    }
 
+   void ClearLastDrawnPicture();
 
+   void DeleteSelectedPostits();
    void DuplicateSelectedPostits();
 private:
 private:

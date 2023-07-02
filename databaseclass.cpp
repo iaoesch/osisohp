@@ -32,7 +32,7 @@ void DatabaseClass::setLastDrawingValid(bool newLastDrawingValid)
 
 void DatabaseClass::setLastPoint(QPointF newLastPoint)
 {
-   lastPoint = newLastPoint;
+   lastPointDrawn = newLastPoint;
 }
 
 void DatabaseClass::setButtonDownPosition(QPointF newButtonDownPosition)
@@ -85,14 +85,15 @@ void DatabaseClass::setScrollHintColor(const QColor &newScrollHintColor)
    ScrollHintColor = newScrollHintColor;
 }
 
-DatabaseClass::DatabaseClass(ScribbleArea &Parent)
-   : Parent(Parent)
+DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySettings)
+   : Parent(Parent), Settings(MySettings)
 {
    modified = false;
    LastDrawingValid = false;
    EraseLastDrawnObject = false;
    Frozen = false;
    ShowOverview = false;
+   CutMode = true;
 
    PasteStatus = None;
 
@@ -155,7 +156,7 @@ bool DatabaseClass::ImportImage(const QString &fileName)
     return true;
 }
 
-void DatabaseClass::MakeSelectionFromLastDrawnObject()
+void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
 {
    SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.QRectangle().translated(Origin.toPoint()));
    SelectedImageBoundingBox = LastPaintedObjectBoundingBox;
@@ -164,14 +165,15 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject()
    HintSelectedImagePart.fill(qRgba(0, 0, 0, 0));
    DiscardSelection = false;
 
-   QPainter painter2(&image);
-   painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                        Qt::RoundJoin));
-   painter2.setBrush(QBrush(QColor(0, 0, 0, 0)));
-   painter2.setCompositionMode(QPainter::CompositionMode_Source);
-   // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
-   painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
-
+   if (Cutout == true) {
+      QPainter painter2(&image);
+      painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                           Qt::RoundJoin));
+      painter2.setBrush(QBrush(QColor(0, 0, 0, 0)));
+      painter2.setCompositionMode(QPainter::CompositionMode_Source);
+      // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
+      painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+   }
    QPainter painter(&HintSelectedImagePart);
    painter.setPen(QPen(SelectionHintBorderColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                        Qt::RoundJoin));
@@ -254,13 +256,13 @@ void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
     painter.setCompositionMode(QPainter::CompositionMode_Source);
     painter.setPen(QPen(myPenColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
-    painter.drawLine(lastPoint, endPoint);
+    painter.drawLine(lastPointDrawn, endPoint);
     modified = true;
 
     int rad = (ModifiedPenWidth / 2) + 2;
-    update(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized()
+    update(QRect(lastPointDrawn.toPoint(), endPoint.toPoint()).normalized()
                                      .adjusted(-rad, -rad, +rad, +rad));
-    lastPoint = endPoint;
+    lastPointDrawn = endPoint;
     EraseLastDrawnObject = false;
 
 }
@@ -275,14 +277,14 @@ void DatabaseClass::EraseLineTo(const QPointF &endPoint, double Pressure)
                         Qt::RoundJoin));
    // painter.setCompositionMode(QPainter::CompositionMode_Source);
     //painter.setCompositionMode(QPainter::CompositionMode_Clear);
-    painter.drawLine(lastPoint, endPoint);
+    painter.drawLine(lastPointDrawn, endPoint);
     modified = true;
     EraseLastDrawnObject = true;
 
     int rad = (ModifiedPenWidth / 2) + 2;
-    update(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized()
+    update(QRect(lastPointDrawn.toPoint(), endPoint.toPoint()).normalized()
                                      .adjusted(-rad, -rad, +rad, +rad));
-    lastPoint = endPoint;
+    lastPointDrawn = endPoint;
 }
 
 /*
@@ -940,9 +942,15 @@ void DatabaseClass::FlushLastDrawnPicture()
 
       LastDrawingValid = false;
       LastDrawnObjectPoints.clear();
-      LastDrawnObjectPoints.append(lastPoint);
+      LastDrawnObjectPoints.append(lastPointDrawn);
 
    }
+}
+void DatabaseClass::ClearLastDrawnPicture()
+{
+      LastDrawnObject.fill(TransparentColor);
+      LastDrawingValid = false;
+      LastDrawnObjectPoints.clear();
 }
 
 void DatabaseClass::MoveSelectedPostits(QPointF Position)
@@ -973,6 +981,13 @@ void DatabaseClass::DuplicateSelectedPostits()
 {
    for (auto &r: SelectedPostit) {
       PostIts.push_back(*r.postit);
+   }
+}
+
+void DatabaseClass::DeleteSelectedPostits()
+{
+   for (auto &r: SelectedPostit) {
+      PostIts.erase(r.postit);
    }
 }
 

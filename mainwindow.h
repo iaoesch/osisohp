@@ -43,6 +43,7 @@
 
 #include <QList>
 #include <QMainWindow>
+#include "Settings.hpp"
 
 class ScribbleArea;
 
@@ -54,7 +55,6 @@ class MainWindow : public QMainWindow
 public:
     MainWindow();
 
-public slots:
 protected:
     void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
@@ -64,6 +64,7 @@ private slots:
     void penColor();
     void BackGroundColorColor();
     void BackGroundColorWhiteBoard();
+    void BackGroundColorOHP();
     void BackGroundColorBlackBoard();
     void penWidth();
     void about();
@@ -72,9 +73,12 @@ private slots:
     void ProtectImage();
     void DirectSelect();
     void ShowPostitsFrame();
+    void ShowCursors();
     void createLayerActions(int Number);
     void SetVisibilityIndicatorOfLayer(int Layer, bool Visibility);
     void ShowOverviewChanged(bool OverviewEnabled);
+
+    void ShowSettings();
 
 
 
@@ -87,6 +91,8 @@ private:
     bool ExportFile(const QByteArray &fileFormat);
 
     ScribbleArea *scribbleArea;
+    class SettingClass Settings;
+
 
     QMenu *saveAsMenu;
     QMenu *fileMenu;
@@ -118,18 +124,23 @@ private:
     QAction *penColorAct;
     QAction *BackGroundColorAct;
     QAction *WhiteBoardColorAct;
+    QAction *OHPColorAct;
     QAction *BlackBoardColorAct;
     QAction *penWidthAct;
     QAction *DirectPostitSelectAct;
     QAction *ShowPostitsFrameAct;
+    QAction *ShowCursorsAct;
     QAction *ShowOverviewAct;
     QAction *printAct;
     QAction *clearScreenAct;
+    QAction *SettingsAct;
     QAction *aboutAct;
     QAction *aboutQtAct;
 
     bool SaveFile(const QByteArray &fileFormat);
     void SetWhiteBoardColors();
+    void SetOHPColors();
+
     void readSettings();
     void writeSettings();
     void SetBlackBoardColors();
