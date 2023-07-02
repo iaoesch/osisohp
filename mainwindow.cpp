@@ -179,9 +179,9 @@ void MainWindow::SetOHPColors(void)
 }
 void MainWindow::SetWhiteBoardColors(void)
 {
-   PenInfo[0].PenColor = Qt::blue;
-   PenInfo[1].PenColor = Qt::darkGreen;
-   PenInfo[2].PenColor = Qt::darkYellow;
+   PenInfo[0].PenColor = QColor(100, 180, 255);
+   PenInfo[1].PenColor = Qt::green;
+   PenInfo[2].PenColor = QColor(225, 193, 110);
    PenInfo[3].PenColor = QColor(255, 128, 0);
    PenInfo[4].PenColor = Qt::red;
    PenInfo[5].PenColor = QColor(255, 88, 255);//Qt::magenta;
