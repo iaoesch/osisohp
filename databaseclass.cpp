@@ -14,7 +14,11 @@
 #include <QClipboard>
 #include "scribblearea.h"
 
+#include "DebugStream.hpp"
 
+int DatabaseClass::PostIt::NextId = 0;
+
+int ToInt(double d) {return static_cast<int>(d + 0.5);}
 
 bool DatabaseClass::getLastDrawingValid() const
 {
@@ -28,7 +32,7 @@ void DatabaseClass::setLastDrawingValid(bool newLastDrawingValid)
 
 void DatabaseClass::setLastPoint(QPointF newLastPoint)
 {
-   lastPoint = newLastPoint;
+   lastPointDrawn = newLastPoint;
 }
 
 void DatabaseClass::setButtonDownPosition(QPointF newButtonDownPosition)
@@ -81,14 +85,18 @@ void DatabaseClass::setScrollHintColor(const QColor &newScrollHintColor)
    ScrollHintColor = newScrollHintColor;
 }
 
-DatabaseClass::DatabaseClass(ScribbleArea &Parent)
-   : Parent(Parent)
+DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySettings)
+   : Parent(Parent), Settings(MySettings)
 {
    modified = false;
    LastDrawingValid = false;
    EraseLastDrawnObject = false;
    Frozen = false;
    ShowOverview = false;
+   CutMode = true;
+
+   PasteStatus = None;
+
 
    myPenWidth = 2;
    myEraserWidth = Settings.EraserSize;
@@ -97,9 +105,11 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent)
 
    TransparentColor = QColor(255, 255, 255, 0);
    BackGroundColor = QColor(230,230, 200,255);
+   AdjustMarkercolor();
    ScrollHintColor = QColor(0, 30, 0, 50);
    ScrollHintBorderColor = QColor(90, 0, 0, 50);
    SelectionHintColor = QColor(0, 30, 0, 50);
+   SelectionHintBorderColor = QColor(0, 30, 0, 50);
 
    DefaultBackGroundColor = BackGroundColor;
    PostItBackgroundColor = QColor(100, 0, 0, 50);
@@ -146,26 +156,29 @@ bool DatabaseClass::ImportImage(const QString &fileName)
     return true;
 }
 
-void DatabaseClass::MakeSelectionFromLastDrawnObject()
+void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
 {
    SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.QRectangle().translated(Origin.toPoint()));
+   SelectedImageBoundingBox = LastPaintedObjectBoundingBox;
+
    HintSelectedImagePart = SelectedImagePart;
    HintSelectedImagePart.fill(qRgba(0, 0, 0, 0));
    DiscardSelection = false;
 
-   QPainter painter2(&image);
-   painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                        Qt::RoundJoin));
-   painter2.setBrush(QBrush(QColor(0, 0, 0, 0)));
-   painter2.setCompositionMode(QPainter::CompositionMode_Source);
-   // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
-   painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
-
+   if (Cutout == true) {
+      QPainter painter2(&image);
+      painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                           Qt::RoundJoin));
+      painter2.setBrush(QBrush(QColor(0, 0, 0, 0)));
+      painter2.setCompositionMode(QPainter::CompositionMode_Source);
+      // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
+      painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+   }
    QPainter painter(&HintSelectedImagePart);
    painter.setPen(QPen(SelectionHintBorderColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                        Qt::RoundJoin));
    painter.setBrush(QBrush(SelectionHintColor));
-   LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetLeft(), -LastPaintedObjectBoundingBox.GetTop());
+   LastDrawnObjectPoints.translate(-SelectedImageBoundingBox.GetLeft(), -SelectedImageBoundingBox.GetTop());
    painter.drawPolygon(LastDrawnObjectPoints);
    QPainterPath Path;
    Path.addPolygon(LastDrawnObjectPoints);
@@ -181,36 +194,75 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject()
 
 void DatabaseClass::CreeatePostitFromSelection()
 {
-   QImage NewPostit(HintSelectedImagePart);
+   std::cout << "new postit (" << PostIts.size() << ")" << std::flush;
+
+   BoundingBoxClass TranslatedBoundingBox (SelectedImageBoundingBox);
+   TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
+   CreatePostit(HintSelectedImagePart, SelectedImagePart, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox, SelectedImagePartPath);
+   SelectedPostit.push_back({std::prev(PostIts.end()), PostIts.back().Position});
+}
+
+void DatabaseClass::CreatePostit(QImage BackgroundImage, QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path)
+{
+   QImage NewPostit(BackgroundImage);
    // Here we could add a different background for postits
    QPainter painter(&NewPostit);
    painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
    painter.setBrush(QBrush(PostItBackgroundColor));
-   painter.drawRect(NewPostit.rect());
+   painter.drawRect(Image.rect());
    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-   painter.drawImage(0,0,SelectedImagePart);
-   BoundingBoxClass TranslatedBoundingBox (LastPaintedObjectBoundingBox);
-   TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
-   PostIts.push_back(PostIt(NewPostit, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox, SelectedImagePartPath));
-   SelectedPostit.push_back({std::prev(PostIts.end()), PostIts.back().Position});
+   painter.drawImage(0,0,Image);
+   //BoundingBoxClass TranslatedBoundingBox (SelectedImageBoundingBox);
+   //TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
+   PostIts.push_back(PostIt(NewPostit, Position, Box, Path));
+}
+
+double DatabaseClass::CalculatePenWidthQuadratic(double Pressure, int BaseWidth)
+{
+   constexpr double MaxPenScaling = 11.0;
+   constexpr double MinPenScaling = 1.0;
+   constexpr double MaxPenForce = 0.9;
+   constexpr double MinPenForce = DatabaseClass::JitterPressureLimit;
+   constexpr double dx = MaxPenForce*MaxPenForce - MinPenForce*MinPenForce;
+   constexpr double dy = MaxPenScaling - MinPenScaling;
+
+   return (BaseWidth * qMax(MinPenScaling, Pressure*Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*MinPenForce*dy/dx))) + 0.5);
+
+}
+
+double DatabaseClass::CalculatePenWidthLinear(double Pressure, int BaseWidth)
+{
+   constexpr double MaxPenScaling = 11.0;
+   constexpr double MinPenScaling = 1.0;
+   constexpr double MaxPenForce = 0.9;
+   constexpr double MinPenForce = DatabaseClass::JitterPressureLimit;
+   constexpr double dx = MaxPenForce - MinPenForce;
+   constexpr double dy = MaxPenScaling - MinPenScaling;
+
+   return (BaseWidth * qMax(MinPenScaling, Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*dy/dx))) + 0.5);
+
 }
 
 void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
 //! [17] //! [18]
 {
-   std::cout << "Drawing ";
-   int ModifiedPenWidth = myPenWidth * (1.0 + Pressure*Pressure*4);
+   DEBUG_LOG << "Drawing Pressure: " << Pressure << std::endl;
+
+
+    double ModifiedPenWidth = CalculatePenWidthLinear(Pressure, myPenWidth);
+//    double ModifiedPenWidth = CalculatePenWidthQuadratic(Pressure, myPenWidth);
+//   int ModifiedPenWidth = myPenWidth * qMax(1.0, Pressure*Pressure*4);
     QPainter painter(&LastDrawnObject);
     painter.setCompositionMode(QPainter::CompositionMode_Source);
     painter.setPen(QPen(myPenColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
-    painter.drawLine(lastPoint, endPoint);
+    painter.drawLine(lastPointDrawn, endPoint);
     modified = true;
 
     int rad = (ModifiedPenWidth / 2) + 2;
-    update(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized()
+    update(QRect(lastPointDrawn.toPoint(), endPoint.toPoint()).normalized()
                                      .adjusted(-rad, -rad, +rad, +rad));
-    lastPoint = endPoint;
+    lastPointDrawn = endPoint;
     EraseLastDrawnObject = false;
 
 }
@@ -218,21 +270,21 @@ void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
 void DatabaseClass::EraseLineTo(const QPointF &endPoint, double Pressure)
 //! [17] //! [18]
 {
-    std::cout << "Erasing ";
+    DEBUG_LOG << "Erasing ";
     QPainter painter(&LastDrawnObject);
-    int ModifiedPenWidth = (myPenWidth+myEraserWidth)*3*(1.0 + Pressure*Pressure*10);
+    int ModifiedPenWidth = static_cast<int>((myPenWidth+myEraserWidth)*3*(1.0 + Pressure*Pressure*10) + 0.5);
     painter.setPen(QPen(BackGroundColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
    // painter.setCompositionMode(QPainter::CompositionMode_Source);
     //painter.setCompositionMode(QPainter::CompositionMode_Clear);
-    painter.drawLine(lastPoint, endPoint);
+    painter.drawLine(lastPointDrawn, endPoint);
     modified = true;
     EraseLastDrawnObject = true;
 
     int rad = (ModifiedPenWidth / 2) + 2;
-    update(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized()
+    update(QRect(lastPointDrawn.toPoint(), endPoint.toPoint()).normalized()
                                      .adjusted(-rad, -rad, +rad, +rad));
-    lastPoint = endPoint;
+    lastPointDrawn = endPoint;
 }
 
 /*
@@ -273,25 +325,26 @@ void DatabaseClass::DrawLastDrawnPicture()
 }
 
 
+
 void DatabaseClass::GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size)
 {
    if (Origin.x() < 0) {
-       Size.setWidth(image.size().width() - Origin.x());
-       Offset.setX(- Origin.x());
+       Size.setWidth(ToInt(Image.size().width() - Origin.x()));
+       Offset.setX(ToInt(- Origin.x()));
        Origin.setX(0);
-   } else if (Origin.x()+Parent.width() > image.size().width()){
-       Size.setWidth(Origin.x()+Parent.width());
+   } else if (Origin.x()+Parent.width() > Image.size().width()){
+       Size.setWidth(ToInt(Origin.x()+Parent.width()));
    } else {
-       Size.setWidth(image.size().width());
+       Size.setWidth(Image.size().width());
    }
    if (Origin.y() < 0) {
-       Size.setHeight(image.size().height() - Origin.y());
-       Offset.setY(- Origin.y());
+       Size.setHeight(ToInt(Image.size().height() - Origin.y()));
+       Offset.setY(ToInt(- Origin.y()));
        Origin.setY(0);
-   } else if (Origin.y()+Parent.height() > image.size().height()){
-       Size.setHeight(Origin.y()+Parent.height());
+   } else if (Origin.y()+Parent.height() > Image.size().height()){
+       Size.setHeight(ToInt(Origin.y()+Parent.height()));
    } else {
-       Size.setHeight(image.size().height());
+       Size.setHeight(Image.size().height());
    }
 }
 
@@ -300,10 +353,10 @@ void DatabaseClass::GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPo
 void DatabaseClass::resizeScrolledImage()
 //! [19] //! [20]
 {
-    int NewWidth;
-    int NewHeight;
-    int OffsetX = 0;
-    int OffsetY = 0;
+   // int NewWidth;
+   // int NewHeight;
+   // int OffsetX = 0;
+   // int OffsetY = 0;
     QPoint Offset;
     QSize Size;
 
@@ -327,8 +380,8 @@ void DatabaseClass::resizeScrolledImage()
 #endif
     // Now adjust all postits
     for (auto &&Picture: PostIts) {
-       Picture.Position += QPoint(OffsetX, OffsetY);
-       Picture.Box.Move(PositionClass(OffsetX, OffsetY));
+       Picture.Position += Offset;
+       Picture.Box.Move(PositionClass(Offset.x(), Offset.y()));
 
     }
 
@@ -363,16 +416,16 @@ void DatabaseClass::setPenColor(const QColor &newColor)
 //! [6]
 //!
 
-void DatabaseClass::UpdateGUI(int NumberOfLayers)
+void DatabaseClass::UpdateGUIElements(unsigned long NumberOfLayers)
 {
    std::vector<bool> Visibilities;
-   for (int i = 0; i < NumberOfLayers; i++) {
+   for (unsigned int i = 0; i < NumberOfLayers; i++) {
             Visibilities.push_back( BackgroundImages[i].IsVisible());
    }
    Parent.UpdateGUI(Visibilities);
 }
 
-bool DatabaseClass::SetLayerVisibility(int SelectedLayer, bool Visibility)
+bool DatabaseClass::SetLayerVisibility(unsigned int SelectedLayer, bool Visibility)
 {
    if (SelectedLayer < BackgroundImages.size()) {
       BackgroundImages[SelectedLayer].SetVisible(Visibility);
@@ -396,7 +449,7 @@ void DatabaseClass::MoveImageToBackgroundLayer()
    CompleteImage();
    BackgroundImages.push_back(std::make_unique<QImage>(image));
    clearImage();
-   UpdateGUI(BackgroundImages.size());
+   UpdateGUIElements(BackgroundImages.size());
 }
 
 void DatabaseClass::MoveTopBackgroundLayerToImage()
@@ -417,7 +470,7 @@ void DatabaseClass::MoveTopBackgroundLayerToImage()
       //Set combined image as new image
       image = newImage;
    }
-   UpdateGUI(BackgroundImages.size());
+   UpdateGUIElements(BackgroundImages.size());
 
 }
 
@@ -442,7 +495,7 @@ void DatabaseClass::CollapseBackgroundLayers()
       }
       BackgroundImages.push_back(std::make_unique<QImage>(newImage));
    }
-   UpdateGUI(BackgroundImages.size());
+   UpdateGUIElements(BackgroundImages.size());
 }
 
 void DatabaseClass::CollapseAllVisibleLayersToTop()
@@ -463,7 +516,7 @@ void DatabaseClass::CollapseAllVisibleLayersToTop()
       painter.drawImage(QPoint(0,0), image);
       image = newImage;
    }
-   UpdateGUI(BackgroundImages.size());
+   UpdateGUIElements(BackgroundImages.size());
 }
 //! [8]
 
@@ -492,11 +545,33 @@ void DatabaseClass::ToggleShowOverview(bool Mode)
 
 void DatabaseClass::PasteImage(QImage ImageToPaste)
 {
-   QSize RequiredSize = image.size().expandedTo(ImageToPaste.size() + QSize(Origin.x(), Origin.y()));
+#if 0
+   CompleteImage();
+   ControllingStateMachine
+#else
+   QSizeF DestSize = ImageToPaste.size();
+   CompleteImage();
+
+   bool ShrinkToFit = true;
+   if (ShrinkToFit) {
+   if (DestSize.width() > Parent.width()) {
+      DestSize.setWidth(Parent.width());
+      DestSize.setHeight(DestSize.height()*Parent.width()/ImageToPaste.width());
+   }
+   if (DestSize.height() > Parent.height()) {
+      DestSize.setHeight(Parent.height());
+      DestSize.setWidth(DestSize.width()*Parent.height()/ImageToPaste.height());
+   }
+   }
+
+
+   QRectF Destination(Origin, DestSize);
+   QSize RequiredSize = image.size().expandedTo(DestSize.toSize() + QSize(ToInt(Origin.x()), ToInt(Origin.y())));
     resizeImage(&image, RequiredSize);
     QPainter painter(&image);
-    painter.drawImage(Origin, ImageToPaste);
+    painter.drawImage(Destination, ImageToPaste);
     update();
+#endif
 }
 
 void DatabaseClass::CopyImageToClipboard()
@@ -530,8 +605,8 @@ bool DatabaseClass::SaveDatabase(const QString &fileName)
    QDataStream out(&file);
 
    // Write a header with a "magic number" and a version
-   out << (quint32)0x139A1A7F;
-   out << (qint32)110;
+   out << static_cast<quint32>(0x139A1A7F);
+   out << static_cast<quint32>(110);
 
    out.setVersion(QDataStream::Qt_6_0);
    CompleteImage();
@@ -541,13 +616,14 @@ bool DatabaseClass::SaveDatabase(const QString &fileName)
    out << Origin;
    out << BackgroundImagesOrigin;
    // Now save all postits
-   out << (qint32)(PostIts.size());
+   out << static_cast<quint32>(PostIts.size());
    for (auto &&Picture: PostIts) {
       out << Picture.Position;
       out << Picture.Image;
       out << Picture.Box;
+      out << Picture.BorderPath;
    }
-   out << (qint32)(BackgroundImages.size());
+   out << static_cast<quint32>(BackgroundImages.size());
    for (auto &Picture: BackgroundImages) {
       out << Picture.IsVisible();
       out << *Picture;
@@ -599,12 +675,14 @@ bool DatabaseClass::LoadDatabase(const QString &fileName)
    QImage NewImage;
    QPoint Position;
    BoundingBoxClass NewBox;
+   QPainterPath BorderPath;
    PostIts.clear();
    for (int i = 0; i < NumberOfSavedPostits; i++) {
       in >> Position;
       in >> NewImage;
       in >> NewBox;
-      PostIts.push_back(PostIt(NewImage, Position, NewBox));
+      in >> BorderPath;
+      PostIts.push_back(PostIt(NewImage, Position, NewBox, BorderPath));
    }
    qint32 NumberOfBackgroundLayers = 0;
    in >> NumberOfBackgroundLayers;
@@ -630,15 +708,29 @@ bool DatabaseClass::LoadDatabase(const QString &fileName)
 #endif
 }
 
-bool DatabaseClass::PostItSelected(QPointF Position)
+bool DatabaseClass::FindSelectedPostIts(QPointF Position, SelectMode Mode)
 {
    bool Found = false;
    SelectedPostit.clear();
    Position += Origin;
+#if 0
+   std::list<PostIt>::iterator Start = PostIts.begin();
+   auto End = PostIts.end();
+   if (Mode == Last) {
+      Start = PostIts.rbegin();
+      End = PostIts.rend();
+   }
+#endif
+
    for (auto PostIt = PostIts.begin(); PostIt != PostIts.end(); PostIt++) {
      if (PostIt->Box.IsInside(PositionClass(Position.x(), Position.y()))) {
         SelectedPostit.push_back({PostIt, PostIt->Position});
         Found = true;
+        if (Mode == First) {
+           // Only select first (Bottom one)
+           return true;
+        }
+        // Select last not implemented yet (Probably use reverse iterator for this case)
      }
    }
    return Found;
@@ -666,7 +758,7 @@ void DatabaseClass::PaintOverview(QPainter &p, QSize const &OutputSize)
                        Qt::RoundJoin));
    painter.setBrush(QBrush(ScrollHintColor));
 
-   painter.drawRect(Origin.x(), Origin.y(), OutputSize.width(), OutputSize.height());
+   painter.drawRect(ToInt(Origin.x()), ToInt(Origin.y()), OutputSize.width(), OutputSize.height());
    p.drawImage(QPointF(0,0), Overview.scaled(OutputSize, Qt::KeepAspectRatio));
 }
 
@@ -748,14 +840,22 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
        painter.setCompositionMode(QPainter::CompositionMode_SourceOut);
     }
 #endif
+    // Now draw pasted object, if availlable
+    if (PasteStatus != None) {
+       QSizeF DestSize = ImageToPaste.size();
+       DestSize *= ScalingFactorOfImageToPaste;
+       QRectF Destination(Origin, DestSize);
+       painter.drawImage(Destination, ImageToPaste);
+    }
 
     // Now draw all postits
     for (auto &&Picture: PostIts) {
        painter.drawImage(Picture.Position-Origin, Picture.Image);
        if (ShowPostitsFrame == true) {
           painter.setBrush(QBrush(Qt::NoBrush));
-          painter.setPen(Qt::black);
+          painter.setPen(Markercolor);
           painter.drawRect(Picture.Box.QRectangle().translated(-Origin.toPoint()));
+          painter.drawText(Picture.Box.QRectangle().translated(-Origin.toPoint()), QString::number(Picture.Id));
        }
     }
 
@@ -823,11 +923,11 @@ void DatabaseClass::ResizeAll(int width, int height)
    if (width > LastDrawnObject.width() || height > LastDrawnObject.height()) {
       int newWidth = qMax(width + 128, image.width());
       int newHeight = qMax(height + 128, image.height());
-      resizeImage(&image, QSize(newWidth+Origin.x(), newHeight+Origin.y()));
+      resizeImage(&image, QSize(newWidth+ToInt(Origin.x()), newHeight+ToInt(Origin.y())));
       resizeImage(&LastDrawnObject, QSize(newWidth, newHeight));
       if (!Frozen) {
          for (auto &p: BackgroundImages) {
-            resizeImage(&*p, QSize(newWidth+BackgroundImagesOrigin.x(), newHeight+BackgroundImagesOrigin.y()));
+            resizeImage(&*p, QSize(newWidth+ToInt(BackgroundImagesOrigin.x()), ToInt(newHeight+BackgroundImagesOrigin.y())));
          }
       }
       update();
@@ -842,9 +942,15 @@ void DatabaseClass::FlushLastDrawnPicture()
 
       LastDrawingValid = false;
       LastDrawnObjectPoints.clear();
-      LastDrawnObjectPoints.append(lastPoint);
+      LastDrawnObjectPoints.append(lastPointDrawn);
 
    }
+}
+void DatabaseClass::ClearLastDrawnPicture()
+{
+      LastDrawnObject.fill(TransparentColor);
+      LastDrawingValid = false;
+      LastDrawnObjectPoints.clear();
 }
 
 void DatabaseClass::MoveSelectedPostits(QPointF Position)
@@ -870,6 +976,115 @@ void DatabaseClass::FinishMovingSelectedPostits(QPointF Position)
       PostIts.splice( PostIts.end(), PostIts, r.postit);
    }
 }
+
+void DatabaseClass::DuplicateSelectedPostits()
+{
+   for (auto &r: SelectedPostit) {
+      PostIts.push_back(*r.postit);
+   }
+}
+
+void DatabaseClass::DeleteSelectedPostits()
+{
+   for (auto &r: SelectedPostit) {
+      PostIts.erase(r.postit);
+   }
+}
+
+void DatabaseClass::SetImageToPaste(QImage Image)
+{
+   CompleteImage();
+   PasteStatus = Drawing;
+   ImageToPaste = Image;
+   ScalingFactorOfImageToPaste = 1.0;
+   QSizeF DestSize = ImageToPaste.size();
+
+   bool ShrinkToFit = true;
+   if (ShrinkToFit) {
+      if (DestSize.width() > Parent.width()) {
+         ScalingFactorOfImageToPaste = static_cast<double>(Parent.width())/ImageToPaste.width();
+      }
+      if (DestSize.height() > Parent.height()) {
+         double ScalingFactorYOfImageToPaste = static_cast<double>(Parent.height())/ImageToPaste.height();
+         if (ScalingFactorYOfImageToPaste < ScalingFactorOfImageToPaste) {
+            ScalingFactorOfImageToPaste = ScalingFactorYOfImageToPaste;
+         }
+      }
+   }
+
+}
+
+void DatabaseClass::DoPasteImage(PasteEvent Event)
+{
+   QSizeF DestSize = ImageToPaste.size();
+   DestSize *= ScalingFactorOfImageToPaste;
+   QRectF Destination(Origin, DestSize);
+   QSize RequiredSize = image.size().expandedTo(DestSize.toSize() + QSize(ToInt(Origin.x()), ToInt(Origin.y())));
+   resizeImage(&image, RequiredSize);
+   // Should also resize all layers
+   if (!Frozen && !BackgroundImages.empty()) {
+      for (auto &p: BackgroundImages) {
+         resizeImage(&*p, RequiredSize);
+      }
+   }
+   //QPainter painter(&image);
+
+   switch(Event) {
+      case DatabaseClass::PasteTopLayer:
+         {
+            QImage NewImage(RequiredSize, QImage::Format_ARGB32);
+            NewImage.fill(TransparentColor);
+            QPainter painter(&NewImage);
+            painter.drawImage(Destination, ImageToPaste);
+            BackgroundImages.push_back(std::make_unique<QImage>(NewImage));
+            UpdateGUIElements(BackgroundImages.size());
+         }
+         break;
+      case DatabaseClass::PasteBottomLayer:
+         {
+            QImage NewImage(RequiredSize, QImage::Format_ARGB32);
+            NewImage.fill(TransparentColor);
+            QPainter painter(&NewImage);
+            painter.drawImage(Destination, ImageToPaste);
+            BackgroundImages.push_front(std::make_unique<QImage>(NewImage));
+            UpdateGUIElements(BackgroundImages.size());
+         }
+         break;
+      case DatabaseClass::PasteDrawing:
+         {
+            QPainter painter(&image);
+            painter.drawImage(Destination, ImageToPaste);
+         }
+
+         break;
+      case DatabaseClass::CancelPasting:
+      case DatabaseClass::MakeBigger:
+      case DatabaseClass::MakeSmaller:
+      case DatabaseClass::MakeOriginalSize:
+         // Ignore
+         break;
+   }
+   PasteStatus = None;
+
+   update();
+}
+
+void DatabaseClass::CancelPasteImage()
+{
+   PasteStatus = None;
+   update();
+}
+
+void DatabaseClass::ScaleImageToPaste(double ScalingFactor)
+{
+   if (ScalingFactor > 0.1) {
+      ScalingFactorOfImageToPaste *= ScalingFactor;
+   } else {
+      ScalingFactorOfImageToPaste = 1.0;
+   }
+   update();
+}
+
 
 void DatabaseClass::ExtendBoundingboxAndShape(QPointF Position)
 {

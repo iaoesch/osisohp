@@ -52,6 +52,7 @@
 
 #include "box.hpp"
 #include "Settings.hpp"
+#include "animatedcursorclass.h"
 
 #include "gesturetracker.hpp"
 
@@ -70,13 +71,15 @@ class ScribbleArea : public QWidget
 
     friend class GuiInterface;
     DatabaseClass MyDatas;
+    CursorManager MyCursorManager;
 #ifdef USE_NEW_STATEMACHINE
     GuiInterface Interface;
     ControllingStateMachine StateMachine;
 #endif
+    bool ShowDebugCrosshair;
 
 public:
-    ScribbleArea(QWidget *parent = 0);
+    ScribbleArea(SettingClass &MySettings, QWidget *parent = nullptr);
 
     bool ImportImage(const QString &fileName);
     bool LoadImage(const QString &fileName);
@@ -86,6 +89,7 @@ public:
     void setPenWidth(int newWidth);
     void setDirectSelect(bool Mode) {SelectPostitsDirectly = Mode;}
     void setShowPostitsFrame(bool Mode) {MyDatas.setShowPostitsFrame(Mode); update();}
+    void setShowCursors(bool Mode) { MyCursorManager.TestCursors(Mode); ShowDebugCrosshair = Mode;}
 
     QColor GetBackGroundColor() const { return MyDatas.GetBackGroundColor(); }
     void setBackGroundColor(const QColor &newColor) {MyDatas.setBackGroundColor(newColor);}
@@ -131,14 +135,18 @@ protected:
     void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE;
     void tabletEvent(QTabletEvent * event) Q_DECL_OVERRIDE;
     bool event(QEvent *event) Q_DECL_OVERRIDE;
+protected:
+    void keyPressEvent(QKeyEvent *event) override;
+
 
 private slots:
     void PointerTimeout();
+    void AnimatedPointerTimetick();
 private:
 
 
 
-    Settings Settings;
+    SettingClass &Settings;
     bool SelectPostitsDirectly;
 
 #ifdef USE_NEW_STATEMACHINE
@@ -183,6 +191,16 @@ private:
     QImage EraserShape;
     QImage SpongeShape;
 
+#if 1
+    AnimatedCursorClass AnimatedCursor;
+    int CurrentAnimatedPointerPercentage;
+#else
+    static const int NumberOfFrames = 30;
+    QPixmap AnimatedPointerCursor[NumberOfFrames];
+    int CurrentAnimatedPointerShape;
+#endif
+    void SetSpecialCursor();
+
  /*
     int CopyTimeout;
     int GestureTimeout;
@@ -192,13 +210,14 @@ private:
 
     QPointF LastTablettMovePosition;
 
+    QTimer AnimatedPointerTimer;
 
 
-    QTimer MyTimer;
-    QTimer PointerTimer;
 
 #ifdef USE_NEW_STATEMACHINE
 #else
+    QTimer MyTimer;
+    QTimer PointerTimer;
      void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
     void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
     void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);

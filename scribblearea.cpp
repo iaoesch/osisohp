@@ -45,13 +45,18 @@
 #endif
 
 #include "scribblearea.h"
+#include "DebugStream.hpp"
 
 
 //! [0]
-ScribbleArea::ScribbleArea(QWidget *parent)
-    : QWidget(parent), MyDatas(*this), Interface(this), StateMachine(MyDatas, Interface)
+ScribbleArea::ScribbleArea(class SettingClass &MySettings, QWidget *parent)
+    : QWidget(parent), MyDatas(*this, MySettings), MyCursorManager(this), Interface(this, &MyCursorManager),
+      StateMachine(MyDatas, Interface, MySettings), ShowDebugCrosshair(false),
+      Settings(MySettings),
+      AnimatedCursor(24, 24, 30, ":/images/MousPointers/left_ptr.png", 6, 0)
 {
     setAttribute(Qt::WA_StaticContents);
+    setFocusPolicy(Qt::StrongFocus);
     setTabletTracking(true);
     QWidget::setAttribute(Qt::WA_AcceptTouchEvents);
     //QWidget::setAttribute(Qt::WA_TouchPadAcceptSingleTouchEvents);
@@ -60,19 +65,44 @@ ScribbleArea::ScribbleArea(QWidget *parent)
     PointerShape = QImage(":/images/HandWithPen.png");
     SpongeShape = QImage(":/images/HandWithSponge.png");
     EraserShape = QImage(":/images/HandWithEraser.png");
+#if 1
+    CurrentAnimatedPointerPercentage = 0;
+#else
+    AnimatedPointerCursor[0] = QPixmap(":/images/MousPointers/left_ptr.png").scaled(16,16);
+    for (int i = 1; i < NumberOfFrames; i++) {
+       AnimatedPointerCursor[i] = AnimatedPointerCursor[0];
+    }
+    for (int i = 0; i < NumberOfFrames; i++) {
+      QPainter IconPainter(&AnimatedPointerCursor[i]);
+      IconPainter.setPen(Qt::white);
+      IconPainter.setBrush(QBrush(Qt::white));
+      IconPainter.drawEllipse(4,4,12,12);
+      IconPainter.setPen(Qt::black);
+      IconPainter.setBrush(QBrush(Qt::black));
+      int StartAngle = 0*16;
+      int SpanAngle = 16*360*i/NumberOfFrames;
+
+      IconPainter.drawPie(5,5,10,10, StartAngle, SpanAngle);
+      //IconPainter.drawEllipse(6,6,8,8);
+    }
+    CurrentAnimatedPointerShape = 0;
+#endif
+    connect(&AnimatedPointerTimer, &QTimer::timeout, this, &ScribbleArea::AnimatedPointerTimetick);
+    AnimatedPointerTimer.setInterval(20);
 #ifndef USE_NEW_STATEMACHINE
     ShowPointer = false;
-#endif
-
-
-    setMouseTracking(true);
-
     connect(&MyTimer, SIGNAL(timeout()), this, SLOT(timeoutSM()));
 
     MyTimer.setSingleShot(true);
 
     connect(&PointerTimer, &QTimer::timeout, this, &ScribbleArea::PointerTimeout);
     PointerTimer.setSingleShot(true);
+
+
+#endif
+
+    setMouseTracking(true);
+
 
     /*CopyTimeout = 500;
     GestureTimeout = 500;
@@ -115,9 +145,9 @@ void ScribbleArea::setPenColor(const QColor &newColor)
 
 void ScribbleArea::UpdateGUI(std::vector<bool> const &Visibilities)
 {
-   emit (NumberOfLayerChanged(Visibilities.size()));
-          for (int i = 0; i < Visibilities.size(); i++) {
-            emit(SetVisibilityIndicatorOfLayer(i, Visibilities[i]));
+   emit (NumberOfLayerChanged(static_cast<int>(Visibilities.size())));
+          for (size_t i = 0; i < Visibilities.size(); i++) {
+            emit(SetVisibilityIndicatorOfLayer(static_cast<int>(i), Visibilities[i]));
           }
    }
 
@@ -165,6 +195,8 @@ void ScribbleArea::HandleToolAction(QAction *action)
        CollapseAllVisibleLayersToTop();
     } else if (action->iconText() == "Freeze") {
        Freeze(action->isChecked());
+    } else if (action->iconText() == "Cut") {
+       MyDatas.CutSelection(action->isChecked());
     } else if (action->iconText() == "ShowOverview") {
        //ToggleShowOverview(action->isChecked());
        StateMachine.HandleOverviewEventSM(action->isChecked());
@@ -173,7 +205,7 @@ void ScribbleArea::HandleToolAction(QAction *action)
 
 void ScribbleArea::HandleLayerVisibilityAction(QAction *action)
 {
-   unsigned int SelectedLayer = action->data().value<int>();
+   unsigned int SelectedLayer = action->data().value<unsigned int>();
    if (MyDatas.SetLayerVisibility(SelectedLayer, action->isChecked())) {
       update();
    }
@@ -191,7 +223,8 @@ void ScribbleArea::setPenWidth(int newWidth)
 
 void ScribbleArea::PasteImage(QImage ImageToPaste)
 {
-   MyDatas.PasteImage(ImageToPaste);
+   //MyDatas.PasteImage(ImageToPaste);
+   StateMachine.HandlePasteEventSM(ImageToPaste);
 }
 
 void ScribbleArea::UpdateShowOverviewChanged(bool OverviewEnabled)
@@ -208,7 +241,7 @@ void ScribbleArea::CopyImageToClipboard()
 //! [11]
 void ScribbleArea::mousePressEvent(QMouseEvent *event)
 {
-   std::cout << "Mouse: press";
+   DEBUG_LOG << "Mouse: press";
 #ifdef USE_NEW_STATEMACHINE
    StateMachine.HandlePressEventSM(event->button(), event->pos(), event->timestamp());
 #else
@@ -219,11 +252,11 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 #ifndef USE_NEW_STATEMACHINE
 void ScribbleArea::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
 {
-    std::cout << "Button Down: " << Button  << std::endl;
+    DEBUG_LOG << "Button Down: " << Button  << std::endl;
     if (Button == Qt::LeftButton) {
        setCursor(Qt::ArrowCursor);
         if (State != Idle) {
-           std::cout << "HandlePressEventSM: unexpected State: " << State  << std::endl;
+           DEBUG_LOG << "HandlePressEventSM: unexpected State: " << State  << std::endl;
         }
         State = WaitingToLeaveJitterProtectionForDrawing;
 
@@ -262,9 +295,34 @@ void ScribbleArea::PointerTimeout()
    update();
 }
 
+void ScribbleArea::AnimatedPointerTimetick()
+{
+
+   CurrentAnimatedPointerPercentage++;
+   if (CurrentAnimatedPointerPercentage < 100) {
+      setCursor(QCursor(AnimatedCursor.GetPictureForPercentage(CurrentAnimatedPointerPercentage), AnimatedCursor.HotX(), AnimatedCursor.HotY()));
+   } else {
+      AnimatedPointerTimer.stop();
+      CurrentAnimatedPointerPercentage = 0;
+   }
+}
+
+void ScribbleArea::SetSpecialCursor()
+{
+#if 1
+   CurrentAnimatedPointerPercentage = 0;
+   setCursor(QCursor(AnimatedCursor.GetPictureForPercentage(CurrentAnimatedPointerPercentage), AnimatedCursor.HotX(), AnimatedCursor.HotY()));
+   AnimatedPointerTimer.start();
+#else
+   setCursor(QCursor(AnimatedPointerCursor[0]));
+   AnimatedPointerTimer.start();
+   CurrentAnimatedPointerShape = 0;
+#endif
+}
+
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
-   std::cout << "Mouse: move" << event->pointCount() << std::endl;
+   DEBUG_LOG << "Mouse: move" << event->pointCount() << std::endl;
 #ifdef USE_NEW_STATEMACHINE
    StateMachine.HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), false, 0);
 #else
@@ -353,7 +411,7 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position,
               State = MovingPostit;
            case MovingPostit:
               if (MyDatas.IsAnySelectedPostit()) {
-                 std::cout << "Moving postit " << std::endl;
+                 DEBUG_LOG << "Moving postit " << std::endl;
                  MyDatas.MoveSelectedPostits(Position);
                  update();
               }
@@ -384,7 +442,7 @@ void ScribbleArea::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position,
 
 void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {
-   std::cout << "Mouse: ";
+   DEBUG_LOG << "Mouse: ";
 #ifdef USE_NEW_STATEMACHINE
    StateMachine.HandleReleaseEventSM(event->button(), event->pos(), false, 0);
 #else
@@ -397,7 +455,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 #ifndef USE_NEW_STATEMACHINE
 void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure)
 {
-   std::cout << "Button Up: " << Button  << std::endl;
+   DEBUG_LOG << "Button Up: " << Button  << std::endl;
 
    if (Button == Qt::LeftButton) {
       switch(State) {
@@ -432,11 +490,11 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position
          case MovingSelectionPaused:
             //WaitForPostIt = false;
              if (Tracker.GetCurrentSpeed() > 0.25f) {
-                 std::cout << "LeavingSpeed " << Tracker.GetCurrentSpeed() << std::endl;
+                 DEBUG_LOG << "LeavingSpeed " << Tracker.GetCurrentSpeed() << std::endl;
                  MyDatas.setDiscardSelection(true);
                  update();
              }
-             //std::cout << "LeavingSpeed " << (LastDistance + CurrentDistance) << " / " << (DeltaTLastDistance + DeltaTCurrentDistance) << " = " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
+             //DEBUG_LOG << "LeavingSpeed " << (LastDistance + CurrentDistance) << " / " << (DeltaTLastDistance + DeltaTCurrentDistance) << " = " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
                  ;
            // QPoint Offset =  - SelectedPoint;
              if (MyDatas.getDiscardSelection() == false) {
@@ -452,7 +510,7 @@ void ScribbleArea::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position
             break;
          case MovingPostit:
             if (MyDatas.IsAnySelectedPostit()) {
-               std::cout << "Fixing postit " << std::endl;
+               DEBUG_LOG << "Fixing postit " << std::endl;
                MyDatas.FinishMovingSelectedPostits(Position);
                //  MoveSelected = false;
                MyDatas.setLastDrawingValid(false);
@@ -499,7 +557,7 @@ void ScribbleArea::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF Mean
 void ScribbleArea::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
    if(NumberOfTouchpoints == 2) {
-   std::cout << "TM(" << MeanPosition.x() <<":" << MeanPosition.y() << ")";
+   DEBUG_LOG << "TM(" << MeanPosition.x() <<":" << MeanPosition.y() << ")";
 
    switch (State) {
       case WaitingForTouchScrolling:
@@ -513,7 +571,7 @@ void ScribbleArea::HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanP
          update();
          break;
       default:
-         std::cout << "Touch move: unexpected state" << std::endl;
+         DEBUG_LOG << "Touch move: unexpected state" << std::endl;
    }
    }
 }
@@ -538,10 +596,10 @@ void ScribbleArea::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF Me
 #endif
 void ScribbleArea::tabletEvent(QTabletEvent * event)
 {
-  // std::cout << "Tablett Pen Type " << event->pointerType() << std::endl;
+  // DEBUG_LOG << "Tablett Pen Type " << event->pointerType() << std::endl;
     switch(event->type()){
        case QEvent::TabletRelease:
-          std::cout << "Tablett up " << event->type() << "/"<< event->button() << std::endl;
+          DEBUG_LOG << "Tablett up " << event->type() << "/"<< event->button() << std::endl;
 #ifdef USE_NEW_STATEMACHINE
           StateMachine.HandleReleaseEventSM(event->button(), event->position(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
 #else
@@ -551,7 +609,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
           break;
 
        case QEvent::TabletPress:
-        std::cout << "Tablett down " << event->type() << "/"<< event->button() << std::endl;
+        DEBUG_LOG << "Tablett down " << event->type() << "/"<< event->button() << std::endl;
 #ifdef USE_NEW_STATEMACHINE
         StateMachine.HandlePressEventSM(event->button(), event->position(), event->timestamp());
 #else
@@ -573,6 +631,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
             case Qt::TaskButton:
               break;
             case Qt::ExtraButton4:
+           default:
               break;
 
         }
@@ -581,7 +640,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
        case QEvent::TabletMove:
           // Tablett move also called on pressure or tilt changes
           if (LastTablettMovePosition != event->position()) {
-             std::cout << "Tablett move " << event->type() << "/"<< event->buttons() << " <" << event->pos().x() << ";" << event->pos().y() << ">:" << event->pressure() << std::endl;
+             DEBUG_LOG << "Tablett move " << event->type() << "/"<< event->buttons() << " <" << event->position().x() << ";" << event->position().y() << ">:" << event->pressure() << std::endl;
 #ifdef USE_NEW_STATEMACHINE
              StateMachine.HandleMoveEventSM(event->buttons(), event->position(), event->timestamp(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
 #else
@@ -600,67 +659,67 @@ bool ScribbleArea::TouchEvent(QTouchEvent *event)
    double TouchScaling = Settings.Touchscaling;
    switch (event->type()) {
       case QEvent::TouchBegin:
-         std::cout << "Got touch begin" << std::endl;
+         DEBUG_LOG << "Got touch begin" << std::endl;
          {
          QPointF MeanPosition(0,0);
          for (auto &p: event->points()) {
             MeanPosition += p.position();
          }
-         MeanPosition *= TouchScaling/event->pointCount();
+         MeanPosition *= TouchScaling/static_cast<double>(event->pointCount());
 #ifdef USE_NEW_STATEMACHINE
-         StateMachine.HandleTouchPressEventSM(event->pointCount(), MeanPosition);
+         StateMachine.HandleTouchPressEventSM(static_cast<int>(event->pointCount()), MeanPosition);
 #else
          HandleTouchPressEventSM(event->pointCount(), MeanPosition);
 #endif
          }
          event->accept();
          return true;
-         break;
+
       case QEvent::TouchCancel:
-         std::cout << "Got touch Cancel" << std::endl;
+         DEBUG_LOG << "Got touch Cancel" << std::endl;
          event->accept();
          return true;
-         break;
+
       case QEvent::TouchEnd:
-         std::cout << "Got touch End" << std::endl;
+         DEBUG_LOG << "Got touch End" << std::endl;
          {
             QPointF MeanPosition(0,0);
             for (auto &p: event->points()) {
                MeanPosition += p.position();
             }
-            MeanPosition *= TouchScaling/event->pointCount();
+            MeanPosition *= TouchScaling/static_cast<double>(event->pointCount());
 #ifdef USE_NEW_STATEMACHINE
-            StateMachine.HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
+            StateMachine.HandleTouchReleaseEventSM(static_cast<int>(event->pointCount()), MeanPosition);
 #else
             HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
 #endif
          }
          event->accept();
          return true;
-         break;
+
       case QEvent::TouchUpdate:
-         std::cout << "Got touch Update" << std::endl;
+         DEBUG_LOG << "Got touch Update" << std::endl;
          {
          QPointF MeanPosition(0,0);
          for (auto &p: event->points()) {
             MeanPosition += p.position();
          }
-         MeanPosition *= TouchScaling/event->pointCount();
+         MeanPosition *= TouchScaling/static_cast<double>(event->pointCount());
          if (event->isBeginEvent()) {
 #ifdef USE_NEW_STATEMACHINE
-            StateMachine.HandleTouchPressEventSM(event->pointCount(), MeanPosition);
+            StateMachine.HandleTouchPressEventSM(static_cast<int>(event->pointCount()), MeanPosition);
 #else
             HandleTouchPressEventSM(event->pointCount(), MeanPosition);
 #endif
          } else if (event->isEndEvent()) {
 #ifdef USE_NEW_STATEMACHINE
-            StateMachine.HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
+            StateMachine.HandleTouchReleaseEventSM(static_cast<int>(event->pointCount()), MeanPosition);
 #else
             HandleTouchReleaseEventSM(event->pointCount(), MeanPosition);
 #endif
          } else {
 #ifdef USE_NEW_STATEMACHINE
-            StateMachine.HandleTouchMoveEventSM(event->pointCount(), MeanPosition);
+            StateMachine.HandleTouchMoveEventSM(static_cast<int>(event->pointCount()), MeanPosition);
 #else
             HandleTouchMoveEventSM(event->pointCount(), MeanPosition);
 #endif
@@ -669,16 +728,15 @@ bool ScribbleArea::TouchEvent(QTouchEvent *event)
          {
 
             for (auto &p: event->points()) {
-               std::cout << "(" << p.position().x() <<":" << p.position().y() << ")";
+               DEBUG_LOG << "(" << p.position().x() <<":" << p.position().y() << ")";
             }
-            std::cout << event->isBeginEvent() << event->isEndEvent() << std::endl;
+            DEBUG_LOG << event->isBeginEvent() << event->isEndEvent() << std::endl;
          }
 #endif
          }
          event->accept();
          return true;
 
-         break;
       default:
          return QWidget::event(event);
 
@@ -702,15 +760,15 @@ bool ScribbleArea::event(QEvent *event)
             return QWidget::event(event);
          }
          }
-         break;
+
       case QEvent::Gesture:
-         std::cout << "Gesrture" << std::endl;
+         DEBUG_LOG << "Gesrture" << std::endl;
          return QWidget::event(event);
       case QEvent::Scroll:
-         std::cout << "Scroll" << std::endl;
+         DEBUG_LOG << "Scroll" << std::endl;
          return QWidget::event(event);
       case QEvent::Wheel:
-         std::cout << "Wheel" << static_cast<QWheelEvent*>(event)->angleDelta().x() << ":" << static_cast<QWheelEvent*>(event)->angleDelta().y() << std::endl;
+         DEBUG_LOG << "Wheel" << static_cast<QWheelEvent*>(event)->angleDelta().x() << ":" << static_cast<QWheelEvent*>(event)->angleDelta().y() << std::endl;
          {
             QPointF Delta (static_cast<QWheelEvent*>(event)->angleDelta());
 
@@ -724,11 +782,51 @@ bool ScribbleArea::event(QEvent *event)
          event->accept();
          return true;
        default:
-         //std::cout << "<" << event->type() << ">";
+         //DEBUG_LOG << "<" << event->type() << ">";
          return QWidget::event(event);
 
    }
 
+}
+
+void ScribbleArea::keyPressEvent(QKeyEvent *event)
+{
+   std::cout << "GotKeyEvent" << std::endl;
+   switch(event->key()) {
+      case Qt::Key_Return:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::PasteDrawing);
+         break;
+
+      case Qt::Key_T:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::PasteTopLayer);
+         break;
+
+      case Qt::Key_B:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::PasteBottomLayer);
+         break;
+
+      case Qt::Key_Escape:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::CancelPasting);
+         break;
+
+      case Qt::Key_Backspace:
+      case Qt::Key_O:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::MakeOriginalSize);
+         break;
+
+      case Qt::Key_Plus:
+      case Qt::Key_1:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::MakeBigger);
+         break;
+
+
+      case Qt::Key_Minus:
+      case Qt::Key_Underscore:
+      case Qt::Key_Space:
+         StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::MakeSmaller);
+         break;
+
+   }
 }
 
 #ifndef USE_NEW_STATEMACHINE
@@ -736,7 +834,7 @@ bool ScribbleArea::event(QEvent *event)
 void ScribbleArea::timeoutSM()
 {
     /* Copying on long move pauses */
-   std::cout << "timeout " << std::endl;
+   DEBUG_LOG << "timeout " << std::endl;
    switch(State) {
       case Idle:
          break;
@@ -766,7 +864,7 @@ void ScribbleArea::timeoutSM()
                //scribbling = false;
                //NewDrawingStarted = false;
                setCursor(Qt::ClosedHandCursor);
-               std::cout << "Selected postit " << std::endl;
+               DEBUG_LOG << "Selected postit " << std::endl;
                State = WaitingToLeaveJitterProtectionWithSelectedPostitForMoving;
 
 
@@ -784,7 +882,7 @@ void ScribbleArea::timeoutSM()
          break;
       case WaitingToLeaveJitterProtectionWithSelectedAreaForMoving:
          {
-            std::cout << "Creating postit " << std::endl;
+            DEBUG_LOG << "Creating postit " << std::endl;
 
             //WaitForPostIt = false;
             MyDatas.CreeatePostitFromSelection();
@@ -861,10 +959,10 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
        }
          switch(StateMachine.PointerTypeToShow()) {
             case ControllingStateMachine::NONE:
-               std::cout << "No Pointer to show" << std::endl;
+               DEBUG_LOG << "No Pointer to show" << std::endl;
                break;
             case ControllingStateMachine::DRAWER:
-               std::cout << "Draw Pointer to show" << std::endl;
+               DEBUG_LOG << "Draw Pointer to show" << std::endl;
                painter.drawImage(StateMachine.getLastPointerPosition() - QPointF(0, 36), PointerShape);
                break;
             case ControllingStateMachine::ERASER:
@@ -875,8 +973,13 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
                break;
 
        }
-
-
+       if (ShowDebugCrosshair) {
+         painter.setPen(QPen(QColor(Qt::black), 1, Qt::SolidLine, Qt::RoundCap,
+                             Qt::RoundJoin));
+         painter.setBrush(QBrush(Qt::black));
+         painter.drawLine(StateMachine.getLastPointerPosition()-QPointF(50,0), StateMachine.getLastPointerPosition()+QPointF(50,0));
+         painter.drawLine(StateMachine.getLastPointerPosition()-QPointF(0,50), StateMachine.getLastPointerPosition()+QPointF(0,50));
+       }
    }
 }
 

@@ -42,6 +42,7 @@
 
 #include "mainwindow.h"
 #include "scribblearea.h"
+#include "SettingsDialog.h"
 
 
 //! [0]
@@ -49,7 +50,7 @@ MainWindow::MainWindow()
 {
     SetWhiteBoardColors();
     readSettings();
-    scribbleArea = new ScribbleArea;
+    scribbleArea = new ScribbleArea(Settings);
     setCentralWidget(scribbleArea);
     QWidget::setAttribute(Qt::WA_AcceptTouchEvents);
     //QWidget::setAttribute(Qt::WA_TouchPadAcceptSingleTouchEvents);
@@ -97,6 +98,7 @@ MainWindow::MainWindow()
 #endif
     Group->setExclusive(true);
     PenInfo[0].SetPenColorAct->setChecked(true);
+    scribbleArea->setPenColor(PenInfo[0].PenColor);
 
     Group = new QActionGroup(this);
     Group->setExclusive(true);
@@ -120,12 +122,15 @@ MainWindow::MainWindow()
     toolBar->addAction("NewPlane");
     toolBar->addAction("Merge")->setToolTip("Merge visible Background");
     toolBar->addAction("ToTop")->setToolTip("Merge all visible to editable");
-    toolBar->addAction("Cut")->setCheckable(true);
+    QPixmap Scissoir = QPixmap(":/images/MousPointers/scissors24.png").scaled(24, 24);
+    QAction *CutAct = toolBar->addAction(Scissoir, "Cut");
+    CutAct->setCheckable(true);
+    CutAct->setChecked(true);
     ShowOverviewAct = toolBar->addAction("ShowOverview");
     ShowOverviewAct->setCheckable(true);
 
-    connect(toolBar, SIGNAL(actionTriggered(QAction *)),
-            scribbleArea, SLOT(HandleToolAction(QAction * )));
+    connect(toolBar, &QToolBar::actionTriggered,
+            scribbleArea, &ScribbleArea::HandleToolAction);
     //  toolBar->insertAction(0, new PushButtonAction(QIcon(":/Search.gif"), "Search"));
 
     addToolBar(Qt::TopToolBarArea, toolBar);
@@ -152,20 +157,37 @@ MainWindow::MainWindow()
     setWindowState(Qt::WindowMaximized);
     resize(width(), height());
     UpdateColors();
+
 }
 //! [0]
 
-void MainWindow::SetWhiteBoardColors(void)
+
+void MainWindow::SetOHPColors(void)
 {
    PenInfo[0].PenColor = Qt::blue;
    PenInfo[1].PenColor = Qt::darkGreen;
    PenInfo[2].PenColor = Qt::darkYellow;
    PenInfo[3].PenColor = QColor(255, 128, 0);
    PenInfo[4].PenColor = Qt::red;
-   PenInfo[5].PenColor = Qt::magenta;
+   PenInfo[5].PenColor = QColor(255, 88, 255);//Qt::magenta;
    PenInfo[6].PenColor = Qt::black;
    PenInfo[7].PenColor = Qt::yellow;
    BackgroundColor = QColor(230,230, 200,255);
+   ScrollHintColor = QColor(200, 230, 200, 50);
+   PostItBackgroundColor = QColor(100, 0, 0, 50);
+   SelectionHintColor = QColor(200, 230, 200, 50);
+}
+void MainWindow::SetWhiteBoardColors(void)
+{
+   PenInfo[0].PenColor = QColor(100, 180, 255);
+   PenInfo[1].PenColor = Qt::green;
+   PenInfo[2].PenColor = QColor(225, 193, 110);
+   PenInfo[3].PenColor = QColor(255, 128, 0);
+   PenInfo[4].PenColor = Qt::red;
+   PenInfo[5].PenColor = QColor(255, 88, 255);//Qt::magenta;
+   PenInfo[6].PenColor = Qt::black;
+   PenInfo[7].PenColor = Qt::yellow;
+   BackgroundColor = QColor(255,255, 255, 255);
    ScrollHintColor = QColor(200, 230, 200, 50);
    PostItBackgroundColor = QColor(100, 0, 0, 50);
    SelectionHintColor = QColor(200, 230, 200, 50);
@@ -178,7 +200,7 @@ void MainWindow::SetBlackBoardColors(void)
    PenInfo[2].PenColor = Qt::yellow;
    PenInfo[3].PenColor = QColor(255, 128, 0);
    PenInfo[4].PenColor = Qt::red;
-   PenInfo[5].PenColor = Qt::magenta;
+   PenInfo[5].PenColor = QColor(255, 88, 255);//Qt::magenta;
    PenInfo[6].PenColor = Qt::white;
    PenInfo[7].PenColor = Qt::yellow;
    BackgroundColor = QColor(30, 30, 30, 255);
@@ -301,6 +323,12 @@ void MainWindow::BackGroundColorColor()
 
 }
 
+void MainWindow::BackGroundColorOHP()
+{
+   SetOHPColors();
+   UpdateColors();
+}
+
 void MainWindow::BackGroundColorWhiteBoard()
 {
    SetWhiteBoardColors();
@@ -341,6 +369,15 @@ void MainWindow::ShowPostitsFrame()
 
     scribbleArea->setShowPostitsFrame(ShowPostitsFrameAct->isChecked());
 }
+
+void MainWindow::ShowCursors()
+//! [9] //! [10]
+{
+
+    scribbleArea->setShowCursors(ShowCursorsAct->isChecked());
+}
+
+
 
 void MainWindow::Paste()
 //! [9] //! [10]
@@ -414,6 +451,9 @@ void MainWindow::createActions()
     WhiteBoardColorAct = new QAction(tr("&Whiteboard"), this);
     connect(WhiteBoardColorAct, SIGNAL(triggered()), this, SLOT(BackGroundColorWhiteBoard()));
 
+    OHPColorAct = new QAction(tr("&OHP"), this);
+    connect(OHPColorAct, SIGNAL(triggered()), this, SLOT(BackGroundColorOHP()));
+
     BlackBoardColorAct = new QAction(tr("&Blackboard"), this);
     connect(BlackBoardColorAct, SIGNAL(triggered()), this, SLOT(BackGroundColorBlackBoard()));
 
@@ -426,10 +466,19 @@ void MainWindow::createActions()
     ShowPostitsFrameAct->setCheckable(true);
     connect(ShowPostitsFrameAct, SIGNAL(triggered()), this, SLOT(ShowPostitsFrame()));
 
+    ShowCursorsAct = new QAction(tr("&Cycle Pointers"), this);
+    ShowCursorsAct->setCheckable(true);
+    connect(ShowCursorsAct, &QAction::triggered, this, &MainWindow::ShowCursors);
+
     clearScreenAct = new QAction(tr("&Clear Screen"), this);
     clearScreenAct->setShortcut(tr("Ctrl+L"));
     connect(clearScreenAct, SIGNAL(triggered()),
             scribbleArea, SLOT(clearImage()));
+
+    SettingsAct = new QAction(tr("SSettings"), this);
+    //SettingsAct->setShortcut(tr("Ctrl+"));
+    connect(SettingsAct, SIGNAL(triggered()),
+            this, SLOT(ShowSettings()));
 
     aboutAct = new QAction(tr("&About"), this);
     connect(aboutAct, SIGNAL(triggered()), this, SLOT(about()));
@@ -463,6 +512,34 @@ void MainWindow::SetVisibilityIndicatorOfLayer(int Layer, bool Visibility)
 void MainWindow::ShowOverviewChanged(bool OverviewEnabled)
 {
    ShowOverviewAct->setChecked(OverviewEnabled);
+}
+
+void MainWindow::ShowSettings()
+{
+   static struct Settings {
+    bool Value1 = true;
+    int Value2 = 128;
+    double Value3 = 3.14;
+    std::string Value4 = "Fritz";
+    std::string Value5 = "guess";
+   } MyLocalSettings;
+    TabDialogDescriptor Descriptor("Test");
+    Descriptor.AddTab("Tab1");
+    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value1);
+    Descriptor.GetTab().AddEntry("Val 2", "Help for Val 2", MyLocalSettings.Value2);
+    Descriptor.GetTab().AddEntry("Val 3", "Help for Val 3", MyLocalSettings.Value3);
+    Descriptor.GetTab().AddEntry("Val 4", "Help for Val 4", MyLocalSettings.Value4);
+    Descriptor.AddTab("Tab2");
+    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value5);
+    Descriptor.AddTab("Timings");
+    this->Settings.getSettings(Descriptor.GetTab());
+
+    SettingsDialog MySettings(Descriptor);
+    auto Result  = MySettings.exec();
+    if (Result == QDialog::Accepted) {
+       Descriptor.Update();
+    }
+
 }
 
 //! [15]
@@ -500,14 +577,20 @@ void MainWindow::createMenus()
     optionMenu->addAction(penWidthAct);
     optionMenu->addAction(BackGroundColorAct);
     optionMenu->addAction(WhiteBoardColorAct);
+    optionMenu->addAction(OHPColorAct);
     optionMenu->addAction(BlackBoardColorAct);
     optionMenu->addAction(DirectPostitSelectAct);
+    optionMenu->addAction(SettingsAct);
     optionMenu->addSeparator();
     optionMenu->addAction(clearScreenAct);
 
 
+
     DebugMenu = new QMenu(tr("&Debug"), this);
     DebugMenu->addAction(ShowPostitsFrameAct);
+    DebugMenu->addAction(ShowCursorsAct);
+    DebugMenu->addAction(SettingsAct);
+
 
     helpMenu = new QMenu(tr("&Help"), this);
     helpMenu->addAction(aboutAct);
@@ -587,7 +670,10 @@ void MainWindow::writeSettings()
         settings.setValue("Color", PenInfo[i].PenColor);
     }
     settings.endArray();
-    settings.setValue("BackgroundColor", scribbleArea->GetBackGroundColor());
+    settings.setValue("BackgroundColor", BackgroundColor);
+    settings.setValue("ScrollHintColor", ScrollHintColor);
+    settings.setValue("SelectionHintColor", SelectionHintColor);
+    settings.setValue("PostItBackgroundColor", PostItBackgroundColor);
 
     settings.beginGroup("SensorNames");
     settings.endGroup();
@@ -609,6 +695,10 @@ void MainWindow::readSettings()
     }
     settings.endArray();
     BackgroundColor = settings.value("BackgroundColor").value<QColor>();
+    ScrollHintColor = settings.value("ScrollHintColor").value<QColor>();
+    SelectionHintColor = settings.value("SelectionHintColor").value<QColor>();
+    PostItBackgroundColor = settings.value("PostItBackgroundColor").value<QColor>();
+
     settings.beginGroup("SensorNames");
     settings.endGroup();
     settings.endGroup();

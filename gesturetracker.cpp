@@ -137,13 +137,13 @@ void GestureTrackerClass::Trackmovement(QPointF Position, ulong Timestamp)
 
    /* Store current move */
    DeltaTimeCurrentDistance = TimeSinceLastTracking;
-   CurrentDistance = MovementSinceLastTracking.manhattanLength();
+   CurrentDistance = static_cast<ulong>(MovementSinceLastTracking.manhattanLength() + 0.5);
 
    /* Discard moves with no time inbetween */
    if (TimeSinceLastTracking > 0) {
 
       /* Calculate speed of last move */
-      QPointF GestureSpeed = QPointF(MovementSinceLastTracking) / TimeSinceLastTracking;
+      QPointF GestureSpeed = QPointF(MovementSinceLastTracking) / static_cast<double>(TimeSinceLastTracking);
 
       /* Store current position for next round */
       LastPosition =  Position;
@@ -183,7 +183,7 @@ float GestureTrackerClass::GetCurrentSpeed()
    /* Method code declaration      */
 
    if ( (DeltaTimeLastDistance + DeltaTimeCurrentDistance) > 0) {
-        return ((LastDistance + CurrentDistance) / static_cast<float>(DeltaTimeLastDistance + DeltaTimeCurrentDistance));
+        return (static_cast<float>(LastDistance + CurrentDistance) / static_cast<float>(DeltaTimeLastDistance + DeltaTimeCurrentDistance));
    }
    return 0;
 }

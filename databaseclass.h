@@ -6,6 +6,7 @@
 #include <QPainterPath>
 #include <list>
 #include <vector>
+#include <deque>
 
 #include "box.hpp"
 #include "Settings.hpp"
@@ -15,13 +16,16 @@ class ScribbleArea;
 class DatabaseClass
 {
    ScribbleArea &Parent;
-   Settings Settings;
+   SettingClass &Settings;
    struct PostIt {
+      static int NextId;
       QImage Image;
       QPointF Position;
       BoundingBoxClass Box;
       QPainterPath BorderPath;
-      PostIt(const QImage &NewImage, const QPointF &Pos, BoundingBoxClass NewBox, QPainterPath &Path) : Image(NewImage), Position(Pos), Box(NewBox), BorderPath(Path) {}
+      int Id;
+      PostIt(const QImage &NewImage, const QPointF &Pos, BoundingBoxClass NewBox, QPainterPath &Path) : Image(NewImage), Position(Pos), Box(NewBox), BorderPath(Path), Id(NextId++) {}
+      PostIt(const PostIt &Src) : Image(Src.Image), Position(Src.Position), Box(Src.Box), BorderPath(Src.BorderPath), Id(NextId++) {}
    };
 
    std::list<PostIt> PostIts;
@@ -38,12 +42,12 @@ class DatabaseClass
    QImage image;
    QImage LastDrawnObject;
     class ImageDescriptor {
-      bool Visible;
       std::unique_ptr<QImage> Image;
+      bool Visible;
 
       public:
-      ImageDescriptor(std::unique_ptr<QImage> TheImage) : Visible(true), Image(std::move(TheImage)) {}
-      ImageDescriptor(std::unique_ptr<QImage> TheImage, bool v) : Visible(v), Image(std::move(TheImage)) {}
+      ImageDescriptor(std::unique_ptr<QImage> TheImage) : Image(std::move(TheImage)), Visible(true) {}
+      ImageDescriptor(std::unique_ptr<QImage> TheImage, bool v) : Image(std::move(TheImage)), Visible(v) {}
       QImage &operator * () {return *Image;}
       QImage *operator -> () {return Image.operator ->();}
       bool IsVisible() {return Visible;}
@@ -52,11 +56,11 @@ class DatabaseClass
    };
 
    //std::vector<std::unique_ptr<QImage>> BackgroundImages;
-   std::vector<ImageDescriptor> BackgroundImages;
+   std::deque<ImageDescriptor> BackgroundImages;
 
    QPointF Origin;
-   bool Frozen;
    QPointF BackgroundImagesOrigin;
+   bool Frozen;
 
 
    bool EraseLastDrawnObject;
@@ -67,18 +71,23 @@ class DatabaseClass
    bool ShowPostitsFrame;
    bool ShowOverview;
 
+   bool CutMode;
+
 
    QPointF SelectedOffset;
    QPointF SelectedCurrentPosition;
-   QPointF lastPoint;
+   QPointF lastPointDrawn;
    QPointF ButtonDownPosition;
 
 
    QColor TransparentColor;
    QColor BackGroundColor;
+   QColor Markercolor;
    QColor DefaultBackGroundColor;
    QColor ScrollHintColor;
+   QColor ScrollHintBorderColor;
    QColor SelectionHintColor;
+   QColor SelectionHintBorderColor;
 
    QColor PostItBackgroundColor;
 
@@ -87,23 +96,33 @@ class DatabaseClass
    QPainterPath SelectedImagePartPath;
    QImage HintSelectedImagePart;
 
+   QImage ImageToPaste;
+   double ScalingFactorOfImageToPaste;
+   enum   PasteImage{None, Drawing, TopLayer, BottomLayer} PasteStatus;
+
    bool RecentlyPastedObjectValid;
    QPointF RecentlyPastedObjectPosition;
    QImage RecentlyPastedObject;
    BoundingBoxClass RecentlyPastedObjectBoundingBox;
 
    BoundingBoxClass LastPaintedObjectBoundingBox;
+   BoundingBoxClass SelectedImageBoundingBox;
    BoundingBoxClass CurrentPaintedObjectBoundingBox;
 
 
 public:
-   void SetSelectedOffset() {SelectedOffset = QPoint(LastPaintedObjectBoundingBox.GetLeft(), LastPaintedObjectBoundingBox.GetTop()) - lastPoint;}
+   enum PasteEvent {PasteTopLayer, PasteBottomLayer, PasteDrawing, CancelPasting, MakeBigger, MakeSmaller, MakeOriginalSize};
+
+
+   void SetSelectedOffset() {SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPointDrawn;}
 
    void RestartCurrentPaintedObjectBoundingBox(QPointF const &StartPoint) {  CurrentPaintedObjectBoundingBox.Clear();
                                                           CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(StartPoint.x(), StartPoint.y()));
    }
 
-   bool IsInsideLstPaintedObjectBoundingBox(QPointF const &Point) { return LastPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));}
+   bool IsInsideLastPaintedObjectBoundingBox(QPointF const &Point) { return LastPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));}
+   bool IsCutoutActive() {return CutMode;}
+   void ClearLastPaintedObjectBoundingBox() { LastPaintedObjectBoundingBox.Clear();}
    void MoveOrigin(QPointF Offset) {
 
       Origin -= Offset;
@@ -113,7 +132,7 @@ public:
    }
    QPointF GetOrigin() {return Origin;}
 
-   DatabaseClass(ScribbleArea &Parent);
+   DatabaseClass(ScribbleArea &Parent, class SettingClass &MySettings);
    bool ImportImage(const QString &fileName);
 
    void drawLineTo(const QPointF &endPoint, double Pressure);
@@ -125,7 +144,7 @@ public:
    void DrawLastDrawnPicture();
    void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
    void resizeScrolledImage();
-   void MakeSelectionFromLastDrawnObject();
+   void MakeSelectionFromLastDrawnObject(bool Cutout = false);
    void CompleteImage();
    void FilllastDrawnShape();
 
@@ -135,6 +154,12 @@ public:
    void MoveSelectedPostits(QPointF Position);
    void FinishMovingSelectedPostits(QPointF Position);
 
+   void SetImageToPaste(QImage Image);
+   void DoPasteImage(PasteEvent Event);
+   void CancelPasteImage();
+   void ScaleImageToPaste(double ScalingFactor);
+
+
    void GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size);
 
 
@@ -142,9 +167,10 @@ public:
    bool SaveDatabase(const QString &fileName);
    bool LoadDatabase(const QString &fileName);
    void setPenColor(const QColor &newColor);
-   bool SetLayerVisibility(int SelectedLayer, bool Visibility);
+   bool SetLayerVisibility(unsigned int SelectedLayer, bool Visibility);
    void setPenWidth(int newWidth);
    void UseSpongeAsEraser(bool UseSponge) {if (UseSponge) {myEraserWidth = Settings.SpongeSize;} else {myEraserWidth = Settings.EraserSize;}}
+   void CutSelection(bool DoCut) {CutMode = DoCut;}
    void RestorePenWidth() {myPenWidth = SelectedPenWidth;}
    void ExtendPenWidthForMarker() {myPenWidth = SelectedPenWidth * 5 + 2;}
    void PasteImage(QImage ImageToPaste);
@@ -166,11 +192,13 @@ public:
    void ToggleShowOverview(bool Mode);
 
    QColor GetBackGroundColor() const { return BackGroundColor; }
-   void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; update();}
+   void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; AdjustMarkercolor(); update();}
+   void AdjustMarkercolor() {Markercolor = QColor(BackGroundColor.red()^0xFF, BackGroundColor.green()^0xFF, BackGroundColor.blue()^0xFF);}
    void setPostItBackgroundColor(const QColor &newColor) {PostItBackgroundColor = newColor; update();}
    void setSelectionHintColor(const QColor &newColor) {SelectionHintColor = newColor;}
 
-   bool PostItSelected(QPointF Position);
+   enum SelectMode {All, First, Last};
+   bool FindSelectedPostIts(QPointF Position, SelectMode Mode = First);
    bool IsInsideAnyPostIt(QPointF Position);
 
    void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundImagesOrigin);
@@ -198,7 +226,7 @@ public:
    void setLastDrawingValid(bool newLastDrawingValid);
 
    void setLastPoint(QPointF newLastPoint);
-   QPointF getLastPoint() {return lastPoint;}
+   QPointF getLastPointDrawn() {return lastPointDrawn;}
 
    void setButtonDownPosition(QPointF newButtonDownPosition);
 
@@ -220,10 +248,26 @@ public:
    const QColor &getScrollHintColor() const;
    void setScrollHintColor(const QColor &newScrollHintColor);
 
+   static constexpr double JitterPressureLimit = 0.6;
+   bool IsJitter(QPointF OldPoint, QPointF NewPoint, double Pressure) {
+      return ((Pressure < JitterPressureLimit) && ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()*3+2)));
+   }
+   bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, double Pressure [[maybe_unused]]) {
+      return ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()+2));
+   }
+
+   void ClearLastDrawnPicture();
+
+   void DeleteSelectedPostits();
+   void DuplicateSelectedPostits();
 private:
+private:
+   double CalculatePenWidthLinear(double Pressure, int BaseWidth);
+   double CalculatePenWidthQuadratic(double Pressure, int BaseWidth);
    void update();
    void update(const QRect &r);
-   void UpdateGUI(int NumberOfLayers);
+   void UpdateGUIElements(unsigned long NumberOfLayers);
+   void CreatePostit(QImage BackgroundImage, QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path);
 };
 
 #endif // DATABASECLASS_H

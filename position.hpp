@@ -55,24 +55,25 @@ class PositionClass
    friend istream& operator >> (istream &Stream, PositionClass& Pos);
    // Methods
    public:
-            PositionClass(int newX, int newY) : X(newX), Y(newY) {};
-            PositionClass(const PositionClass &Pos) : X(Pos.X), Y(Pos.Y)  {};
-           ~PositionClass(void){};
+            PositionClass(int newX, int newY) : X(newX), Y(newY) {}
+            PositionClass(double newX, double newY) : X(static_cast<int>(newX+0.0)), Y(static_cast<int>(newY+0.0)) {}
+            PositionClass(const PositionClass &Pos) : X(Pos.X), Y(Pos.Y)  {}
+           ~PositionClass(void){}
 
-   PositionClass& operator =  (const PositionClass &Pos)  { Y  = Pos.Y; X  = Pos.X; return *this;};
-   PositionClass& operator += (const PositionClass &Pos)  { Y += Pos.Y; X += Pos.X; return *this;};
-   PositionClass& operator -= (const PositionClass &Pos)  { Y -= Pos.Y; X -= Pos.X; return *this;};
-   int            operator == (const PositionClass &Pos)  const { return ((Y == Pos.Y) && (X == Pos.X));};
-   int            operator != (const PositionClass &Pos)  const { return !(*this == Pos);};
-   PositionClass  operator +  (const PositionClass &Pos2) const { return PositionClass(X + Pos2.X, Y + Pos2.Y);};
-   PositionClass  operator -  (const PositionClass &Pos2) const { return PositionClass(X - Pos2.X, Y - Pos2.Y);};
-   PositionClass  operator -  () const { return PositionClass(-X, -Y);};
+   PositionClass& operator =  (const PositionClass &Pos)  { Y  = Pos.Y; X  = Pos.X; return *this;}
+   PositionClass& operator += (const PositionClass &Pos)  { Y += Pos.Y; X += Pos.X; return *this;}
+   PositionClass& operator -= (const PositionClass &Pos)  { Y -= Pos.Y; X -= Pos.X; return *this;}
+   int            operator == (const PositionClass &Pos)  const { return ((Y == Pos.Y) && (X == Pos.X));}
+   int            operator != (const PositionClass &Pos)  const { return !(*this == Pos);}
+   PositionClass  operator +  (const PositionClass &Pos2) const { return PositionClass(X + Pos2.X, Y + Pos2.Y);}
+   PositionClass  operator -  (const PositionClass &Pos2) const { return PositionClass(X - Pos2.X, Y - Pos2.Y);}
+   PositionClass  operator -  () const { return PositionClass(-X, -Y);}
 
-   int      GetX(void) const {return X;};
-   int      GetY(void) const {return Y;};
-   void     SetX(int _X) {X = _X;};
-   void     SetY(int _Y) {Y = _Y;};
-   void     SetXY(int _X, int _Y) {X = _X; Y = _Y;};
+   int      GetX(void) const {return X;}
+   int      GetY(void) const {return Y;}
+   void     SetX(int _nX) {X = _nX;}
+   void     SetY(int _nY) {Y = _nY;}
+   void     SetXY(int _nX, int _nY) {X = _nX; Y = _nY;}
 };
 
 //ostream &operator << (ostream &Stream, const PositionClass& Pos);

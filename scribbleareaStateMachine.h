@@ -58,6 +58,7 @@
 #include "Settings.hpp"
 #include "gesturetracker.hpp"
 #include "interface.hpp"
+#include "databaseclass.h"
 
 //! [0]
 //!
@@ -69,7 +70,7 @@
 #define MakeStateObject(S) StateClass<State::ScribblingState::S> S
 class StateBaseClass;
 class ControllingStateMachine;
-class DatabaseClass;
+//class DatabaseClass;
 
 namespace State {
 enum ScribblingState {
@@ -79,23 +80,31 @@ enum ScribblingState {
    WaitingToLeaveJitterProtectionForScrolling,
    WaitingToLeaveJitterProtectionWithCreatedPostitForMoving,
    WaitingToLeaveJitterProtectionWithSelectedPostitForMoving,
+   WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving,
    Drawing,
-   DrawingPaused,
+ //  DrawingPaused,
    DrawingFillRequested,
+   DrawingKillRequested,
    MovingSelection,
    MovingSelectionPaused,
    MovingPostit,
+   MovingPostitPaused,
    ScrollingDrawingArea,
    WaitingForTouchScrolling,
    TouchScrollingDrawingArea,
-   WaitingToSelectRegionFromOverview
+   WaitingToSelectRegionFromOverview,
+   WaitingToPasteClippboardImage
 };
 }
 
 class StateBaseClass {
 protected:
    ControllingStateMachine &StateMachine;
+   void StartTimer(double TimeInms);
+   void StoppTimer();
+
 public:
+   typedef DatabaseClass::PasteEvent PasteEvent;
    StateBaseClass(ControllingStateMachine &sm) : StateMachine(sm) {}
    virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
    virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
@@ -104,6 +113,8 @@ public:
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    virtual void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    virtual void HandleOverviewEventSM(bool Enabled);
+   virtual void HandlePasteEventSM(QImage ImageToPaste);
+   virtual void HandleKeyEventSM(PasteEvent Event);
    virtual void timeoutSM();
    virtual State::ScribblingState StateId() = 0;
  //  virtual std::string StateName() = 0;
@@ -124,6 +135,8 @@ public:
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void HandleOverviewEventSM(bool Enabled) override;
+   virtual void HandlePasteEventSM(QImage ImageToPaste) override;
+   virtual void HandleKeyEventSM(PasteEvent Event) override;
    virtual void timeoutSM() override;
    virtual ~StateClass() override {}
    virtual State::ScribblingState StateId() override;
@@ -187,7 +200,7 @@ private:
       Context(DatabaseClass &db) : MyDatas(db) {}
 
    } Context;
-   Settings Settings;
+   SettingClass &Settings;
 
    GuiInterface Interface;
    StateBaseClass *CurrentState;
@@ -198,16 +211,20 @@ private:
    MakeStateObject(WaitingToLeaveJitterProtectionForScrolling);
    MakeStateObject(WaitingToLeaveJitterProtectionWithCreatedPostitForMoving);
    MakeStateObject(WaitingToLeaveJitterProtectionWithSelectedPostitForMoving);
+   MakeStateObject(WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving);
    MakeStateObject(Drawing);
-   MakeStateObject(DrawingPaused);
+ //  MakeStateObject(DrawingPaused);
    MakeStateObject(DrawingFillRequested);
+   MakeStateObject(DrawingKillRequested);
    MakeStateObject(MovingSelection);
    MakeStateObject(MovingSelectionPaused);
    MakeStateObject(MovingPostit);
+   MakeStateObject(MovingPostitPaused);
    MakeStateObject(ScrollingDrawingArea);
    MakeStateObject(WaitingForTouchScrolling);
    MakeStateObject(TouchScrollingDrawingArea);
    MakeStateObject(WaitingToSelectRegionFromOverview);
+   MakeStateObject(WaitingToPasteClippboardImage);
 
 public:
 
@@ -232,8 +249,10 @@ public:
    void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleOverviewEventSM(bool Enabled);
+   void HandlePasteEventSM(QImage ImageToPaste);
+   void HandleKeyEventSM(DatabaseClass::PasteEvent Event);
 
-   ControllingStateMachine(DatabaseClass &Database, GuiInterface &Interface);
+   ControllingStateMachine(DatabaseClass &Database, GuiInterface &Interface, class SettingClass &MySettings);
 public slots:
    void timeoutSM();
 
@@ -241,6 +260,10 @@ private slots:
    void PointerTimeout();
    void Timeout();
 };
+
+inline void StateBaseClass::StartTimer(double TimeInms) {StateMachine.MyTimer.start(static_cast<int>(TimeInms));}
+inline void StateBaseClass::StoppTimer() {StateMachine.MyTimer.stop();}
+
 #endif
 
 
