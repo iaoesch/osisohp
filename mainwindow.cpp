@@ -48,14 +48,14 @@
 //! [0]
 MainWindow::MainWindow()
 {
-    SetWhiteBoardColors();
+    SetOHPColors();
     readSettings();
     scribbleArea = new ScribbleArea(Settings);
     setCentralWidget(scribbleArea);
     QWidget::setAttribute(Qt::WA_AcceptTouchEvents);
     //QWidget::setAttribute(Qt::WA_TouchPadAcceptSingleTouchEvents);
     grabGesture(Qt::PanGesture);
-    QActionGroup *Group = new QActionGroup(this);
+    PenColorGroup = new QActionGroup(this);
     createActions();
     createMenus();
     QToolBar * toolBar= new QToolBar("Main Window Tool Bar");
@@ -63,10 +63,11 @@ MainWindow::MainWindow()
 
     QPixmap ToolIcon(15, 15);
 #if 1
+    int PenId = 0;
     for (auto &p: PenInfo) {
        ToolIcon.fill(p.PenColor);
        p.SetPenColorAct = toolBar->addAction(QIcon(ToolIcon), "PenColor");
-       Group->addAction(p.SetPenColorAct)->setCheckable(true);
+       PenColorGroup->addAction(p.SetPenColorAct)->setCheckable(true);
        p.SetPenColorAct->setData(QVariant(p.PenColor));
     }
     PenInfo[NumberOfPens-1].SetPenColorAct->setText("MarkerYellow");
@@ -96,11 +97,11 @@ MainWindow::MainWindow()
     ToolIcon.fill(Qt::yellow);
     toolBar->addAction(ToolIcon, "MarkerYellow");
 #endif
-    Group->setExclusive(true);
+    PenColorGroup->setExclusive(true);
     PenInfo[0].SetPenColorAct->setChecked(true);
     scribbleArea->setPenColor(PenInfo[0].PenColor);
 
-    Group = new QActionGroup(this);
+    QActionGroup *Group = new QActionGroup(this);
     Group->setExclusive(true);
     ToolIcon.fill(Qt::yellow);
     QPainter IconPainter(&ToolIcon);
@@ -148,7 +149,8 @@ MainWindow::MainWindow()
             this, &MainWindow::SetVisibilityIndicatorOfLayer);
     connect(scribbleArea, &ScribbleArea::ShowOverviewChanged,
             this, &MainWindow::ShowOverviewChanged);
-
+    connect(scribbleArea, &ScribbleArea::SwitchToNextPenColor,
+              this, &MainWindow::SwitchToNextPenColor);
 
 
   //
@@ -289,6 +291,19 @@ void MainWindow::penColor()
     if (newColor.isValid())
         scribbleArea->setPenColor(newColor);
 }
+
+void MainWindow::SwitchToNextPenColor()
+//! [7] //! [8]
+{
+   int ActiveColor = PenColorGroup->actions().indexOf(PenColorGroup->checkedAction());
+   ActiveColor++;
+   if (ActiveColor >= PenColorGroup->actions().length()) {
+      ActiveColor = 0;
+   }
+   PenColorGroup->actions().at(ActiveColor)->setChecked(true);
+   PenColorGroup->actions().at(ActiveColor)->trigger();
+}
+
 //! [8]
 void MainWindow::SetMatchingPostitColor(QColor &newColor)
 {

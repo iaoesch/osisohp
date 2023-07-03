@@ -826,6 +826,10 @@ void ScribbleArea::keyPressEvent(QKeyEvent *event)
          StateMachine.HandleKeyEventSM(DatabaseClass::PasteEvent::MakeSmaller);
          break;
 
+      case Qt::Key_C:
+         emit (SwitchToNextPenColor());
+         break;
+
    }
 }
 

@@ -126,6 +126,7 @@ signals:
     void NumberOfLayerChanged(int NumberOfLayers);
     void SetVisibilityIndicatorOfLayer(int Layer, bool Visibility);
     void ShowOverviewChanged(bool OverviewEnabled);
+    void SwitchToNextPenColor();
 
 protected:
     void mousePressEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
