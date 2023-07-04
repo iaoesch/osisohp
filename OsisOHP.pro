@@ -5,6 +5,7 @@ HEADERS       = mainwindow.h \
    DebugStream.hpp \
    Settings.hpp \
    SettingsDialog.h \
+   ValueGroupDescriptor.h \
    animatedcursorclass.h \
    databaseclass.h \
    gesturetracker.hpp \

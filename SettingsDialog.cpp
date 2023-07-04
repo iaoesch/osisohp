@@ -59,7 +59,7 @@ SettingsDialog::SettingsDialog(TabDialogDescriptor &Descriptor, QWidget *parent)
 
     tabWidget = new QTabWidget;
     for (auto &Tab: Descriptor.getTabs()) {
-       tabWidget->addTab(new GeneralTab(Tab), QString::fromStdString(Tab.getTabName()));
+       tabWidget->addTab(new GeneralTab(Tab), QString::fromStdString(Tab.GetGroupName()));
     }
 //! [0]
 
@@ -93,7 +93,7 @@ overloaded(Ts...) -> overloaded<Ts...>;
 
 
 //! [6]
-GeneralTab::GeneralTab(const TabDescriptor &Descriptor, QWidget *parent)
+GeneralTab::GeneralTab(const GroupDescriptor &Descriptor, QWidget *parent)
     : QWidget(parent)
 {
    QVBoxLayout *mainLayout = new QVBoxLayout;
@@ -122,6 +122,7 @@ GeneralTab::GeneralTab(const TabDescriptor &Descriptor, QWidget *parent)
                QLineEdit *Edit = new QLineEdit(QString::number(d.GetValue<int>()));
                Edit->setToolTip(QString::fromStdString(d.HelpText));
                Edit->setValidator( new QIntValidator(d.GetLimits<int>().Lower, d.GetLimits<int>().Upper, this));
+               Edit->addAction(new QAction("x"));
                HBoxLayout->addWidget(Edit);
                DescriptorMap[Edit] = &d;
                connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
@@ -233,16 +234,11 @@ void TabDialogDescriptor::Update()
    }
 }
 
-TabDescriptor &TabDialogDescriptor::AddTab(std::string Title)
+GroupDescriptor &TabDialogDescriptor::AddTab(std::string Title)
 {
-   Tabs.push_back(TabDescriptor(Title));
+   Tabs.push_back(GroupDescriptor(Title));
    return Tabs.back();
 }
 
 
-void TabDescriptor::Update()
-{
-   for(auto &e: Entries) {
-      e.Update();
-   }
-}
+
