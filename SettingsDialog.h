@@ -97,6 +97,7 @@ private slots:
     void NewInput();
     void NewState(int State);
 
+    void DefaultClicked();
 private:
     std::map<QWidget *, const EntityDescriptor *> DescriptorMap;
 

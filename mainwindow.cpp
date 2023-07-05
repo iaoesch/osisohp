@@ -741,6 +741,7 @@ void MainWindow::readSettings()
             d.SetValue<std::string>(SettingsManager.value(QString::fromStdString(d.Title), QVariant(QString::fromStdString(d.GetDefaultValue<std::string>()))).value<std::string>());
        }
    }
+   MySettings.Update();
 
    SettingsManager.endGroup();
 
