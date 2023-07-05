@@ -103,9 +103,11 @@ GeneralTab::GeneralTab(const GroupDescriptor &Descriptor, QWidget *parent)
       QLabel *NameLabel = new QLabel(QString::fromStdString(d.Title));
       QHBoxLayout *HBoxLayout = new QHBoxLayout;
       HBoxLayout->addWidget(NameLabel);
-      QPixmap Icon(15,15);
-      Icon.fill(QColor(Qt::red));
-      auto m_ShowPwsAction = new QAction(QIcon(Icon), "Defaults");
+      QPixmap Original(":/images/Restore.png");
+      QPixmap Icon = Original.scaled(20,20);
+      //QPixmap Icon(15,15);
+      //Icon.fill(QColor(Qt::red));
+      auto m_ShowPwsAction = new QAction(QIcon(Original), "Defaults");
 
       switch(d.CurrentTypeId()) {
          case EntityDescriptor::IdOf<bool>():
@@ -118,6 +120,9 @@ GeneralTab::GeneralTab(const GroupDescriptor &Descriptor, QWidget *parent)
                m_ShowPwsAction->setData(QVariant::fromValue(CheckBox));
                CheckBox->addAction(m_ShowPwsAction);
                HBoxLayout->addWidget(CheckBox);
+               auto ToolButton = new QToolButton();
+               ToolButton->setDefaultAction(m_ShowPwsAction);
+               HBoxLayout->addWidget(ToolButton);
                DescriptorMap[CheckBox] = &d;
                connect(CheckBox, &QCheckBox::stateChanged, this, &GeneralTab::NewState);
 
@@ -215,7 +220,13 @@ void GeneralTab::DefaultClicked()
          case EntityDescriptor::IdOf<std::string>():
             edit->setText(QString::fromStdString(Val->GetDefaultValue<std::string>()));
             Val->SetValue<std::string>(Val->GetDefaultValue<std::string>());
-
+      }
+   } else {
+      QCheckBox* Checkbox = Action->data().value<QCheckBox*>();
+      if (Checkbox) {
+         auto Val = DescriptorMap[Checkbox];
+         Checkbox->setChecked(Val->GetDefaultValue<bool>());
+         Val->SetValue<bool>(Val->GetDefaultValue<bool>());
       }
    }
 }

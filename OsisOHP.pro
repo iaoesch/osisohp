@@ -31,6 +31,7 @@ resources.files = \
     images/HandWithPen.png \
     images/HandWithEraser.png \
     images/HandWithSponge.png \
+    images/Restore.png \
     images/spongeicon.png\
     images/MousPointers/pencil.png\
     images/MousPointers/all-scroll.png \
