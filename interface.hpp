@@ -96,7 +96,6 @@ public:
    void RestartAnimatedCursor() {
       MyCursorManager->RestartAnimatedCursor();
    }
-   void setSpeciallCursor();
 
 
 };

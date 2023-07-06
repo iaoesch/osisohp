@@ -232,7 +232,7 @@ public:
 
    void UseSpongeAsEraser(bool SpongeMode) {Context.SpongeAsEraser = SpongeMode;}
 
-
+   void setDirectSelect(bool Mode) {Context.SelectPostitsDirectly = Mode;}
    void SetNewState(StateBaseClass *NewState);
    enum PointerType {NONE, DRAWER, ERASER, WIPER};
    PointerType  PointerTypeToShow();

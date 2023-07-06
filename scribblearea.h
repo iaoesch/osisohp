@@ -45,14 +45,14 @@
 #include <QImage>
 #include <QPoint>
 #include <QWidget>
-#include <QTimer>
+//#include <QTimer>
 #include <QPolygon>
 #include <QTouchEvent>
 #include <list>
 
 #include "box.hpp"
 #include "Settings.hpp"
-#include "animatedcursorclass.h"
+//#include "animatedcursorclass.h"
 
 #include "gesturetracker.hpp"
 
@@ -72,10 +72,8 @@ class ScribbleArea : public QWidget
     friend class GuiInterface;
     DatabaseClass MyDatas;
     CursorManager MyCursorManager;
-#ifdef USE_NEW_STATEMACHINE
     GuiInterface Interface;
     ControllingStateMachine StateMachine;
-#endif
     bool ShowDebugCrosshair;
 
 public:
@@ -87,7 +85,7 @@ public:
     bool ExportImage(const QString &fileName, const char *fileFormat);
     void setPenColor(const QColor &newColor);
     void setPenWidth(int newWidth);
-    void setDirectSelect(bool Mode) {SelectPostitsDirectly = Mode;}
+    void setDirectSelect(bool Mode) {StateMachine.setDirectSelect(Mode);}
     void setShowPostitsFrame(bool Mode) {MyDatas.setShowPostitsFrame(Mode); update();}
     void setShowCursors(bool Mode) { MyCursorManager.TestCursors(Mode); ShowDebugCrosshair = Mode;}
 
@@ -118,10 +116,8 @@ public slots:
     void print();
     void HandleToolAction(QAction *action);
     void HandleLayerVisibilityAction(QAction *action);
-#ifndef USE_NEW_STATEMACHINE
-    void timeoutSM();
-#endif
     void CopyImageToClipboard();
+
 signals:
     void NumberOfLayerChanged(int NumberOfLayers);
     void SetVisibilityIndicatorOfLayer(int Layer, bool Visibility);
@@ -139,101 +135,30 @@ protected:
 protected:
     void keyPressEvent(QKeyEvent *event) override;
 
-
 private slots:
-    void PointerTimeout();
-    void AnimatedPointerTimetick();
+  //  void PointerTimeout();
+  //  void AnimatedPointerTimetick();
 private:
 
-
-
     SettingClass &Settings;
-    bool SelectPostitsDirectly;
+   // bool SelectPostitsDirectly;
 
-#ifdef USE_NEW_STATEMACHINE
-#else
-    QPoint StartPositionSelectedPostIt;
-
-    enum ScribblingState {
-       Idle,
-       WaitingToLeaveJitterProtectionForDrawing,
-       WaitingToLeaveJitterProtectionWithSelectedAreaForMoving,
-       WaitingToLeaveJitterProtectionForScrolling,
-       WaitingToLeaveJitterProtectionWithCreatedPostitForMoving,
-       WaitingToLeaveJitterProtectionWithSelectedPostitForMoving,
-       Drawing,
-       DrawingPaused,
-       DrawingFillRequested,
-       MovingSelection,
-       MovingSelectionPaused,
-       MovingPostit,
-       ScrollingDrawingArea,
-       WaitingForTouchScrolling,
-       TouchScrollingDrawingArea
-    };
-    enum ScribblingState State;
-
-
-     bool DownInsideObject;
-     bool Showeraser;
-
-    //QPointF SelectedPoint;
-    QPointF ScrollingLastPosition;
-    QPointF ScrollingOldOrigin;
-    QPointF FillPolygonStartPosition;
-
-
-    QPointF LastPointerPosition;
-    bool    ShowPointer;
-
-    GestureTrackerClass Tracker;
-#endif
     QImage PointerShape;
     QImage EraserShape;
     QImage SpongeShape;
 
-#if 1
-    AnimatedCursorClass AnimatedCursor;
-    int CurrentAnimatedPointerPercentage;
-#else
-    static const int NumberOfFrames = 30;
-    QPixmap AnimatedPointerCursor[NumberOfFrames];
-    int CurrentAnimatedPointerShape;
-#endif
-    void SetSpecialCursor();
-
- /*
-    int CopyTimeout;
-    int GestureTimeout;
-    int PostItTimeout;
-    int SelectTimeout;*/
-
+//    AnimatedCursorClass AnimatedCursor;
+//    int CurrentAnimatedPointerPercentage;
+//    void SetSpecialCursor();
 
     QPointF LastTablettMovePosition;
 
-    QTimer AnimatedPointerTimer;
+    //QTimer AnimatedPointerTimer;
 
-
-
-#ifdef USE_NEW_STATEMACHINE
-#else
-    QTimer MyTimer;
-    QTimer PointerTimer;
-     void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
-    void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
-    void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
-    void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
-    void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
-    void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
-#endif
     bool TouchEvent(QTouchEvent *event);
 public:
     void UpdateGUI(const std::vector<bool> &Visibilities);
-#ifdef USE_NEW_STATEMACHINE
     bool IsInSelectingState() {return StateMachine.IsInSelectingState();}
-#else
-    bool IsInSelectingState() {return ((State == MovingSelection)||(State == WaitingToLeaveJitterProtectionWithSelectedAreaForMoving)||(State == MovingSelectionPaused));}
-#endif
 };
 //! [0]
 

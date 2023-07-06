@@ -374,7 +374,6 @@ void MainWindow::penWidth()
 void MainWindow::DirectSelect()
 //! [9] //! [10]
 {
-
     scribbleArea->setDirectSelect(DirectPostitSelectAct->isChecked());
 }
 
