@@ -48,14 +48,14 @@
 //! [0]
 MainWindow::MainWindow()
 {
-    SetWhiteBoardColors();
+    SetOHPColors();
     readSettings();
     scribbleArea = new ScribbleArea(Settings);
     setCentralWidget(scribbleArea);
     QWidget::setAttribute(Qt::WA_AcceptTouchEvents);
     //QWidget::setAttribute(Qt::WA_TouchPadAcceptSingleTouchEvents);
     grabGesture(Qt::PanGesture);
-    QActionGroup *Group = new QActionGroup(this);
+    PenColorGroup = new QActionGroup(this);
     createActions();
     createMenus();
     QToolBar * toolBar= new QToolBar("Main Window Tool Bar");
@@ -63,10 +63,11 @@ MainWindow::MainWindow()
 
     QPixmap ToolIcon(15, 15);
 #if 1
+    int PenId = 0;
     for (auto &p: PenInfo) {
        ToolIcon.fill(p.PenColor);
        p.SetPenColorAct = toolBar->addAction(QIcon(ToolIcon), "PenColor");
-       Group->addAction(p.SetPenColorAct)->setCheckable(true);
+       PenColorGroup->addAction(p.SetPenColorAct)->setCheckable(true);
        p.SetPenColorAct->setData(QVariant(p.PenColor));
     }
     PenInfo[NumberOfPens-1].SetPenColorAct->setText("MarkerYellow");
@@ -96,11 +97,11 @@ MainWindow::MainWindow()
     ToolIcon.fill(Qt::yellow);
     toolBar->addAction(ToolIcon, "MarkerYellow");
 #endif
-    Group->setExclusive(true);
+    PenColorGroup->setExclusive(true);
     PenInfo[0].SetPenColorAct->setChecked(true);
     scribbleArea->setPenColor(PenInfo[0].PenColor);
 
-    Group = new QActionGroup(this);
+    QActionGroup *Group = new QActionGroup(this);
     Group->setExclusive(true);
     ToolIcon.fill(Qt::yellow);
     QPainter IconPainter(&ToolIcon);
@@ -148,7 +149,8 @@ MainWindow::MainWindow()
             this, &MainWindow::SetVisibilityIndicatorOfLayer);
     connect(scribbleArea, &ScribbleArea::ShowOverviewChanged,
             this, &MainWindow::ShowOverviewChanged);
-
+    connect(scribbleArea, &ScribbleArea::SwitchToNextPenColor,
+              this, &MainWindow::SwitchToNextPenColor);
 
 
   //
@@ -289,6 +291,19 @@ void MainWindow::penColor()
     if (newColor.isValid())
         scribbleArea->setPenColor(newColor);
 }
+
+void MainWindow::SwitchToNextPenColor()
+//! [7] //! [8]
+{
+   int ActiveColor = PenColorGroup->actions().indexOf(PenColorGroup->checkedAction());
+   ActiveColor++;
+   if (ActiveColor >= PenColorGroup->actions().length()) {
+      ActiveColor = 0;
+   }
+   PenColorGroup->actions().at(ActiveColor)->setChecked(true);
+   PenColorGroup->actions().at(ActiveColor)->trigger();
+}
+
 //! [8]
 void MainWindow::SetMatchingPostitColor(QColor &newColor)
 {
@@ -525,12 +540,12 @@ void MainWindow::ShowSettings()
    } MyLocalSettings;
     TabDialogDescriptor Descriptor("Test");
     Descriptor.AddTab("Tab1");
-    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value1);
-    Descriptor.GetTab().AddEntry("Val 2", "Help for Val 2", MyLocalSettings.Value2);
-    Descriptor.GetTab().AddEntry("Val 3", "Help for Val 3", MyLocalSettings.Value3);
-    Descriptor.GetTab().AddEntry("Val 4", "Help for Val 4", MyLocalSettings.Value4);
+    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value1, false);
+    Descriptor.GetTab().AddEntry("Val 2", "Help for Val 2", MyLocalSettings.Value2, 0);
+    Descriptor.GetTab().AddEntry("Val 3", "Help for Val 3", MyLocalSettings.Value3, 0.0);
+    Descriptor.GetTab().AddEntry("Val 4", "Help for Val 4", MyLocalSettings.Value4, std::string(""));
     Descriptor.AddTab("Tab2");
-    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value5);
+    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value5, std::string(""));
     Descriptor.AddTab("Timings");
     this->Settings.getSettings(Descriptor.GetTab());
 
@@ -661,47 +676,92 @@ bool MainWindow::SaveFile(const QByteArray &fileFormat)
 
 void MainWindow::writeSettings()
 {
-    QSettings settings("OESCH", "OverheadProjector");
+    QSettings SettingsManager("OESCH", "OverheadProjector");
+    GroupDescriptor MySettings("timings");
+    Settings.getSettings(MySettings);
+    SettingsManager.beginGroup("timings");
 
-    settings.beginGroup("Drawing");
-    settings.beginWriteArray("Pens");
-    for (qsizetype i = 0; i < NumberOfPens; ++i) {
-        settings.setArrayIndex(i);
-        settings.setValue("Color", PenInfo[i].PenColor);
+    for (auto &d: MySettings.getEntries()) {
+       // Switch on type in variant
+       switch(d.CurrentTypeId()) {
+          case EntityDescriptor::IdOf<bool>():
+                SettingsManager.setValue(QString::fromStdString(d.Title), d.GetValue<bool>());
+          break;
+          case EntityDescriptor::IdOf<int>():
+                SettingsManager.setValue(QString::fromStdString(d.Title), d.GetValue<int>());
+             break;
+          case EntityDescriptor::IdOf<double>():
+                SettingsManager.setValue(QString::fromStdString(d.Title), d.GetValue<double>());
+          break;
+          case EntityDescriptor::IdOf<std::string>():
+                SettingsManager.setValue(QString::fromStdString(d.Title), QString::fromStdString(d.GetValue<std::string>()));
+        }
     }
-    settings.endArray();
-    settings.setValue("BackgroundColor", BackgroundColor);
-    settings.setValue("ScrollHintColor", ScrollHintColor);
-    settings.setValue("SelectionHintColor", SelectionHintColor);
-    settings.setValue("PostItBackgroundColor", PostItBackgroundColor);
 
-    settings.beginGroup("SensorNames");
-    settings.endGroup();
+    SettingsManager.endGroup();
 
-    settings.endGroup();
+    SettingsManager.beginGroup("Drawing");
+    SettingsManager.beginWriteArray("Pens");
+    for (qsizetype i = 0; i < NumberOfPens; ++i) {
+        SettingsManager.setArrayIndex(i);
+        SettingsManager.setValue("Color", PenInfo[i].PenColor);
+    }
+    SettingsManager.endArray();
+    SettingsManager.setValue("BackgroundColor", BackgroundColor);
+    SettingsManager.setValue("ScrollHintColor", ScrollHintColor);
+    SettingsManager.setValue("SelectionHintColor", SelectionHintColor);
+    SettingsManager.setValue("PostItBackgroundColor", PostItBackgroundColor);
+
+    SettingsManager.beginGroup("SensorNames");
+    SettingsManager.endGroup();
+
+    SettingsManager.endGroup();
 }
 
 void MainWindow::readSettings()
 {
-   QSettings settings("OESCH", "OverheadProjector");
+   QSettings SettingsManager("OESCH", "OverheadProjector");
+   GroupDescriptor MySettings("timings");
+   Settings.getSettings(MySettings);
+   SettingsManager.beginGroup("timings");
 
-    settings.beginGroup("Drawing");
-    int size = settings.beginReadArray("Pens");
+   for (auto &d: MySettings.getEntries()) {
+      // Switch on type in variant
+      switch(d.CurrentTypeId()) {
+         case EntityDescriptor::IdOf<bool>():
+               d.SetValue<bool>(SettingsManager.value(QString::fromStdString(d.Title), QVariant(d.GetDefaultValue<bool>())).value<bool>());
+         break;
+         case EntityDescriptor::IdOf<int>():
+            d.SetValue<int>(SettingsManager.value(QString::fromStdString(d.Title), QVariant(d.GetDefaultValue<int>())).value<int>());
+            break;
+         case EntityDescriptor::IdOf<double>():
+            d.SetValue<double>(SettingsManager.value(QString::fromStdString(d.Title), QVariant(d.GetDefaultValue<double>())).value<double>());
+         break;
+         case EntityDescriptor::IdOf<std::string>():
+            d.SetValue<std::string>(SettingsManager.value(QString::fromStdString(d.Title), QVariant(QString::fromStdString(d.GetDefaultValue<std::string>()))).value<std::string>());
+       }
+   }
+   MySettings.Update();
+
+   SettingsManager.endGroup();
+
+    SettingsManager.beginGroup("Drawing");
+    int size = SettingsManager.beginReadArray("Pens");
     for (int i = 0; i < size; ++i) {
-        settings.setArrayIndex(i);
-        if (settings.value("Color").canConvert<QString>()) {
-            PenInfo[i].PenColor = settings.value("Color").value<QColor>();
+        SettingsManager.setArrayIndex(i);
+        if (SettingsManager.value("Color").canConvert<QString>()) {
+            PenInfo[i].PenColor = SettingsManager.value("Color").value<QColor>();
         }
     }
-    settings.endArray();
-    BackgroundColor = settings.value("BackgroundColor").value<QColor>();
-    ScrollHintColor = settings.value("ScrollHintColor").value<QColor>();
-    SelectionHintColor = settings.value("SelectionHintColor").value<QColor>();
-    PostItBackgroundColor = settings.value("PostItBackgroundColor").value<QColor>();
+    SettingsManager.endArray();
+    BackgroundColor = SettingsManager.value("BackgroundColor").value<QColor>();
+    ScrollHintColor = SettingsManager.value("ScrollHintColor").value<QColor>();
+    SelectionHintColor = SettingsManager.value("SelectionHintColor").value<QColor>();
+    PostItBackgroundColor = SettingsManager.value("PostItBackgroundColor").value<QColor>();
 
-    settings.beginGroup("SensorNames");
-    settings.endGroup();
-    settings.endGroup();
+    SettingsManager.beginGroup("SensorNames");
+    SettingsManager.endGroup();
+    SettingsManager.endGroup();
 }
 
 

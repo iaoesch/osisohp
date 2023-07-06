@@ -59,7 +59,7 @@ SettingsDialog::SettingsDialog(TabDialogDescriptor &Descriptor, QWidget *parent)
 
     tabWidget = new QTabWidget;
     for (auto &Tab: Descriptor.getTabs()) {
-       tabWidget->addTab(new GeneralTab(Tab), QString::fromStdString(Tab.getTabName()));
+       tabWidget->addTab(new GeneralTab(Tab), QString::fromStdString(Tab.GetGroupName()));
     }
 //! [0]
 
@@ -93,7 +93,7 @@ overloaded(Ts...) -> overloaded<Ts...>;
 
 
 //! [6]
-GeneralTab::GeneralTab(const TabDescriptor &Descriptor, QWidget *parent)
+GeneralTab::GeneralTab(const GroupDescriptor &Descriptor, QWidget *parent)
     : QWidget(parent)
 {
    QVBoxLayout *mainLayout = new QVBoxLayout;
@@ -103,6 +103,12 @@ GeneralTab::GeneralTab(const TabDescriptor &Descriptor, QWidget *parent)
       QLabel *NameLabel = new QLabel(QString::fromStdString(d.Title));
       QHBoxLayout *HBoxLayout = new QHBoxLayout;
       HBoxLayout->addWidget(NameLabel);
+      QPixmap Original(":/images/Restore.png");
+      QPixmap Icon = Original.scaled(20,20);
+      //QPixmap Icon(15,15);
+      //Icon.fill(QColor(Qt::red));
+      auto m_ShowPwsAction = new QAction(QIcon(Original), "Defaults");
+
       switch(d.CurrentTypeId()) {
          case EntityDescriptor::IdOf<bool>():
             {
@@ -111,7 +117,12 @@ GeneralTab::GeneralTab(const TabDescriptor &Descriptor, QWidget *parent)
                   CheckBox->setChecked(true);
                }
                CheckBox->setToolTip(QString::fromStdString(d.HelpText));
+               m_ShowPwsAction->setData(QVariant::fromValue(CheckBox));
+               CheckBox->addAction(m_ShowPwsAction);
                HBoxLayout->addWidget(CheckBox);
+               auto ToolButton = new QToolButton();
+               ToolButton->setDefaultAction(m_ShowPwsAction);
+               HBoxLayout->addWidget(ToolButton);
                DescriptorMap[CheckBox] = &d;
                connect(CheckBox, &QCheckBox::stateChanged, this, &GeneralTab::NewState);
 
@@ -122,6 +133,8 @@ GeneralTab::GeneralTab(const TabDescriptor &Descriptor, QWidget *parent)
                QLineEdit *Edit = new QLineEdit(QString::number(d.GetValue<int>()));
                Edit->setToolTip(QString::fromStdString(d.HelpText));
                Edit->setValidator( new QIntValidator(d.GetLimits<int>().Lower, d.GetLimits<int>().Upper, this));
+               m_ShowPwsAction->setData(QVariant::fromValue(Edit));
+               Edit->addAction(m_ShowPwsAction, QLineEdit::TrailingPosition);
                HBoxLayout->addWidget(Edit);
                DescriptorMap[Edit] = &d;
                connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
@@ -133,6 +146,8 @@ GeneralTab::GeneralTab(const TabDescriptor &Descriptor, QWidget *parent)
                QLineEdit *Edit = new QLineEdit(QString::number(d.GetValue<double>()));
                Edit->setToolTip(QString::fromStdString(d.HelpText));
                Edit->setValidator( new QDoubleValidator(d.GetLimits<double>().Lower, d.GetLimits<double>().Upper, 4, this));
+               m_ShowPwsAction->setData(QVariant::fromValue(Edit));
+               Edit->addAction(m_ShowPwsAction, QLineEdit::TrailingPosition);
                HBoxLayout->addWidget(Edit);
                DescriptorMap[Edit] = &d;
                connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
@@ -142,11 +157,14 @@ GeneralTab::GeneralTab(const TabDescriptor &Descriptor, QWidget *parent)
             {
                QLineEdit *Edit = new QLineEdit(QString::fromStdString(d.GetValue<std::string>()));
                Edit->setToolTip(QString::fromStdString(d.HelpText));
+               m_ShowPwsAction->setData(QVariant::fromValue(Edit));
+               Edit->addAction(m_ShowPwsAction, QLineEdit::TrailingPosition);
                HBoxLayout->addWidget(Edit);
                DescriptorMap[Edit] = &d;
                connect(Edit, &QLineEdit::editingFinished, this, &GeneralTab::NewInput);
             }
       }
+      connect(m_ShowPwsAction, &QAction::triggered, this, &GeneralTab::DefaultClicked);
 
       mainLayout->addLayout(HBoxLayout);
 
@@ -178,6 +196,41 @@ void GeneralTab::NewInput()
       }
    }
 }
+
+
+void GeneralTab::DefaultClicked()
+{
+   QAction* Action = qobject_cast<QAction*>(sender());
+   QLineEdit* edit = Action->data().value<QLineEdit*>();
+   if (edit) {
+      // Do something with QLineEdit
+      auto Val = DescriptorMap[edit];
+      switch(Val->CurrentTypeId()) {
+         case EntityDescriptor::IdOf<bool>():
+            //Val->SetValue<bool>(false);
+            break;
+         case EntityDescriptor::IdOf<int>():
+            edit->setText(QString::number(Val->GetDefaultValue<int>()));
+            Val->SetValue<int>(Val->GetDefaultValue<int>());
+            break;
+         case EntityDescriptor::IdOf<double>():
+            edit->setText(QString::number(Val->GetDefaultValue<double>()));
+            Val->SetValue<double>(Val->GetDefaultValue<double>());
+            break;
+         case EntityDescriptor::IdOf<std::string>():
+            edit->setText(QString::fromStdString(Val->GetDefaultValue<std::string>()));
+            Val->SetValue<std::string>(Val->GetDefaultValue<std::string>());
+      }
+   } else {
+      QCheckBox* Checkbox = Action->data().value<QCheckBox*>();
+      if (Checkbox) {
+         auto Val = DescriptorMap[Checkbox];
+         Checkbox->setChecked(Val->GetDefaultValue<bool>());
+         Val->SetValue<bool>(Val->GetDefaultValue<bool>());
+      }
+   }
+}
+
 void GeneralTab::NewState(int State)
 {
    QCheckBox* Checkbox = qobject_cast<QCheckBox*>(sender());
@@ -233,16 +286,11 @@ void TabDialogDescriptor::Update()
    }
 }
 
-TabDescriptor &TabDialogDescriptor::AddTab(std::string Title)
+GroupDescriptor &TabDialogDescriptor::AddTab(std::string Title)
 {
-   Tabs.push_back(TabDescriptor(Title));
+   Tabs.push_back(GroupDescriptor(Title));
    return Tabs.back();
 }
 
 
-void TabDescriptor::Update()
-{
-   for(auto &e: Entries) {
-      e.Update();
-   }
-}
+

@@ -29,7 +29,6 @@
 /* Class constant declaration  */
 
 /* Class Type declaration      */
-class TabDescriptor;
 
 /* Class data declaration      */
 
@@ -38,6 +37,7 @@ class SettingClass {
    struct SettingInfo {
       std::string Name;
       std::string Helptext;
+      EntityDescriptor::VariantType DefaultValue;
    };
 
    std::map<void *, SettingInfo> Infos;
@@ -58,14 +58,20 @@ public:
    int    EraserSize = 2;
    int    SpongeSize = 15;
 
-   void getSettings(TabDescriptor &Descriptor);
+   void getSettings(GroupDescriptor &Descriptor);
    SettingClass();
    void SetDefaultValues();
 private:
    template<class U>
-   void AddSettingsEntry(TabDescriptor &Descriptor, U &Value) {
-      Descriptor.AddEntry(Infos[&Value].Name, Infos[&Value].Helptext, Value);
+   void AddSettingsEntry(GroupDescriptor &Descriptor, U &Value) {
+      Descriptor.AddEntry(Infos[&Value].Name, Infos[&Value].Helptext, Value, std::get<U>(Infos[&Value].DefaultValue));
    }
+
+   template<class U>
+   void InitInfoEntry(U *Value, std::string Name, std::string HelpText) {
+      Infos[Value] = {Name, HelpText, *Value};
+   }
+
 };
 /*****************************************************************************/
 /*  End Header  : Settings                                           */

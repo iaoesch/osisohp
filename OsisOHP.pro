@@ -5,6 +5,7 @@ HEADERS       = mainwindow.h \
    DebugStream.hpp \
    Settings.hpp \
    SettingsDialog.h \
+   ValueGroupDescriptor.h \
    animatedcursorclass.h \
    databaseclass.h \
    gesturetracker.hpp \
@@ -30,6 +31,7 @@ resources.files = \
     images/HandWithPen.png \
     images/HandWithEraser.png \
     images/HandWithSponge.png \
+    images/Restore.png \
     images/spongeicon.png\
     images/MousPointers/pencil.png\
     images/MousPointers/all-scroll.png \

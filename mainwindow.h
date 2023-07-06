@@ -46,6 +46,7 @@
 #include "Settings.hpp"
 
 class ScribbleArea;
+class QActionGroup;
 
 //! [0]
 class MainWindow : public QMainWindow
@@ -77,6 +78,7 @@ private slots:
     void createLayerActions(int Number);
     void SetVisibilityIndicatorOfLayer(int Layer, bool Visibility);
     void ShowOverviewChanged(bool OverviewEnabled);
+    void SwitchToNextPenColor();
 
     void ShowSettings();
 
@@ -107,6 +109,7 @@ private:
        QAction *SetPenColorAct;
        QColor  PenColor;
     };
+    QActionGroup *PenColorGroup;
 
     PenInfo PenInfo[NumberOfPens];
     QColor BackgroundColor;

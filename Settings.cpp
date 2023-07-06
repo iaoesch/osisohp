@@ -2,7 +2,7 @@
 #include "SettingsDialog.h"
 
 
-void SettingClass::getSettings(TabDescriptor &Descriptor)
+void SettingClass::getSettings(GroupDescriptor &Descriptor)
 {
    AddSettingsEntry(Descriptor, Touchscaling);
    AddSettingsEntry(Descriptor, DirectSelectTimeout);
@@ -38,21 +38,21 @@ void SettingClass::getSettings(TabDescriptor &Descriptor)
 SettingClass::SettingClass()
 {
    SetDefaultValues();
-   Infos[&Touchscaling] = {"Touchscaling", "Lausanne: Mobilis 2 Zonen Badi Fleurie Wandern Uferweg"};
-   Infos[&DirectSelectTimeout] = {"DirectSelectTimeout", "DirectSelectTimeout"};
-   Infos[&GestureTimeout] = {"GestureTimeout", "GestureTimeout"};
-   Infos[&GoingToFillTimeout] = {"GoingToFillTimeout", "GoingToFillTimeoutGoingToFillTimeout"};
-   Infos[&CancelFillTimeout] = {"CancelFillTimeout", "CancelFillTimeout"};
-   Infos[&GoingToKillTimeout] = {"GoingToKillTimeout", "GoingToKillTimeout"};
-   Infos[&CopyTimeout] = {"CopyTimeout", "CopyTimeout"};
-   Infos[&SelectTimeout] = {"SelectTimeout", "SelectTimeout"};
-   Infos[&PostItTimeout] = {"PostItTimeout", "PostItTimeout"};
-   Infos[&MovePostitPauseTimeout] = {"MovePostitPauseTimeout", "MovePostitPauseTimeout"};
-   Infos[&PostitCopyTimeout] = {"PostitCopyTimeout", "PostitCopyTimeout"};
-   Infos[&DeletePostItTimeout] = {"DeletePostItTimeout", "DeletePostItTimeout"};
-   Infos[&PointerHoldon] = {"PointerHoldon", "PointerHoldon"};
-   Infos[&EraserSize] = {"EraserSize", "EraserSize"};
-   Infos[&SpongeSize] = {"SpongeSize", "SpongeSize"};
+   InitInfoEntry(&Touchscaling, "Touchscaling", "Lausanne: Mobilis 2 Zonen Badi Fleurie Wandern Uferweg");
+   InitInfoEntry(&DirectSelectTimeout, "DirectSelectTimeout", "DirectSelectTimeout");
+   InitInfoEntry(&GestureTimeout, "GestureTimeout", "GestureTimeout");
+   InitInfoEntry(&GoingToFillTimeout, "GoingToFillTimeout", "GoingToFillTimeoutGoingToFillTimeout");
+   InitInfoEntry(&CancelFillTimeout, "CancelFillTimeout", "CancelFillTimeout");
+   InitInfoEntry(&GoingToKillTimeout, "GoingToKillTimeout", "GoingToKillTimeout");
+   InitInfoEntry(&CopyTimeout, "CopyTimeout", "CopyTimeout");
+   InitInfoEntry(&SelectTimeout, "SelectTimeout", "SelectTimeout");
+   InitInfoEntry(&PostItTimeout, "PostItTimeout", "PostItTimeout");
+   InitInfoEntry(&MovePostitPauseTimeout, "MovePostitPauseTimeout", "MovePostitPauseTimeout");
+   InitInfoEntry(&PostitCopyTimeout, "PostitCopyTimeout", "PostitCopyTimeout");
+   InitInfoEntry(&DeletePostItTimeout, "DeletePostItTimeout", "DeletePostItTimeout");
+   InitInfoEntry(&PointerHoldon, "PointerHoldon", "PointerHoldon");
+   InitInfoEntry(&EraserSize, "EraserSize", "EraserSize");
+   InitInfoEntry(&SpongeSize, "SpongeSize", "SpongeSize");
 
 }
 
@@ -64,9 +64,9 @@ void SettingClass::SetDefaultValues()
    CopyTimeout = 500 * DebugFactor;
    DeletePostItTimeout = 2000 * DebugFactor;
    GestureTimeout = 800 * DebugFactor;
-   GoingToFillTimeout = 800*4;
-   CancelFillTimeout = 800*4;
-   GoingToKillTimeout = 1000*4;
+   GoingToFillTimeout = 800*DebugFactor;
+   CancelFillTimeout = 800*DebugFactor;
+   GoingToKillTimeout = 1000*DebugFactor;
    SelectTimeout = 500 * DebugFactor;
    PostItTimeout = 1000 * DebugFactor;
    MovePostitPauseTimeout = 500 * DebugFactor;
