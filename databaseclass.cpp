@@ -287,23 +287,6 @@ void DatabaseClass::EraseLineTo(const QPointF &endPoint, double Pressure)
     lastPointDrawn = endPoint;
 }
 
-/*
-void ScribbleArea::drawrectangle(const BoundingBoxClass &Region)
-//! [17] //! [18]
-{
-    QPainter painter(&image);
-    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                        Qt::RoundJoin));
-    QRect Rectangle(Region.QRectangle());
-    painter.drawRect(Rectangle);
-    modified = true;
-
-    int rad = (myPenWidth / 2) + 2;
-    update(Rectangle.normalized()
-                                     .adjusted(-rad, -rad, +rad, +rad));
-
-}
-*/
 //! [17]
 void DatabaseClass::DrawLastDrawnPicture()
 {
@@ -361,7 +344,7 @@ void DatabaseClass::resizeScrolledImage()
     QSize Size;
 
     GetOffsetAndAdjustOrigin(image, Origin, Offset, Size);
-#if 1
+
     resizeImage(&image, Size, Offset);
     if (!Frozen && !BackgroundImages.empty()) {
        GetOffsetAndAdjustOrigin(*BackgroundImages[0], BackgroundImagesOrigin, Offset, Size);
@@ -371,13 +354,6 @@ void DatabaseClass::resizeScrolledImage()
        }
     }
 
-#else
-    QImage newImage(QSize(NewWidth ,NewHeight), QImage::Format_ARGB32);
-    newImage.fill(TransparentColor);
-    QPainter painter(&newImage);
-    painter.drawImage(QPoint(OffsetX, OffsetY), image);
-    image = newImage;
-#endif
     // Now adjust all postits
     for (auto &&Picture: PostIts) {
        Picture.Position += Offset;
