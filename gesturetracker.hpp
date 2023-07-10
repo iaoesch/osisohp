@@ -42,9 +42,13 @@ class GestureTrackerClass {
    QPointF  StartPosition;
    ulong   StartPositionTimeStamp;
    QPointF  LastPosition;
+   QPointF  LastSpeed;
    ulong   LastPositionTimeStamp;
    QPointF AccumulatedSpeed;
    QPointF AccumulatedSquaredSpeed;
+
+   QPointF AccumulatedAcceleration;
+   QPointF AccumulatedAbsolutesOfAcceleration;
 
    ulong CurrentDistance;
    ulong LastDistance;

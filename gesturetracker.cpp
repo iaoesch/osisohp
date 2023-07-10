@@ -90,11 +90,14 @@ void GestureTrackerClass::StartTracking(QPointF Position, ulong Timestamp)
 
    /* Prepare for gesture detection */
    LastPosition =  Position;
+   LastSpeed = QPointF(0, 0);
    LastPositionTimeStamp = Timestamp;
    StartPosition =  Position;
    StartPositionTimeStamp = Timestamp;
    AccumulatedSpeed = QPoint(0,0);
    AccumulatedSquaredSpeed =  QPoint(0,0);
+   AccumulatedAcceleration = QPointF(0, 0);
+   AccumulatedAbsolutesOfAcceleration = QPointF(0, 0);
    CurrentDistance = 0;
    LastDistance = 0;
    DeltaTimeLastDistance = 0;
@@ -143,16 +146,25 @@ void GestureTrackerClass::Trackmovement(QPointF Position, ulong Timestamp)
    if (TimeSinceLastTracking > 0) {
 
       /* Calculate speed of last move */
-      QPointF GestureSpeed = QPointF(MovementSinceLastTracking) / static_cast<double>(TimeSinceLastTracking);
+      QPointF GestureSpeed = MovementSinceLastTracking / static_cast<double>(TimeSinceLastTracking);
 
       /* Store current position for next round */
       LastPosition =  Position;
       LastPositionTimeStamp = Timestamp;
 
+      /* Calculate acceleration of last move */
+      QPointF SpeedChangeSinceLastTracking = GestureSpeed - LastSpeed;
+      QPointF GestureAcceleration = SpeedChangeSinceLastTracking / static_cast<double>(TimeSinceLastTracking);
+
       /* Accumulate speed and squared speed */
       /* needed to detect shaking */
       AccumulatedSpeed += GestureSpeed;
       AccumulatedSquaredSpeed += QPointF(GestureSpeed.x() * GestureSpeed.x(), GestureSpeed.y()*GestureSpeed.y() );
+
+      /* Accumulate acceleration and absolute acceleration */
+      /* needed to detect shaking */
+      AccumulatedAcceleration += GestureAcceleration;
+      AccumulatedAbsolutesOfAcceleration += QPointF(abs(GestureSpeed.x()), abs(GestureSpeed.y()));
    }
 }
 /*****************************************************************************/
