@@ -243,7 +243,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 {
    DEBUG_LOG << "Mouse: press";
 #ifdef USE_NEW_STATEMACHINE
-   StateMachine.HandlePressEventSM(event->button(), event->pos(), event->timestamp());
+   StateMachine.HandlePressEventSM(event->button(), event->pos(), ControllingStateMachine::Milliseconds(event->timestamp()));
 #else
    HandlePressEventSM(event->button(), event->pos(), event->timestamp());
 #endif
@@ -324,7 +324,7 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
    DEBUG_LOG << "Mouse: move" << event->pointCount() << std::endl;
 #ifdef USE_NEW_STATEMACHINE
-   StateMachine.HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), false, 0);
+   StateMachine.HandleMoveEventSM(event->buttons(), event->pos(), ControllingStateMachine::Milliseconds(event->timestamp()), false, 0);
 #else
    HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), false, 0);
 #endif
@@ -611,7 +611,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
        case QEvent::TabletPress:
         DEBUG_LOG << "Tablett down " << event->type() << "/"<< event->button() << std::endl;
 #ifdef USE_NEW_STATEMACHINE
-        StateMachine.HandlePressEventSM(event->button(), event->position(), event->timestamp());
+        StateMachine.HandlePressEventSM(event->button(), event->position(), ControllingStateMachine::Milliseconds(event->timestamp()));
 #else
         HandlePressEventSM(event->button(), event->position(), event->timestamp());
 #endif
@@ -642,7 +642,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
           if (LastTablettMovePosition != event->position()) {
              DEBUG_LOG << "Tablett move " << event->type() << "/"<< event->buttons() << " <" << event->position().x() << ";" << event->position().y() << ">:" << event->pressure() << std::endl;
 #ifdef USE_NEW_STATEMACHINE
-             StateMachine.HandleMoveEventSM(event->buttons(), event->position(), event->timestamp(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
+             StateMachine.HandleMoveEventSM(event->buttons(), event->position(), ControllingStateMachine::Milliseconds(event->timestamp()), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
 #else
              HandleMoveEventSM(event->buttons(), event->position(), event->timestamp(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
 #endif
