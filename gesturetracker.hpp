@@ -23,26 +23,36 @@
 /*****************************************************************************/
 
 /* imports */
+#include <QObject>
 #include <QPoint>
 #include <QPointF>
+#include <QTimer>
 
 
 /* Class constant declaration  */
 
 /* Class Type declaration      */
+class SettingClass;
 
 /* Class data declaration      */
 
 /* Class definition            */
 class GestureTrackerClass {
 
+   Q_OBJECT
+
    // Data
    private:
+   QTimer   MyTimer;
 
-   QPointF  StartPosition;
+   SettingClass &Settings;
+
+   bool GestureFinished;
+
+   QPointF StartPosition;
    ulong   StartPositionTimeStamp;
-   QPointF  LastPosition;
-   QPointF  LastSpeed;
+   QPointF LastPosition;
+   QPointF LastSpeed;
    ulong   LastPositionTimeStamp;
    QPointF AccumulatedSpeed;
    QPointF AccumulatedSquaredSpeed;
@@ -56,12 +66,16 @@ class GestureTrackerClass {
    ulong DeltaTimeCurrentDistance;
 
    // Methods
-   public:
+   void StartNewGesture(QPointF Position, ulong Timestamp);
+public:
    void StartTracking(QPointF Position, ulong Timestamp);
    void Trackmovement(QPointF Position, ulong Timestamp);
    float GetCurrentSpeed();
    bool IsFastShaking();
-   GestureTrackerClass();
+   GestureTrackerClass(SettingClass &TheSettings);
+
+private slots:
+   void Timeout();
 };
 
 /*****************************************************************************/

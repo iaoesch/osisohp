@@ -22,6 +22,7 @@
 
 /* imports */
 #include "gesturetracker.hpp"
+#include "Settings.hpp"
 
 /* Class constant declaration  */
 
@@ -49,7 +50,8 @@
 /*  History     : 05.11.2020  IO  Created                                    */
 /*                                                                           */
 /*****************************************************************************/
-GestureTrackerClass::GestureTrackerClass()
+GestureTrackerClass::GestureTrackerClass(SettingClass &TheSettings)
+   : Settings(TheSettings)
 {
    /* Method data declaration      */
 
@@ -58,6 +60,11 @@ GestureTrackerClass::GestureTrackerClass()
    LastDistance = 0;
    DeltaTimeLastDistance = 0;
    DeltaTimeCurrentDistance = 0;
+
+   MyTimer.callOnTimeout(this, &GestureTrackerClass::Timeout);
+   MyTimer.setSingleShot(true);
+   GestureFinished = false;
+
 }
 
 /*****************************************************************************/
@@ -84,6 +91,11 @@ GestureTrackerClass::GestureTrackerClass()
 /*****************************************************************************/
 void GestureTrackerClass::StartTracking(QPointF Position, ulong Timestamp)
 {
+   StartNewGesture(Position, Timestamp);
+}
+
+void GestureTrackerClass::StartNewGesture(QPointF Position, ulong Timestamp)
+{
    /* Method data declaration      */
 
    /* Method code declaration      */
@@ -102,6 +114,9 @@ void GestureTrackerClass::StartTracking(QPointF Position, ulong Timestamp)
    LastDistance = 0;
    DeltaTimeLastDistance = 0;
    DeltaTimeCurrentDistance = 0;
+   GestureFinished = false;
+
+   MyTimer.start(std::chrono::milliseconds(static_cast<int>(Settings.GestureTrackerTimeout)));
 
 }
 /*****************************************************************************/
@@ -128,6 +143,12 @@ void GestureTrackerClass::StartTracking(QPointF Position, ulong Timestamp)
 /*****************************************************************************/
 void GestureTrackerClass::Trackmovement(QPointF Position, ulong Timestamp)
 {
+
+   if (GestureFinished) {
+      StartNewGesture(Position,  Timestamp);
+      return;
+   }
+
    /* Method data declaration      */
    QPointF MovementSinceLastTracking = Position - LastPosition;
    ulong  TimeSinceLastTracking = Timestamp - LastPositionTimeStamp;
@@ -166,10 +187,18 @@ void GestureTrackerClass::Trackmovement(QPointF Position, ulong Timestamp)
       AccumulatedAcceleration += GestureAcceleration;
       AccumulatedAbsolutesOfAcceleration += QPointF(abs(GestureSpeed.x()), abs(GestureSpeed.y()));
    }
+   MyTimer.start(std::chrono::milliseconds(static_cast<int>(Settings.GestureTrackerTimeout)));
+
 }
 /*****************************************************************************/
 /*  End  Method : Trackmovement                                              */
 /*****************************************************************************/
+
+void GestureTrackerClass::Timeout()
+{
+   GestureFinished = true;
+}
+
 
 /*****************************************************************************/
 /*  Method      : GetCurrentSpeed                                            */
