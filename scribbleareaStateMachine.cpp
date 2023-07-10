@@ -50,15 +50,15 @@
 #include "DebugStream.hpp"
 
 template<>
-void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
+void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp);
 
-void StateBaseClass::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
+void StateBaseClass::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp)
 {
    DEBUG_LOG << "HandlePressEventSM: unexpected State: (Baseclass)" << StateId()  << std::endl;
    StateMachine.Idle.HandlePressEventSM(Button, Position, Timestamp);
 }
 
-void StateBaseClass::HandleMoveEventSM(Qt::MouseButtons Buttons [[maybe_unused]], QPointF Position, ulong Timestamp, bool Erasing, double Pressure [[maybe_unused]])
+void StateBaseClass::HandleMoveEventSM(Qt::MouseButtons Buttons [[maybe_unused]], QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure [[maybe_unused]])
 {
 
    StateMachine.Tracker.Trackmovement(Position, Timestamp);
@@ -144,13 +144,13 @@ State::ScribblingState StateClass<State>::StateId() {return TheState;}
 
 
 template<State::ScribblingState State>
-void StateClass<State>::HandlePressEventSM(Qt::MouseButton Button [[maybe_unused]], QPointF Position [[maybe_unused]], ulong Timestamp [[maybe_unused]])
+void StateClass<State>::HandlePressEventSM(Qt::MouseButton Button [[maybe_unused]], QPointF Position [[maybe_unused]], Milliseconds Timestamp [[maybe_unused]])
 {
    DEBUG_LOG << "Unexpected event HandlePressEventSM() in default<> State " << StateId() << std::endl;
 }
 
 template<State::ScribblingState State>
-void StateClass<State>::HandleMoveEventSM(Qt::MouseButtons Buttons [[maybe_unused]], QPointF Position [[maybe_unused]], ulong Timestamp [[maybe_unused]], bool Erasing [[maybe_unused]], double Pressure [[maybe_unused]])
+void StateClass<State>::HandleMoveEventSM(Qt::MouseButtons Buttons [[maybe_unused]], QPointF Position [[maybe_unused]], Milliseconds Timestamp [[maybe_unused]], bool Erasing [[maybe_unused]], double Pressure [[maybe_unused]])
 {
    DEBUG_LOG << "Unexpected event HandleMoveEventSM() in default<> State " << StateId() << std::endl;
 }
@@ -212,7 +212,7 @@ void StateClass<State>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF
 /***************  IDLE  *****************/
 //! [0]
 template<>
-void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
+void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp)
 {
     DEBUG_LOG << "Button Down: " << Button  << std::endl;
     if (Button == Qt::LeftButton) {
@@ -258,7 +258,7 @@ void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF
 
 
 template<>
-void StateClass<State::Idle>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::Idle>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
    StateMachine.ShowBigPointer();
@@ -304,13 +304,13 @@ void StateClass<State::Idle>::HandlePasteEventSM(QImage Image)
 
 /***************  WaitingToLeaveJitterProtectionForDrawing  *****************/
 template <>
-void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
+void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure);
 template<>
 void StateClass<State::Drawing>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
 
 template<>
 void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
-::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
    StateMachine.ShowBigPointer();
@@ -406,7 +406,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
 /***************  Drawing  *****************/
 
 template<>
-void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
    StateMachine.ShowBigPointer();
@@ -471,7 +471,7 @@ void StateClass<State::Drawing>::timeoutSM()
 
 #if 0
 template<>
-void StateClass<State::DrawingPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::DrawingPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
    StateMachine.ShowBigPointer();
@@ -520,7 +520,7 @@ void StateClass<State::DrawingPaused>::timeoutSM()
 /***************  DrawingFillRequested  *****************/
 
 template<>
-void StateClass<State::DrawingFillRequested>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::DrawingFillRequested>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
    StateMachine.ShowBigPointer();
@@ -573,7 +573,7 @@ void StateClass<State::DrawingFillRequested>::timeoutSM()
 /***************  DrawingKillRequested  *****************/
 
 template<>
-void StateClass<State::DrawingKillRequested>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::DrawingKillRequested>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
    StateMachine.ShowBigPointer();
@@ -633,11 +633,11 @@ void StateClass<State::DrawingKillRequested>::timeoutSM()
 /***************  WaitingToLeaveJitterProtectionWithSelectedAreaForMoving  *****************/
 
 template<>
-void StateClass<State::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
+void StateClass<State::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure);
 
 template<>
 void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>
-::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
@@ -687,7 +687,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>
 /***************  MovingSelection  *****************/
 
 template<>
-void StateClass<State::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
@@ -768,7 +768,7 @@ void StateClass<State::MovingSelection>::timeoutSM()
 /***************  MovingSelectionPaused  *****************/
 #if 0 // Not required, stay just in movingselection
 template<>
-void StateClass<State::MovingSelectionPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::MovingSelectionPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
@@ -798,10 +798,10 @@ void StateClass<State::MovingSelectionPaused>::HandleReleaseEventSM(Qt::MouseBut
 #endif
 /***************  WaitingToLeaveJitterProtectionWithCreatedPostitForMoving  *****************/
 template<>
-void StateClass<State::MovingPostit>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
+void StateClass<State::MovingPostit>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure);
 
 template<>
-void StateClass<State::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
@@ -830,7 +830,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving>
 
 /***************  WaitingToLeaveJitterProtectionWithSelectedPostitForMoving  *****************/
 template<>
-void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
@@ -881,7 +881,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving
 /***************  WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving  *****************/
 template<>
 void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving>
-::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
@@ -934,7 +934,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForDeleti
 /***************  MovingPostit  *****************/
 
 template<>
-void StateClass<State::MovingPostit>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::MovingPostit>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
@@ -991,7 +991,7 @@ void StateClass<State::MovingPostit>::timeoutSM()
 /***************  MovingPostitPaused  *****************/
 
 template<>
-void StateClass<State::MovingPostitPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::MovingPostitPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
@@ -1038,10 +1038,10 @@ void StateClass<State::MovingPostitPaused>::timeoutSM()
 
 /***************  WaitingToLeaveJitterProtectionForScrolling  *****************/
 template<>
-void StateClass<State::ScrollingDrawingArea>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
+void StateClass<State::ScrollingDrawingArea>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure);
 
 template<>
-void StateClass<State::WaitingToLeaveJitterProtectionForScrolling>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::WaitingToLeaveJitterProtectionForScrolling>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
@@ -1075,7 +1075,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForScrolling>::HandleReleas
 /***************  ScrollingDrawingArea  *****************/
 
 template<>
-void StateClass<State::ScrollingDrawingArea>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void StateClass<State::ScrollingDrawingArea>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 
@@ -1184,7 +1184,7 @@ void StateClass<State::WaitingForTouchScrolling>::HandleTouchPressEventSM(int Nu
 /*********** Overviev *******************************/
 
 template<>
-void StateClass<State::WaitingToSelectRegionFromOverview>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp [[maybe_unused]])
+void StateClass<State::WaitingToSelectRegionFromOverview>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp [[maybe_unused]])
 {
    if (Button == Qt::LeftButton) {
       StateMachine.Context.MyDatas.MoveOrigin(-(StateMachine.Context.MyDatas.TranslateCoordinateOffsetFromOverview(Position)-StateMachine.Context.MyDatas.GetOrigin()));
@@ -1246,7 +1246,7 @@ void StateClass<State::WaitingToPasteClippboardImage>::HandleKeyEventSM(PasteEve
 
 
 template<>
-void StateClass<State::WaitingToPasteClippboardImage>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position [[maybe_unused]], ulong Timestamp [[maybe_unused]])
+void StateClass<State::WaitingToPasteClippboardImage>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position [[maybe_unused]], Milliseconds Timestamp [[maybe_unused]])
 {
    if (Button == Qt::LeftButton) {
       StateMachine.Context.MyDatas.DoPasteImage(DatabaseClass::PasteDrawing);
@@ -1305,12 +1305,12 @@ void ControllingStateMachine::SetNewState(StateBaseClass *NewState)
    CurrentState = NewState;
 }
 
-void ControllingStateMachine::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp)
+void ControllingStateMachine::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp)
 {
     CurrentState->HandlePressEventSM(Button, Position, Timestamp);
 }
 
-void ControllingStateMachine::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure)
+void ControllingStateMachine::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure)
 {
     CurrentState->HandleMoveEventSM(Buttons, Position, Timestamp, Erasing, Pressure);
 }
@@ -1361,7 +1361,8 @@ void ControllingStateMachine::Timeout()
 
 
 ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database, GuiInterface &NewInterface, class SettingClass &MySettings)
-   :   Context(Database),
+   :   Tracker(MySettings),
+       Context(Database),
        Settings(MySettings),
        Interface(NewInterface),
        Idle(*this),

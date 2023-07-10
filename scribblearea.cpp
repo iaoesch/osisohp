@@ -196,7 +196,7 @@ void ScribbleArea::CopyImageToClipboard()
 void ScribbleArea::mousePressEvent(QMouseEvent *event)
 {
    DEBUG_LOG << "Mouse: press";
-   StateMachine.HandlePressEventSM(event->button(), event->pos(), event->timestamp());
+   StateMachine.HandlePressEventSM(event->button(), event->pos(), ControllingStateMachine::Milliseconds(event->timestamp()));
 }
 
 #if 0
@@ -213,7 +213,7 @@ void ScribbleArea::PointerTimeout()
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
    DEBUG_LOG << "Mouse: move" << event->pointCount() << std::endl;
-   StateMachine.HandleMoveEventSM(event->buttons(), event->pos(), event->timestamp(), false, 0);
+   StateMachine.HandleMoveEventSM(event->buttons(), event->pos(), ControllingStateMachine::Milliseconds(event->timestamp()), false, 0);
 }
 
 
@@ -237,7 +237,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
 
        case QEvent::TabletPress:
         DEBUG_LOG << "Tablett down " << event->type() << "/"<< event->button() << std::endl;
-        StateMachine.HandlePressEventSM(event->button(), event->position(), event->timestamp());
+        StateMachine.HandlePressEventSM(event->button(), event->position(), ControllingStateMachine::Milliseconds(event->timestamp()));
         switch (event->button()) {
            case Qt::NoButton:
               break;
@@ -264,7 +264,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
           // Tablett move also called on pressure or tilt changes
           if (LastTablettMovePosition != event->position()) {
              DEBUG_LOG << "Tablett move " << event->type() << "/"<< event->buttons() << " <" << event->position().x() << ";" << event->position().y() << ">:" << event->pressure() << std::endl;
-             StateMachine.HandleMoveEventSM(event->buttons(), event->position(), event->timestamp(), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
+             StateMachine.HandleMoveEventSM(event->buttons(), event->position(), ControllingStateMachine::Milliseconds(event->timestamp()), event->pointerType() == QPointingDevice::PointerType::Eraser, event->pressure());
              LastTablettMovePosition = event->position();
           }
           event->accept();

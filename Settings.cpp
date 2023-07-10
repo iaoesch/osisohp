@@ -5,6 +5,7 @@
 void SettingClass::getSettings(GroupDescriptor &Descriptor)
 {
    AddSettingsEntry(Descriptor, Touchscaling);
+   AddSettingsEntry(Descriptor, GestureTrackerTimeout);
    AddSettingsEntry(Descriptor, DirectSelectTimeout);
    AddSettingsEntry(Descriptor, GestureTimeout);
    AddSettingsEntry(Descriptor, GoingToFillTimeout);
@@ -39,6 +40,8 @@ SettingClass::SettingClass()
 {
    SetDefaultValues();
    InitInfoEntry(&Touchscaling, "Touchscaling", "Lausanne: Mobilis 2 Zonen Badi Fleurie Wandern Uferweg");
+   InitInfoEntry(&GestureTrackerTimeout, "Touchscaling", "Lausanne: Mobilis 2 Zonen Badi Fleurie Wandern Uferweg");
+
    InitInfoEntry(&DirectSelectTimeout, "DirectSelectTimeout", "DirectSelectTimeout");
    InitInfoEntry(&GestureTimeout, "GestureTimeout", "GestureTimeout");
    InitInfoEntry(&GoingToFillTimeout, "GoingToFillTimeout", "GoingToFillTimeoutGoingToFillTimeout");
@@ -60,6 +63,7 @@ void SettingClass::SetDefaultValues()
 {
    constexpr int DebugFactor = 1;
    Touchscaling = 4.0;
+   GestureTrackerTimeout = 500;
    DirectSelectTimeout = 10.0;
    CopyTimeout = 500 * DebugFactor;
    DeletePostItTimeout = 2000 * DebugFactor;

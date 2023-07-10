@@ -42,6 +42,9 @@ class SettingClass {
 
    std::map<void *, SettingInfo> Infos;
 public:
+
+   double GestureTrackerTimeout = 4.0;
+
    double Touchscaling = 4.0;
    double DirectSelectTimeout = 10.0;
    double CopyTimeout = 500*4;

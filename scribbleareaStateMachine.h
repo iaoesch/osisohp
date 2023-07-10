@@ -105,9 +105,11 @@ protected:
 
 public:
    typedef DatabaseClass::PasteEvent PasteEvent;
+   typedef std::chrono::milliseconds Milliseconds;
+
    StateBaseClass(ControllingStateMachine &sm) : StateMachine(sm) {}
-   virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
-   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
+   virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp);
+   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure);
    virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
    virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
@@ -128,8 +130,8 @@ class StateClass : public StateBaseClass {
    static constexpr State::ScribblingState TheState = State;
 public:
    StateClass(ControllingStateMachine &sm) : StateBaseClass(sm) {}
-   virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp) override;
-   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure) override;
+   virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp) override;
+   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure) override;
    virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure) override;
    virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
@@ -227,6 +229,7 @@ private:
    MakeStateObject(WaitingToPasteClippboardImage);
 
 public:
+   typedef std::chrono::milliseconds Milliseconds;
 
    void ShowBigPointer();
 
@@ -242,8 +245,8 @@ public:
 
    bool IsInSelectingState() {return ((CurrentState == &MovingSelection)||(CurrentState == &WaitingToLeaveJitterProtectionWithSelectedAreaForMoving)||(CurrentState == &MovingSelectionPaused));}
 
-   void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
-   void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
+   void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp);
+   void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure);
    void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
    void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);

@@ -22,10 +22,12 @@
 
 /* imports */
 #include "gesturetracker.hpp"
+#include "Settings.hpp"
 
 /* Class constant declaration  */
 
 /* Class Type declaration      */
+using namespace std::chrono_literals;
 
 /* Class data declaration      */
 
@@ -49,15 +51,21 @@
 /*  History     : 05.11.2020  IO  Created                                    */
 /*                                                                           */
 /*****************************************************************************/
-GestureTrackerClass::GestureTrackerClass()
+GestureTrackerClass::GestureTrackerClass(SettingClass &TheSettings)
+   : Settings(TheSettings)
 {
    /* Method data declaration      */
 
    /* Method code declaration      */
    CurrentDistance = 0;
    LastDistance = 0;
-   DeltaTimeLastDistance = 0;
-   DeltaTimeCurrentDistance = 0;
+   DeltaTimeLastDistance = 0ms;
+   DeltaTimeCurrentDistance = 0ms;
+
+   MyTimer.callOnTimeout(this, &GestureTrackerClass::Timeout);
+   MyTimer.setSingleShot(true);
+   GestureFinished = false;
+
 }
 
 /*****************************************************************************/
@@ -82,7 +90,12 @@ GestureTrackerClass::GestureTrackerClass()
 /*  History     : 05.11.2020  IO  Created                                    */
 /*                                                                           */
 /*****************************************************************************/
-void GestureTrackerClass::StartTracking(QPointF Position, ulong Timestamp)
+void GestureTrackerClass::StartTracking(QPointF Position, std::chrono::milliseconds Timestamp)
+{
+   StartNewGesture(Position, Timestamp);
+}
+
+void GestureTrackerClass::StartNewGesture(QPointF Position, std::chrono::milliseconds Timestamp)
 {
    /* Method data declaration      */
 
@@ -94,14 +107,14 @@ void GestureTrackerClass::StartTracking(QPointF Position, ulong Timestamp)
    LastPositionTimeStamp = Timestamp;
    StartPosition =  Position;
    StartPositionTimeStamp = Timestamp;
-   AccumulatedSpeed = QPoint(0,0);
-   AccumulatedSquaredSpeed =  QPoint(0,0);
-   AccumulatedAcceleration = QPointF(0, 0);
-   AccumulatedAbsolutesOfAcceleration = QPointF(0, 0);
+   CurrentGesture.Clear();
    CurrentDistance = 0;
    LastDistance = 0;
-   DeltaTimeLastDistance = 0;
-   DeltaTimeCurrentDistance = 0;
+   DeltaTimeLastDistance = 0ms;
+   DeltaTimeCurrentDistance = 0ms;
+   GestureFinished = false;
+
+   MyTimer.start(std::chrono::milliseconds(static_cast<int>(Settings.GestureTrackerTimeout)));
 
 }
 /*****************************************************************************/
@@ -126,11 +139,17 @@ void GestureTrackerClass::StartTracking(QPointF Position, ulong Timestamp)
 /*  History     : 05.11.2020  IO  Created                                    */
 /*                                                                           */
 /*****************************************************************************/
-void GestureTrackerClass::Trackmovement(QPointF Position, ulong Timestamp)
+void GestureTrackerClass::Trackmovement(QPointF Position, std::chrono::milliseconds Timestamp)
 {
+
+   if (GestureFinished) {
+      StartNewGesture(Position,  Timestamp);
+      return;
+   }
+
    /* Method data declaration      */
    QPointF MovementSinceLastTracking = Position - LastPosition;
-   ulong  TimeSinceLastTracking = Timestamp - LastPositionTimeStamp;
+   std::chrono::milliseconds  TimeSinceLastTracking = Timestamp - LastPositionTimeStamp;
 
    /* Method code declaration      */
 
@@ -142,11 +161,14 @@ void GestureTrackerClass::Trackmovement(QPointF Position, ulong Timestamp)
    DeltaTimeCurrentDistance = TimeSinceLastTracking;
    CurrentDistance = static_cast<ulong>(MovementSinceLastTracking.manhattanLength() + 0.5);
 
+   CurrentGesture.AccumulatedLength += CurrentDistance;
+   CurrentGesture.AccumulatedTime += TimeSinceLastTracking;
+
    /* Discard moves with no time inbetween */
-   if (TimeSinceLastTracking > 0) {
+   if (TimeSinceLastTracking > 0ms) {
 
       /* Calculate speed of last move */
-      QPointF GestureSpeed = MovementSinceLastTracking / static_cast<double>(TimeSinceLastTracking);
+      QPointF GestureSpeed = MovementSinceLastTracking / static_cast<double>(TimeSinceLastTracking.count());
 
       /* Store current position for next round */
       LastPosition =  Position;
@@ -154,22 +176,30 @@ void GestureTrackerClass::Trackmovement(QPointF Position, ulong Timestamp)
 
       /* Calculate acceleration of last move */
       QPointF SpeedChangeSinceLastTracking = GestureSpeed - LastSpeed;
-      QPointF GestureAcceleration = SpeedChangeSinceLastTracking / static_cast<double>(TimeSinceLastTracking);
+      QPointF GestureAcceleration = SpeedChangeSinceLastTracking / static_cast<double>(TimeSinceLastTracking.count());
 
       /* Accumulate speed and squared speed */
       /* needed to detect shaking */
-      AccumulatedSpeed += GestureSpeed;
-      AccumulatedSquaredSpeed += QPointF(GestureSpeed.x() * GestureSpeed.x(), GestureSpeed.y()*GestureSpeed.y() );
+      CurrentGesture.AccumulatedSpeed += GestureSpeed;
+      CurrentGesture.AccumulatedSquaredSpeed += QPointF(GestureSpeed.x() * GestureSpeed.x(), GestureSpeed.y()*GestureSpeed.y() );
 
       /* Accumulate acceleration and absolute acceleration */
       /* needed to detect shaking */
-      AccumulatedAcceleration += GestureAcceleration;
-      AccumulatedAbsolutesOfAcceleration += QPointF(abs(GestureSpeed.x()), abs(GestureSpeed.y()));
+      CurrentGesture.AccumulatedAcceleration += GestureAcceleration;
+      CurrentGesture.AccumulatedAbsolutesOfAcceleration += QPointF(abs(GestureSpeed.x()), abs(GestureSpeed.y()));
    }
+   MyTimer.start(std::chrono::milliseconds(static_cast<int>(Settings.GestureTrackerTimeout)));
+
 }
 /*****************************************************************************/
 /*  End  Method : Trackmovement                                              */
 /*****************************************************************************/
+
+void GestureTrackerClass::Timeout()
+{
+   GestureFinished = true;
+}
+
 
 /*****************************************************************************/
 /*  Method      : GetCurrentSpeed                                            */
@@ -194,8 +224,8 @@ float GestureTrackerClass::GetCurrentSpeed()
 
    /* Method code declaration      */
 
-   if ( (DeltaTimeLastDistance + DeltaTimeCurrentDistance) > 0) {
-        return (static_cast<float>(LastDistance + CurrentDistance) / static_cast<float>(DeltaTimeLastDistance + DeltaTimeCurrentDistance));
+   if ( (DeltaTimeLastDistance + DeltaTimeCurrentDistance) > 0ms) {
+        return (static_cast<float>(LastDistance + CurrentDistance) / static_cast<float>((DeltaTimeLastDistance + DeltaTimeCurrentDistance).count()));
    }
    return 0;
 }
@@ -227,7 +257,7 @@ bool GestureTrackerClass::IsFastShaking() {
 
    /* On fast shaking speed cancels out (posiotive and negative values) */
    /* Squared speed summs up */
-   return (AccumulatedSpeed.manhattanLength()*10) < (AccumulatedSquaredSpeed.manhattanLength());
+   return (CurrentGesture.AccumulatedSpeed.manhattanLength()*10) < (CurrentGesture.AccumulatedSquaredSpeed.manhattanLength());
 }
 /*****************************************************************************/
 /*  End  Method : IsFastShaking                                              */
@@ -241,3 +271,15 @@ bool GestureTrackerClass::IsFastShaking() {
 
 
 
+
+void GestureTrackerClass::GestureInfo::Clear()
+{
+   AccumulatedAbsolutesOfAcceleration = QPointF(0, 0);
+   AccumulatedAcceleration = QPointF(0, 0);
+
+   AccumulatedLength = 0;
+   AccumulatedTime = 0ms;
+
+   AccumulatedSpeed = QPointF(0, 0);
+   AccumulatedSquaredSpeed = QPointF(0, 0);
+}

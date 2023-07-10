@@ -23,45 +23,71 @@
 /*****************************************************************************/
 
 /* imports */
+#include <QObject>
 #include <QPoint>
 #include <QPointF>
+#include <QTimer>
 
 
 /* Class constant declaration  */
 
 /* Class Type declaration      */
+class SettingClass;
 
 /* Class data declaration      */
 
 /* Class definition            */
-class GestureTrackerClass {
+class GestureTrackerClass : public QObject {
+
+   Q_OBJECT
 
    // Data
+   public:
+
+   struct GestureInfo {
+      double  AccumulatedLength;
+      std::chrono::milliseconds  AccumulatedTime;
+
+      QPointF AccumulatedSpeed;
+      QPointF AccumulatedSquaredSpeed;
+
+      QPointF AccumulatedAcceleration;
+      QPointF AccumulatedAbsolutesOfAcceleration;
+
+      void Clear();
+   };
+
    private:
+   QTimer   MyTimer;
 
-   QPointF  StartPosition;
-   ulong   StartPositionTimeStamp;
-   QPointF  LastPosition;
-   QPointF  LastSpeed;
-   ulong   LastPositionTimeStamp;
-   QPointF AccumulatedSpeed;
-   QPointF AccumulatedSquaredSpeed;
+   SettingClass &Settings;
 
-   QPointF AccumulatedAcceleration;
-   QPointF AccumulatedAbsolutesOfAcceleration;
+   bool GestureFinished;
+   GestureInfo CurrentGesture;
+   GestureInfo LastGesture;
+
+   QPointF StartPosition;
+   std::chrono::milliseconds   StartPositionTimeStamp;
+   QPointF LastPosition;
+   QPointF LastSpeed;
+   std::chrono::milliseconds   LastPositionTimeStamp;
 
    ulong CurrentDistance;
    ulong LastDistance;
-   ulong DeltaTimeLastDistance;
-   ulong DeltaTimeCurrentDistance;
+   std::chrono::milliseconds DeltaTimeLastDistance;
+   std::chrono::milliseconds DeltaTimeCurrentDistance;
 
    // Methods
-   public:
-   void StartTracking(QPointF Position, ulong Timestamp);
-   void Trackmovement(QPointF Position, ulong Timestamp);
+   void StartNewGesture(QPointF Position, std::chrono::milliseconds Timestamp);
+public:
+   void StartTracking(QPointF Position, std::chrono::milliseconds Timestamp);
+   void Trackmovement(QPointF Position, std::chrono::milliseconds Timestamp);
    float GetCurrentSpeed();
    bool IsFastShaking();
-   GestureTrackerClass();
+   GestureTrackerClass(SettingClass &TheSettings);
+
+private slots:
+   void Timeout();
 };
 
 /*****************************************************************************/
