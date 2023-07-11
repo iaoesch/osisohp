@@ -23,6 +23,7 @@
 /* imports */
 #include "gesturetracker.hpp"
 #include "Settings.hpp"
+#include <iostream>
 
 /* Class constant declaration  */
 
@@ -102,12 +103,13 @@ void GestureTrackerClass::StartNewGesture(QPointF Position, std::chrono::millise
    /* Method code declaration      */
 
    /* Prepare for gesture detection */
+   CurrentGesture.Clear();
    LastPosition =  Position;
    LastSpeed = QPointF(0, 0);
+   LastAcceleration = QPointF(0, 0);
    LastPositionTimeStamp = Timestamp;
-   StartPosition =  Position;
-   StartPositionTimeStamp = Timestamp;
-   CurrentGesture.Clear();
+   CurrentGesture.StartPosition =  Position;
+   CurrentGesture.StartPositionTimeStamp = Timestamp;
    CurrentDistance = 0;
    LastDistance = 0;
    DeltaTimeLastDistance = 0ms;
@@ -177,6 +179,12 @@ void GestureTrackerClass::Trackmovement(QPointF Position, std::chrono::milliseco
       /* Calculate acceleration of last move */
       QPointF SpeedChangeSinceLastTracking = GestureSpeed - LastSpeed;
       QPointF GestureAcceleration = SpeedChangeSinceLastTracking / static_cast<double>(TimeSinceLastTracking.count());
+      LastSpeed = GestureSpeed;
+
+      /* Calculate Ruck of last move */
+      QPointF AccelerationChangeSinceLastTracking = GestureAcceleration - LastAcceleration;
+      QPointF GestureRuck = AccelerationChangeSinceLastTracking / static_cast<double>(TimeSinceLastTracking.count());
+      LastAcceleration = GestureAcceleration;
 
       /* Accumulate speed and squared speed */
       /* needed to detect shaking */
@@ -187,6 +195,11 @@ void GestureTrackerClass::Trackmovement(QPointF Position, std::chrono::milliseco
       /* needed to detect shaking */
       CurrentGesture.AccumulatedAcceleration += GestureAcceleration;
       CurrentGesture.AccumulatedAbsolutesOfAcceleration += QPointF(abs(GestureSpeed.x()), abs(GestureSpeed.y()));
+
+      /* Accumulate ruck and absolute ruck */
+      /* needed to detect shaking */
+      CurrentGesture.AccumulatedRuck += GestureRuck;
+      CurrentGesture.AccumulatedAbsolutesOfRuck += QPointF(abs(GestureRuck.x()), abs(GestureRuck.y()));
    }
    MyTimer.start(std::chrono::milliseconds(static_cast<int>(Settings.GestureTrackerTimeout)));
 
@@ -194,10 +207,27 @@ void GestureTrackerClass::Trackmovement(QPointF Position, std::chrono::milliseco
 /*****************************************************************************/
 /*  End  Method : Trackmovement                                              */
 /*****************************************************************************/
+template<class T>
+void PrintPoint(const char *Text, const T &Point) {
+   std::cout << Text << ": (" << Point.x() << "; " << Point.y() << ")" << std::endl;
+}
 
 void GestureTrackerClass::Timeout()
 {
+
    GestureFinished = true;
+   CurrentGesture.EndPosition = LastPosition;
+   CurrentGesture.EndPositionTimeStamp = LastPositionTimeStamp;
+   LastGesture = CurrentGesture;
+   auto t = LastGesture.AccumulatedTime.count() / 1000.0;
+   PrintPoint("Gesture abs Ruck:", LastGesture.AccumulatedAbsolutesOfRuck/t);
+   PrintPoint("Gesture Ruck:", LastGesture.AccumulatedRuck/t);
+   PrintPoint("Gesture abs Acc:", LastGesture.AccumulatedAbsolutesOfAcceleration/t);
+   PrintPoint("Gesture Acc:", LastGesture.AccumulatedAcceleration/t);
+   PrintPoint("Gesture Speed:", LastGesture.AccumulatedSpeed/t);
+   PrintPoint("Gesture Squared Speed:", LastGesture.AccumulatedSquaredSpeed/t);
+   std::cout << "Length: " << LastGesture.AccumulatedLength << std::endl;
+   std::cout << "Time: " << LastGesture.AccumulatedTime.count() << std::endl;
 }
 
 
@@ -232,7 +262,13 @@ float GestureTrackerClass::GetCurrentSpeed()
 /*****************************************************************************/
 /*  End  Method : GetCurrentSpeed                                            */
 /*****************************************************************************/
+bool GestureTrackerClass::IsThrowing()
+{
+   /* Method data declaration      */
 
+   /* Method code declaration      */
+   return GetCurrentSpeed() > Settings.ThrowingSpeedLimit;
+}
 /*****************************************************************************/
 /*  Method      : IsFastShaking                                              */
 /*****************************************************************************/
@@ -255,7 +291,7 @@ bool GestureTrackerClass::IsFastShaking() {
 
    /* Method code declaration      */
 
-   /* On fast shaking speed cancels out (posiotive and negative values) */
+   /* On fast shaking speed cancels out (positive and negative values) */
    /* Squared speed summs up */
    return (CurrentGesture.AccumulatedSpeed.manhattanLength()*10) < (CurrentGesture.AccumulatedSquaredSpeed.manhattanLength());
 }
@@ -277,9 +313,18 @@ void GestureTrackerClass::GestureInfo::Clear()
    AccumulatedAbsolutesOfAcceleration = QPointF(0, 0);
    AccumulatedAcceleration = QPointF(0, 0);
 
+   AccumulatedAbsolutesOfRuck = QPointF(0, 0);
+   AccumulatedRuck = QPointF(0, 0);
+
    AccumulatedLength = 0;
    AccumulatedTime = 0ms;
 
    AccumulatedSpeed = QPointF(0, 0);
    AccumulatedSquaredSpeed = QPointF(0, 0);
+
+   StartPosition = QPointF(0, 0);
+   StartPositionTimeStamp = 0ms;
+   EndPosition = QPointF(0, 0);
+   EndPositionTimeStamp = 0ms;
+
 }

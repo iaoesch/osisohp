@@ -45,6 +45,7 @@ public:
 
    double GestureTrackerTimeout = 4.0;
 
+   double ThrowingSpeedLimit = 0.25;
    double Touchscaling = 4.0;
    double DirectSelectTimeout = 10.0;
    double CopyTimeout = 500*4;

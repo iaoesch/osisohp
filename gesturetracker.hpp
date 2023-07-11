@@ -54,6 +54,14 @@ class GestureTrackerClass : public QObject {
       QPointF AccumulatedAcceleration;
       QPointF AccumulatedAbsolutesOfAcceleration;
 
+      QPointF AccumulatedRuck;
+      QPointF AccumulatedAbsolutesOfRuck;
+
+      QPointF StartPosition;
+      std::chrono::milliseconds   StartPositionTimeStamp;
+      QPointF EndPosition;
+      std::chrono::milliseconds   EndPositionTimeStamp;
+
       void Clear();
    };
 
@@ -66,10 +74,9 @@ class GestureTrackerClass : public QObject {
    GestureInfo CurrentGesture;
    GestureInfo LastGesture;
 
-   QPointF StartPosition;
-   std::chrono::milliseconds   StartPositionTimeStamp;
    QPointF LastPosition;
    QPointF LastSpeed;
+   QPointF LastAcceleration;
    std::chrono::milliseconds   LastPositionTimeStamp;
 
    ulong CurrentDistance;
@@ -86,6 +93,7 @@ public:
    bool IsFastShaking();
    GestureTrackerClass(SettingClass &TheSettings);
 
+   bool IsThrowing();
 private slots:
    void Timeout();
 };
