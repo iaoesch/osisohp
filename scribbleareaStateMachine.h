@@ -232,6 +232,7 @@ public:
    typedef std::chrono::milliseconds Milliseconds;
 
    void ShowBigPointer();
+   void DrawGestureTrackerDebugInfo(QPainter &Painter, QPointF Offset) {Tracker.DrawDebugInfo(Painter, Offset);}
 
    void UseSpongeAsEraser(bool SpongeMode) {Context.SpongeAsEraser = SpongeMode;}
 
@@ -256,12 +257,19 @@ public:
    void HandleKeyEventSM(DatabaseClass::PasteEvent Event);
 
    ControllingStateMachine(DatabaseClass &Database, GuiInterface &Interface, class SettingClass &MySettings);
+
+
 public slots:
    void timeoutSM();
 
 private slots:
    void PointerTimeout();
    void Timeout();
+   void HandleGesture();
+
+signals:
+   void GestureDetected();
+
 };
 
 inline void StateBaseClass::StartTimer(double TimeInms) {StateMachine.MyTimer.start(static_cast<int>(TimeInms));}

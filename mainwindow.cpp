@@ -384,6 +384,14 @@ void MainWindow::ShowPostitsFrame()
     scribbleArea->setShowPostitsFrame(ShowPostitsFrameAct->isChecked());
 }
 
+void MainWindow::ShowGestureInfos()
+//! [9] //! [10]
+{
+
+    scribbleArea->setShowGestureInfos(ShowGestureInfosAct->isChecked());
+}
+
+
 void MainWindow::ShowCursors()
 //! [9] //! [10]
 {
@@ -483,6 +491,11 @@ void MainWindow::createActions()
     ShowCursorsAct = new QAction(tr("&Cycle Pointers"), this);
     ShowCursorsAct->setCheckable(true);
     connect(ShowCursorsAct, &QAction::triggered, this, &MainWindow::ShowCursors);
+
+
+    ShowGestureInfosAct = new QAction(tr("&Gesture Infos"), this);
+    ShowGestureInfosAct->setCheckable(true);
+    connect(ShowGestureInfosAct, &QAction::triggered, this, &MainWindow::ShowGestureInfos);
 
     clearScreenAct = new QAction(tr("&Clear Screen"), this);
     clearScreenAct->setShortcut(tr("Ctrl+L"));
@@ -603,6 +616,7 @@ void MainWindow::createMenus()
     DebugMenu = new QMenu(tr("&Debug"), this);
     DebugMenu->addAction(ShowPostitsFrameAct);
     DebugMenu->addAction(ShowCursorsAct);
+    DebugMenu->addAction(ShowGestureInfosAct);
     DebugMenu->addAction(SettingsAct);
 
 

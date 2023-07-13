@@ -75,6 +75,7 @@ class ScribbleArea : public QWidget
     GuiInterface Interface;
     ControllingStateMachine StateMachine;
     bool ShowDebugCrosshair;
+    bool ShowGestureInfos;
 
 public:
     ScribbleArea(SettingClass &MySettings, QWidget *parent = nullptr);
@@ -87,6 +88,8 @@ public:
     void setPenWidth(int newWidth);
     void setDirectSelect(bool Mode) {StateMachine.setDirectSelect(Mode);}
     void setShowPostitsFrame(bool Mode) {MyDatas.setShowPostitsFrame(Mode); update();}
+    void setShowGestureInfos(bool Mode) {ShowGestureInfos = Mode;}
+
     void setShowCursors(bool Mode) { MyCursorManager.TestCursors(Mode); ShowDebugCrosshair = Mode;}
 
     QColor GetBackGroundColor() const { return MyDatas.GetBackGroundColor(); }

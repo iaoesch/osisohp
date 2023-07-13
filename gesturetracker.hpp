@@ -33,6 +33,7 @@
 
 /* Class Type declaration      */
 class SettingClass;
+class QPainter;
 
 /* Class data declaration      */
 
@@ -50,12 +51,13 @@ class GestureTrackerClass : public QObject {
 
       QPointF AccumulatedSpeed;
       QPointF AccumulatedSquaredSpeed;
+      double AccumulatedAbsoluteOfSpeed;
 
       QPointF AccumulatedAcceleration;
-      QPointF AccumulatedAbsolutesOfAcceleration;
+      QPointF AccumulatedAbsolutesOfAccelerationComponents;
 
       QPointF AccumulatedRuck;
-      QPointF AccumulatedAbsolutesOfRuck;
+      QPointF AccumulatedAbsolutesOfRuckComponents;
 
       QPointF StartPosition;
       std::chrono::milliseconds   StartPositionTimeStamp;
@@ -63,6 +65,7 @@ class GestureTrackerClass : public QObject {
       std::chrono::milliseconds   EndPositionTimeStamp;
 
       void Clear();
+      bool IsValid() {return AccumulatedTime.count() > 0;}
    };
 
    private:
@@ -86,6 +89,7 @@ class GestureTrackerClass : public QObject {
 
    // Methods
    void StartNewGesture(QPointF Position, std::chrono::milliseconds Timestamp);
+   std::vector<int> GetDatasToDraw(GestureInfo &Gesture, double Scaling);
 public:
    void StartTracking(QPointF Position, std::chrono::milliseconds Timestamp);
    void Trackmovement(QPointF Position, std::chrono::milliseconds Timestamp);
@@ -94,6 +98,10 @@ public:
    GestureTrackerClass(SettingClass &TheSettings);
 
    bool IsThrowing();
+
+   void DrawDebugInfo(QPainter &Painter, QPointF Offset);
+signals:
+   void GestureDetected();
 private slots:
    void Timeout();
 };

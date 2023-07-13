@@ -23,7 +23,10 @@
 /* imports */
 #include "gesturetracker.hpp"
 #include "Settings.hpp"
+#include <QPainter>
+#include <QVector2D>
 #include <iostream>
+
 
 /* Class constant declaration  */
 
@@ -103,6 +106,7 @@ void GestureTrackerClass::StartNewGesture(QPointF Position, std::chrono::millise
    /* Method code declaration      */
 
    /* Prepare for gesture detection */
+   MyTimer.stop();
    CurrentGesture.Clear();
    LastPosition =  Position;
    LastSpeed = QPointF(0, 0);
@@ -116,7 +120,7 @@ void GestureTrackerClass::StartNewGesture(QPointF Position, std::chrono::millise
    DeltaTimeCurrentDistance = 0ms;
    GestureFinished = false;
 
-   MyTimer.start(std::chrono::milliseconds(static_cast<int>(Settings.GestureTrackerTimeout)));
+  // MyTimer.start(std::chrono::milliseconds(static_cast<int>(Settings.GestureTrackerTimeout)));
 
 }
 /*****************************************************************************/
@@ -189,17 +193,21 @@ void GestureTrackerClass::Trackmovement(QPointF Position, std::chrono::milliseco
       /* Accumulate speed and squared speed */
       /* needed to detect shaking */
       CurrentGesture.AccumulatedSpeed += GestureSpeed;
+
+      CurrentGesture.AccumulatedAbsoluteOfSpeed += sqrt(GestureSpeed.x() * GestureSpeed.x() + GestureSpeed.y()*GestureSpeed.y());
+      double Angle = atan2(GestureSpeed.x(), GestureSpeed.y());
       CurrentGesture.AccumulatedSquaredSpeed += QPointF(GestureSpeed.x() * GestureSpeed.x(), GestureSpeed.y()*GestureSpeed.y() );
+
 
       /* Accumulate acceleration and absolute acceleration */
       /* needed to detect shaking */
       CurrentGesture.AccumulatedAcceleration += GestureAcceleration;
-      CurrentGesture.AccumulatedAbsolutesOfAcceleration += QPointF(abs(GestureSpeed.x()), abs(GestureSpeed.y()));
+      CurrentGesture.AccumulatedAbsolutesOfAccelerationComponents += QPointF(abs(GestureSpeed.x()), abs(GestureSpeed.y()));
 
       /* Accumulate ruck and absolute ruck */
       /* needed to detect shaking */
       CurrentGesture.AccumulatedRuck += GestureRuck;
-      CurrentGesture.AccumulatedAbsolutesOfRuck += QPointF(abs(GestureRuck.x()), abs(GestureRuck.y()));
+      CurrentGesture.AccumulatedAbsolutesOfRuckComponents += QPointF(abs(GestureRuck.x()), abs(GestureRuck.y()));
    }
    MyTimer.start(std::chrono::milliseconds(static_cast<int>(Settings.GestureTrackerTimeout)));
 
@@ -214,20 +222,27 @@ void PrintPoint(const char *Text, const T &Point) {
 
 void GestureTrackerClass::Timeout()
 {
-
-   GestureFinished = true;
-   CurrentGesture.EndPosition = LastPosition;
-   CurrentGesture.EndPositionTimeStamp = LastPositionTimeStamp;
-   LastGesture = CurrentGesture;
-   auto t = LastGesture.AccumulatedTime.count() / 1000.0;
-   PrintPoint("Gesture abs Ruck:", LastGesture.AccumulatedAbsolutesOfRuck/t);
-   PrintPoint("Gesture Ruck:", LastGesture.AccumulatedRuck/t);
-   PrintPoint("Gesture abs Acc:", LastGesture.AccumulatedAbsolutesOfAcceleration/t);
-   PrintPoint("Gesture Acc:", LastGesture.AccumulatedAcceleration/t);
-   PrintPoint("Gesture Speed:", LastGesture.AccumulatedSpeed/t);
-   PrintPoint("Gesture Squared Speed:", LastGesture.AccumulatedSquaredSpeed/t);
-   std::cout << "Length: " << LastGesture.AccumulatedLength << std::endl;
-   std::cout << "Time: " << LastGesture.AccumulatedTime.count() << std::endl;
+   if (CurrentGesture.AccumulatedTime.count() > 0) {
+      GestureFinished = true;
+      CurrentGesture.EndPosition = LastPosition;
+      CurrentGesture.EndPositionTimeStamp = LastPositionTimeStamp;
+      LastGesture = CurrentGesture;
+      auto t = LastGesture.AccumulatedTime.count() / 1000.0;
+      if (!(t > 0)) {
+         t = 0.000001;
+         std::cout << "!!!!!!!! Division by 0";
+      }
+      PrintPoint("Gesture abs Ruck:", LastGesture.AccumulatedAbsolutesOfRuckComponents/t);
+      PrintPoint("Gesture Ruck:", LastGesture.AccumulatedRuck/t);
+      PrintPoint("Gesture abs Acc:", LastGesture.AccumulatedAbsolutesOfAccelerationComponents/t);
+      PrintPoint("Gesture Acc:", LastGesture.AccumulatedAcceleration/t);
+      PrintPoint("Gesture Speed:", LastGesture.AccumulatedSpeed/t);
+      PrintPoint("Gesture Squared Speed:", LastGesture.AccumulatedSquaredSpeed/t);
+      std::cout << "accumulated speedabsolute: " << LastGesture.AccumulatedAbsoluteOfSpeed/t << std::endl;
+      std::cout << "Length: " << LastGesture.AccumulatedLength << std::endl;
+      std::cout << "Time: " << LastGesture.AccumulatedTime.count() << std::endl;
+      emit(GestureDetected());
+   }
 }
 
 
@@ -268,6 +283,49 @@ bool GestureTrackerClass::IsThrowing()
 
    /* Method code declaration      */
    return GetCurrentSpeed() > Settings.ThrowingSpeedLimit;
+}
+std::vector<int> GestureTrackerClass::GetDatasToDraw(GestureInfo &Gesture, double Scaling)
+{
+   std::vector<int> Datas;
+
+   Datas.push_back(Gesture.AccumulatedSpeed.x() * Scaling);
+   Datas.push_back(Gesture.AccumulatedSpeed.y() * Scaling);
+   Datas.push_back(Gesture.AccumulatedAbsoluteOfSpeed * Scaling);
+   Datas.push_back(Gesture.AccumulatedSquaredSpeed.x() * Scaling);
+   Datas.push_back(Gesture.AccumulatedSquaredSpeed.y() * Scaling);
+   Datas.push_back(Gesture.AccumulatedAcceleration.x() * Scaling * 100);
+   Datas.push_back(Gesture.AccumulatedAcceleration.y() * Scaling * 100);
+   Datas.push_back(Gesture.AccumulatedAbsolutesOfAccelerationComponents.x() * Scaling);
+   Datas.push_back(Gesture.AccumulatedAbsolutesOfAccelerationComponents.y() * Scaling);
+   Datas.push_back(Gesture.AccumulatedRuck.x() * Scaling * 100);
+   Datas.push_back(Gesture.AccumulatedRuck.y() * Scaling * 100);
+   Datas.push_back(Gesture.AccumulatedAbsolutesOfRuckComponents.x() * Scaling * 100);
+   Datas.push_back(Gesture.AccumulatedAbsolutesOfRuckComponents.y() * Scaling * 100);
+   return Datas;
+}
+
+void GestureTrackerClass::DrawDebugInfo(QPainter &Painter, QPointF Offset)
+{
+   Painter.setPen(QPen(QColor(Qt::blue), 1, Qt::SolidLine, Qt::RoundCap,
+                       Qt::RoundJoin));
+   Painter.setBrush(QBrush(Qt::blue));
+   int x = Offset.x();
+   int y = Offset.y();
+   constexpr int Width = 10;
+   auto Datas = GetDatasToDraw(CurrentGesture, 1000.0/CurrentGesture.AccumulatedTime.count());
+   for (auto l: Datas) {
+      Painter.drawRect(x,y, l, Width);
+      y += Width + 2;
+   }
+   Painter.setPen(QPen(QColor(Qt::red), 1, Qt::SolidLine, Qt::RoundCap,
+                       Qt::RoundJoin));
+   Painter.setBrush(QBrush(Qt::red));
+   Datas = GetDatasToDraw(LastGesture, 1000.0/LastGesture.AccumulatedTime.count());
+   for (auto l: Datas) {
+      Painter.drawRect(x,y, l, Width);
+      y += Width + 2;
+   }
+
 }
 /*****************************************************************************/
 /*  Method      : IsFastShaking                                              */
@@ -310,10 +368,10 @@ bool GestureTrackerClass::IsFastShaking() {
 
 void GestureTrackerClass::GestureInfo::Clear()
 {
-   AccumulatedAbsolutesOfAcceleration = QPointF(0, 0);
+   AccumulatedAbsolutesOfAccelerationComponents = QPointF(0, 0);
    AccumulatedAcceleration = QPointF(0, 0);
 
-   AccumulatedAbsolutesOfRuck = QPointF(0, 0);
+   AccumulatedAbsolutesOfRuckComponents = QPointF(0, 0);
    AccumulatedRuck = QPointF(0, 0);
 
    AccumulatedLength = 0;
@@ -321,6 +379,7 @@ void GestureTrackerClass::GestureInfo::Clear()
 
    AccumulatedSpeed = QPointF(0, 0);
    AccumulatedSquaredSpeed = QPointF(0, 0);
+   AccumulatedAbsoluteOfSpeed = 0;
 
    StartPosition = QPointF(0, 0);
    StartPositionTimeStamp = 0ms;

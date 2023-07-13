@@ -1357,6 +1357,12 @@ void ControllingStateMachine::Timeout()
 
 }
 
+void ControllingStateMachine::HandleGesture()
+{
+   emit(GestureDetected());
+   //std::cout << "!! gesture !!=";
+}
+
 #define InitStateObject(s) s(*this, ##s)
 
 
@@ -1403,6 +1409,8 @@ ControllingStateMachine::ControllingStateMachine(DatabaseClass &Database, GuiInt
 
     QObject::connect(&PointerTimer, &QTimer::timeout, this, &ControllingStateMachine::PointerTimeout);
     PointerTimer.setSingleShot(true);
+
+    connect(&Tracker, &GestureTrackerClass::GestureDetected, this, &ControllingStateMachine::HandleGesture);
 
     //Context.SelectedPostit.clear();
     Context.SelectPostitsDirectly = false;

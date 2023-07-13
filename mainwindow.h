@@ -132,6 +132,7 @@ private:
     QAction *penWidthAct;
     QAction *DirectPostitSelectAct;
     QAction *ShowPostitsFrameAct;
+    QAction *ShowGestureInfosAct;
     QAction *ShowCursorsAct;
     QAction *ShowOverviewAct;
     QAction *printAct;
@@ -152,6 +153,7 @@ private:
 
 
     // QWidget interface
+    void ShowGestureInfos();
 };
 //! [0]
 
