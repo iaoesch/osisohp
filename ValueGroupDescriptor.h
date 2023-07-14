@@ -34,6 +34,8 @@ class EntityDescriptorTemplate {
 
    public:
       ValueDescriptor(T &Src, T DefaultValue, T LowerLimit, T UpperLimit) : NewValue(Src), Source(Src), Limits({LowerLimit, UpperLimit}), Default(DefaultValue) {}
+      ValueDescriptor(const ValueDescriptor &src) = default;
+      ValueDescriptor(ValueDescriptor &&src) = default;
 
       const auto &getLimits() const { return Limits;}
       const T &getValue() const { return NewValue;}
@@ -109,6 +111,9 @@ public:
  //  NewVal(Val, Val, LimitLow, LimitHigh),
    Title(Name), HelpText(Help), Value(ValueDescriptor<U>(Val, Default, LimitLow, LimitHigh)) {}
 
+   EntityDescriptorTemplate(const EntityDescriptorTemplate &) = default;
+   EntityDescriptorTemplate(EntityDescriptorTemplate &&) = default;
+
    template <class... U>
    void Visit(std::function<void(U &Value, U Lower, U Upper)>... func) const{
       std::visit(overloaded_osi{func...}, Value);
@@ -124,9 +129,12 @@ private:
    std::vector<EntityDescriptor> Entries;
 
 public:
+   GroupDescriptor() {}
+
    typedef EntityDescriptor::VariantType VariantType;
 
    GroupDescriptor(std::string Name) : GroupName(Name) {}
+   GroupDescriptor(const GroupDescriptor &src) = default;
    template <class U>
    void AddEntry(std::string const &Name, std::string const &Help, U &Value, U Default, U LowerLimit = std::numeric_limits<U>::lowest(), U UpperLimit = std::numeric_limits<U>::max())
    {

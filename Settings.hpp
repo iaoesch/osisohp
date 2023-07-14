@@ -22,6 +22,7 @@
 
 /* imports */
 #include <map>
+#include <set>
 #include <string>
 #include "SettingsDialog.h"
 
@@ -41,6 +42,9 @@ class SettingClass {
    };
 
    std::map<void *, SettingInfo> Infos;
+   std::vector<GroupDescriptor> Groups;
+   std::map<std::string, int> GroupMapping;
+   GroupDescriptor *CurrentGroup;
 public:
 
    double GestureTrackerTimeout = 4.0;
@@ -62,6 +66,7 @@ public:
    int    EraserSize = 2;
    int    SpongeSize = 15;
 
+   std::vector<GroupDescriptor> &getSettings() {return Groups;}
    void getSettings(GroupDescriptor &Descriptor);
    SettingClass();
    void SetDefaultValues();
@@ -74,7 +79,10 @@ private:
    template<class U>
    void InitInfoEntry(U *Value, std::string Name, std::string HelpText) {
       Infos[Value] = {Name, HelpText, *Value};
+      AddSettingsEntry(*CurrentGroup, *Value);
    }
+
+   void SetCurrentGroup(std::string Group);
 
 };
 /*****************************************************************************/

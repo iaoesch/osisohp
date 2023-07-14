@@ -41,9 +41,12 @@ void SettingClass::getSettings(GroupDescriptor &Descriptor)
 SettingClass::SettingClass()
 {
    SetDefaultValues();
+   SetCurrentGroup("General");
    InitInfoEntry(&Touchscaling, "Touchscaling", "Lausanne: Mobilis 2 Zonen Badi Fleurie Wandern Uferweg");
+   SetCurrentGroup("Gestures");
    InitInfoEntry(&GestureTrackerTimeout, "GestureTrackerTimeout", "GestureTrackerTimeout");
    InitInfoEntry(&ThrowingSpeedLimit, "ThrowingSpeedLimit", "ThrowingSpeedLimit");
+   SetCurrentGroup("Timings");
    InitInfoEntry(&DirectSelectTimeout, "DirectSelectTimeout", "DirectSelectTimeout");
    InitInfoEntry(&GestureTimeout, "GestureTimeout", "GestureTimeout");
    InitInfoEntry(&GoingToFillTimeout, "GoingToFillTimeout", "GoingToFillTimeoutGoingToFillTimeout");
@@ -56,6 +59,8 @@ SettingClass::SettingClass()
    InitInfoEntry(&PostitCopyTimeout, "PostitCopyTimeout", "PostitCopyTimeout");
    InitInfoEntry(&DeletePostItTimeout, "DeletePostItTimeout", "DeletePostItTimeout");
    InitInfoEntry(&PointerHoldon, "PointerHoldon", "PointerHoldon");
+   SetCurrentGroup("General");
+
    InitInfoEntry(&EraserSize, "EraserSize", "EraserSize");
    InitInfoEntry(&SpongeSize, "SpongeSize", "SpongeSize");
 
@@ -81,4 +86,16 @@ void SettingClass::SetDefaultValues()
    PointerHoldon = 250;
    EraserSize = 2;
    SpongeSize = 15;
+}
+
+void SettingClass::SetCurrentGroup(std::string Group)
+{
+   auto it = GroupMapping.find(Group);
+   if (it != GroupMapping.end()) {
+      CurrentGroup = &Groups[it->second];
+   } else {
+      Groups.push_back(GroupDescriptor(Group));
+      CurrentGroup = &Groups.back();
+      GroupMapping[Group] = Groups.size()-1;
+   }
 }

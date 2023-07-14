@@ -286,10 +286,22 @@ void TabDialogDescriptor::Update()
    }
 }
 
+void TabDialogDescriptor::AddTab(std::vector<GroupDescriptor> &Descriptors)
+{
+   for (auto &e: Descriptors) {
+      Tabs.push_back(e);
+   }
+}
+
 GroupDescriptor &TabDialogDescriptor::AddTab(std::string Title)
 {
    Tabs.push_back(GroupDescriptor(Title));
    return Tabs.back();
+}
+
+void TabDialogDescriptor::AddTab(GroupDescriptor &Descriptor)
+{
+   Tabs.push_back(Descriptor);
 }
 
 
