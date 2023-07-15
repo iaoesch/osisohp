@@ -695,9 +695,16 @@ bool MainWindow::SaveFile(const QByteArray &fileFormat)
 void MainWindow::writeSettings()
 {
     QSettings SettingsManager("OESCH", "OverheadProjector");
+#ifdef UseFlatSettings
     GroupDescriptor MySettings("timings");
     Settings.getSettings(MySettings);
     SettingsManager.beginGroup("timings");
+#else
+    auto GroupedSettings = Settings.getSettings();
+    for (auto MySettings: GroupedSettings) {
+       MySettings.Fetch();
+    SettingsManager.beginGroup(QString::fromStdString(MySettings.GetGroupName()));
+#endif
 
     for (auto &d: MySettings.getEntries()) {
        // Switch on type in variant
@@ -716,7 +723,12 @@ void MainWindow::writeSettings()
         }
     }
 
+#ifdef UseFlatSettings
     SettingsManager.endGroup();
+#else
+    SettingsManager.endGroup();
+    }
+#endif
 
     SettingsManager.beginGroup("Drawing");
     SettingsManager.beginWriteArray("Pens");
@@ -739,9 +751,17 @@ void MainWindow::writeSettings()
 void MainWindow::readSettings()
 {
    QSettings SettingsManager("OESCH", "OverheadProjector");
+#ifdef UseFlatSettings
    GroupDescriptor MySettings("timings");
    Settings.getSettings(MySettings);
    SettingsManager.beginGroup("timings");
+#else
+    auto GroupedSettings = Settings.getSettings();
+    for (auto MySettings: GroupedSettings) {
+
+    SettingsManager.beginGroup(QString::fromStdString(MySettings.GetGroupName()));
+#endif
+
 
    for (auto &d: MySettings.getEntries()) {
       // Switch on type in variant
@@ -759,9 +779,14 @@ void MainWindow::readSettings()
             d.SetValue<std::string>(SettingsManager.value(QString::fromStdString(d.Title), QVariant(QString::fromStdString(d.GetDefaultValue<std::string>()))).value<std::string>());
        }
    }
-   MySettings.Update();
-
-   SettingsManager.endGroup();
+#ifdef UseFlatSettings
+    SettingsManager.endGroup();
+    MySettings.Update();
+#else
+    SettingsManager.endGroup();
+    MySettings.Update();
+    }
+#endif
 
     SettingsManager.beginGroup("Drawing");
     int size = SettingsManager.beginReadArray("Pens");
