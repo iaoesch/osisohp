@@ -21,12 +21,12 @@ constexpr std::size_t variant_index() {
 
 template <class T>
 class InvokeUpdate {
-public: static void Invoke(T o) {o.Update();}
+public: static void Invoke(T &o) {o.Update();}
 };
 
 template <class T>
 class InvokeFetch {
-public: static void Invoke(T o) {o.Fetch();}
+public: static void Invoke(T &o) {o.Fetch();}
 };
 
 template <class... Types>
