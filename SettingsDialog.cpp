@@ -286,6 +286,13 @@ void TabDialogDescriptor::Update()
    }
 }
 
+void TabDialogDescriptor::Fetch()
+{
+   for(auto &t: Tabs) {
+      t.Fetch();
+   }
+}
+
 void TabDialogDescriptor::AddTab(std::vector<GroupDescriptor> &Descriptors)
 {
    for (auto &e: Descriptors) {

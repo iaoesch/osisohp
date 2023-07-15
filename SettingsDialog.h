@@ -72,6 +72,7 @@ private:
 public:
    TabDialogDescriptor(std::string Name) : Title(Name) {}
    void Update();
+   void Fetch();
    void AddTab(std::vector<GroupDescriptor> &Descriptors);
    void AddTab(GroupDescriptor &Descriptor);
    GroupDescriptor &AddTab(std::string Title);

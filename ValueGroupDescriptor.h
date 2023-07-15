@@ -19,6 +19,16 @@ constexpr std::size_t variant_index() {
     }
 }
 
+template <class T>
+class InvokeUpdate {
+public: static void Invoke(T o) {o.Update();}
+};
+
+template <class T>
+class InvokeFetch {
+public: static void Invoke(T o) {o.Fetch();}
+};
+
 template <class... Types>
 class EntityDescriptorTemplate {
    template <class T>
@@ -42,7 +52,9 @@ class EntityDescriptorTemplate {
       const T &GetDefaultValue() const { return Default;}
       void setValue(const T &newNewValue) const {  NewValue = newNewValue;}
       void Update() {  Source = NewValue;}
+      void Fetch() {  NewValue = Source;}
    };
+#ifdef Visitor_experiments
    template<class V, class ...Ts>
    struct overloaded_osi;
 
@@ -64,26 +76,28 @@ class EntityDescriptorTemplate {
    // explicit deduction guide (not needed as of C++20)
    template<class... Ts>
    overloaded_osili(Ts...) -> overloaded_osili<Ts...>;
-
-   template<class ...Ts>
+#endif
+   template<template<class> class MemberFct, class ...Ts>
    struct overloaded_Update;
 
-   template<>
-   struct overloaded_Update<>  {
+   template<template<class> class MemberFct>
+   struct overloaded_Update<MemberFct>  {
       void operator() () {}
    };
 
-   template<class T, class ...Ts>
-   struct overloaded_Update<T,  Ts...> : overloaded_Update<Ts...> {
-      using overloaded_Update<Ts...>::operator();
-      void operator() (ValueDescriptor<T> &v) {v.Update();}
+   template<template<class> class MemberFct, class T, class ...Ts>
+   struct overloaded_Update<MemberFct, T,  Ts...> : overloaded_Update<MemberFct, Ts...> {
+      using overloaded_Update<MemberFct, Ts...>::operator();
+     // void operator() (ValueDescriptor<T> &v) {v.Update();}
+      void operator() (ValueDescriptor<T> &v) {MemberFct<ValueDescriptor<T>>::Invoke(v);}
    };
 
 public:
    typedef std::variant<ValueDescriptor<Types>...> ValueType;
    typedef std::variant<Types...> VariantType;
 
-   void Update() {std::visit(overloaded_Update<Types...>(),Value);}
+   void Update() {std::visit(overloaded_Update<InvokeUpdate, Types...>(),Value);}
+   void Fetch() {std::visit(overloaded_Update<InvokeFetch, Types...>(),Value);}
    template <class T>
    static constexpr int IdOf() {return variant_index<ValueType, ValueDescriptor<T>>();}
    int CurrentTypeId() const {return Value.index();}
@@ -114,11 +128,12 @@ public:
    EntityDescriptorTemplate(const EntityDescriptorTemplate &) = default;
    EntityDescriptorTemplate(EntityDescriptorTemplate &&) = default;
 
+#ifdef Visitor_experiments
    template <class... U>
    void Visit(std::function<void(U &Value, U Lower, U Upper)>... func) const{
       std::visit(overloaded_osi{func...}, Value);
    }
-
+#endif
 };
 
 typedef EntityDescriptorTemplate<bool, int, double, std::string> EntityDescriptor;
@@ -161,6 +176,13 @@ public:
    {
       for(auto &e: Entries) {
          e.Update();
+      }
+   }
+
+   void Fetch()
+   {
+      for(auto &e: Entries) {
+         e.Fetch();
       }
    }
 private:

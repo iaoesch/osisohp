@@ -543,6 +543,7 @@ void MainWindow::ShowOverviewChanged(bool OverviewEnabled)
 
 void MainWindow::ShowSettings()
 {
+#if 0
    static struct Settings {
     bool Value1 = true;
     int Value2 = 128;
@@ -560,7 +561,11 @@ void MainWindow::ShowSettings()
     Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value5, std::string(""));
     Descriptor.AddTab("Timings");
     this->Settings.getSettings(Descriptor.GetTab());
-
+#else
+   TabDialogDescriptor Descriptor("Test");
+   Descriptor.AddTab( Settings.getSettings());
+#endif
+   Descriptor.Fetch();
     SettingsDialog MySettings(Descriptor);
     auto Result  = MySettings.exec();
     if (Result == QDialog::Accepted) {
