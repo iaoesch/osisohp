@@ -153,7 +153,6 @@ MainWindow::MainWindow()
               this, &MainWindow::SwitchToNextPenColor);
 
 
-  //
 
     setWindowTitle(tr("Osis OHP"));
     setWindowState(Qt::WindowMaximized);
@@ -562,7 +561,7 @@ void MainWindow::ShowSettings()
     Descriptor.AddTab("Timings");
     this->Settings.getSettings(Descriptor.GetTab());
 #else
-   TabDialogDescriptor Descriptor("Test");
+   TabDialogDescriptor Descriptor("Preferences");
    Descriptor.AddTab( Settings.getSettings());
 #endif
    Descriptor.Fetch();
@@ -696,6 +695,7 @@ void MainWindow::writeSettings()
 {
     QSettings SettingsManager("OESCH", "OverheadProjector");
 #ifdef UseFlatSettings
+#error "Old variant, just for reference, throw away soon"
     GroupDescriptor MySettings("timings");
     Settings.getSettings(MySettings);
     SettingsManager.beginGroup("timings");
@@ -752,6 +752,8 @@ void MainWindow::readSettings()
 {
    QSettings SettingsManager("OESCH", "OverheadProjector");
 #ifdef UseFlatSettings
+#error "Old variant, just for reference, throw away soon"
+
    GroupDescriptor MySettings("timings");
    Settings.getSettings(MySettings);
    SettingsManager.beginGroup("timings");

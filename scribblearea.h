@@ -157,6 +157,8 @@ private:
     QPointF LastTablettMovePosition;
 
     //QTimer AnimatedPointerTimer;
+    QTimer AutoSaveTimer;
+
 
     bool TouchEvent(QTouchEvent *event);
 public:

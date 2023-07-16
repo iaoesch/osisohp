@@ -232,6 +232,7 @@ void GestureTrackerClass::Timeout()
          t = 0.000001;
          std::cout << "!!!!!!!! Division by 0";
       }
+#if 0
       PrintPoint("Gesture abs Ruck:", LastGesture.AccumulatedAbsolutesOfRuckComponents/t);
       PrintPoint("Gesture Ruck:", LastGesture.AccumulatedRuck/t);
       PrintPoint("Gesture abs Acc:", LastGesture.AccumulatedAbsolutesOfAccelerationComponents/t);
@@ -241,6 +242,7 @@ void GestureTrackerClass::Timeout()
       std::cout << "accumulated speedabsolute: " << LastGesture.AccumulatedAbsoluteOfSpeed/t << std::endl;
       std::cout << "Length: " << LastGesture.AccumulatedLength << std::endl;
       std::cout << "Time: " << LastGesture.AccumulatedTime.count() << std::endl;
+#endif
       emit(GestureDetected());
    }
 }

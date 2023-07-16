@@ -89,6 +89,7 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
    : Parent(Parent), Settings(MySettings)
 {
    modified = false;
+   AutosaveNeeded = false;
    LastDrawingValid = false;
    EraseLastDrawnObject = false;
    Frozen = false;
@@ -146,9 +147,9 @@ bool DatabaseClass::ImportImage(const QString &fileName)
     resizeImage(&loadedImage, newSize);
     image = loadedImage;
     modified = false;
+    AutosaveNeeded = false;
     Origin = {0,0};
     BackgroundImagesOrigin = {0,0};
-    modified = false;
     LastDrawingValid = false;
     EraseLastDrawnObject = false;
     BackgroundImages.clear();
@@ -200,6 +201,7 @@ void DatabaseClass::CreeatePostitFromSelection()
    TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
    CreatePostit(HintSelectedImagePart, SelectedImagePart, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox, SelectedImagePartPath);
    SelectedPostit.push_back({std::prev(PostIts.end()), PostIts.back().Position});
+   SetModified();
 }
 
 void DatabaseClass::CreatePostit(QImage BackgroundImage, QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path)
@@ -257,7 +259,7 @@ void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
     painter.setPen(QPen(myPenColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
     painter.drawLine(lastPointDrawn, endPoint);
-    modified = true;
+    SetModified();
 
     int rad = (ModifiedPenWidth / 2) + 2;
     update(QRect(lastPointDrawn.toPoint(), endPoint.toPoint()).normalized()
@@ -278,7 +280,7 @@ void DatabaseClass::EraseLineTo(const QPointF &endPoint, double Pressure)
    // painter.setCompositionMode(QPainter::CompositionMode_Source);
     //painter.setCompositionMode(QPainter::CompositionMode_Clear);
     painter.drawLine(lastPointDrawn, endPoint);
-    modified = true;
+    SetModified();
     EraseLastDrawnObject = true;
 
     int rad = (ModifiedPenWidth / 2) + 2;
@@ -301,7 +303,7 @@ void DatabaseClass::DrawLastDrawnPicture()
     }
     painter.drawImage(Origin, LastDrawnObject);
     LastDrawnObject.fill(TransparentColor);
-    modified = true;
+    SetModified();
 
     update();
 
@@ -445,6 +447,7 @@ void DatabaseClass::MoveTopBackgroundLayerToImage()
 
       //Set combined image as new image
       image = newImage;
+      SetModified();
    }
    UpdateGUIElements(BackgroundImages.size());
 
@@ -470,6 +473,7 @@ void DatabaseClass::CollapseBackgroundLayers()
          }
       }
       BackgroundImages.push_back(std::make_unique<QImage>(newImage));
+      SetModified();
    }
    UpdateGUIElements(BackgroundImages.size());
 }
@@ -491,6 +495,7 @@ void DatabaseClass::CollapseAllVisibleLayersToTop()
       }
       painter.drawImage(QPoint(0,0), image);
       image = newImage;
+      SetModified();
    }
    UpdateGUIElements(BackgroundImages.size());
 }
@@ -501,7 +506,7 @@ void DatabaseClass::clearImage()
 //! [9] //! [10]
 {
     image.fill(TransparentColor);
-    modified = true;
+    SetModified();
     LastDrawingValid = false;
     LastDrawnObjectPoints.clear();
     LastDrawnObject.fill(TransparentColor);
@@ -546,6 +551,7 @@ void DatabaseClass::PasteImage(QImage ImageToPaste)
     resizeImage(&image, RequiredSize);
     QPainter painter(&image);
     painter.drawImage(Destination, ImageToPaste);
+    SetModified();
     update();
 #endif
 }
@@ -571,6 +577,24 @@ bool DatabaseClass::SaveImage(const QString &fileName, const char *fileFormat)
         return false;
     }
 }
+
+QString DatabaseClass::GetAutoSaveName()
+{
+
+}
+
+
+void DatabaseClass::AutoSaveDatabase()
+{
+   if (AutosaveNeeded) {
+      QString AutoSavefileName = GetAutoSaveName();
+      SaveDatabase(AutoSavefileName);
+      AutosaveNeeded = false;
+      // Und clear of autosave from SaveDataBasae()
+      modified = true;
+   }
+}
+
 
 bool DatabaseClass::SaveDatabase(const QString &fileName)
 {
@@ -604,9 +628,9 @@ bool DatabaseClass::SaveDatabase(const QString &fileName)
       out << Picture.IsVisible();
       out << *Picture;
    }
+   modified = false;
+   AutosaveNeeded = false;
    return true;
-
-
 }
 
 bool DatabaseClass::LoadDatabase(const QString &fileName)
@@ -676,6 +700,7 @@ bool DatabaseClass::LoadDatabase(const QString &fileName)
    Parent.UpdateGUI(Visibilities);
 
    modified = false;
+   AutosaveNeeded = false;
    LastDrawingValid = false;
    EraseLastDrawnObject = false;
 
@@ -854,7 +879,7 @@ void DatabaseClass::DrawMovedSelection(const QPointF Offset)
 
 
     painter.drawImage(SelectedOffset+Offset+Origin, SelectedImagePart);
-    modified = true;
+    SetModified();
 
     update();
 
@@ -879,6 +904,7 @@ void DatabaseClass::FilllastDrawnShape()
    painter2.setCompositionMode(QPainter::CompositionMode_Source);
    // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
    painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+   SetModified();
 }
 
 void DatabaseClass::CompleteImage()
@@ -951,6 +977,7 @@ void DatabaseClass::FinishMovingSelectedPostits(QPointF Position)
       // Place moved postits on top of each other
       PostIts.splice( PostIts.end(), PostIts, r.postit);
    }
+   SetModified();
 }
 
 void DatabaseClass::DuplicateSelectedPostits()
@@ -958,6 +985,8 @@ void DatabaseClass::DuplicateSelectedPostits()
    for (auto &r: SelectedPostit) {
       PostIts.push_back(*r.postit);
    }
+   SetModified();
+
 }
 
 void DatabaseClass::DeleteSelectedPostits()
@@ -965,6 +994,8 @@ void DatabaseClass::DeleteSelectedPostits()
    for (auto &r: SelectedPostit) {
       PostIts.erase(r.postit);
    }
+   SetModified();
+
 }
 
 void DatabaseClass::SetImageToPaste(QImage Image)
@@ -1014,6 +1045,7 @@ void DatabaseClass::DoPasteImage(PasteEvent Event)
             painter.drawImage(Destination, ImageToPaste);
             BackgroundImages.push_back(std::make_unique<QImage>(NewImage));
             UpdateGUIElements(BackgroundImages.size());
+            SetModified();
          }
          break;
       case DatabaseClass::PasteBottomLayer:
@@ -1024,12 +1056,14 @@ void DatabaseClass::DoPasteImage(PasteEvent Event)
             painter.drawImage(Destination, ImageToPaste);
             BackgroundImages.push_front(std::make_unique<QImage>(NewImage));
             UpdateGUIElements(BackgroundImages.size());
+            SetModified();
          }
          break;
       case DatabaseClass::PasteDrawing:
          {
             QPainter painter(&image);
             painter.drawImage(Destination, ImageToPaste);
+            SetModified();
          }
 
          break;

@@ -65,6 +65,7 @@ class DatabaseClass
 
    bool EraseLastDrawnObject;
    bool modified;
+   bool AutosaveNeeded;
    bool LastDrawingValid;
    bool DiscardSelection;
    bool MarkerActive;
@@ -114,17 +115,23 @@ public:
    enum PasteEvent {PasteTopLayer, PasteBottomLayer, PasteDrawing, CancelPasting, MakeBigger, MakeSmaller, MakeOriginalSize};
 
 
-   void SetSelectedOffset() {SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPointDrawn;}
-
-   void RestartCurrentPaintedObjectBoundingBox(QPointF const &StartPoint) {  CurrentPaintedObjectBoundingBox.Clear();
-                                                          CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(StartPoint.x(), StartPoint.y()));
+   void SetSelectedOffset() {
+      SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPointDrawn;
    }
 
-   bool IsInsideLastPaintedObjectBoundingBox(QPointF const &Point) { return LastPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));}
+   void RestartCurrentPaintedObjectBoundingBox(QPointF const &StartPoint)
+   {
+      CurrentPaintedObjectBoundingBox.Clear();
+      CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(StartPoint.x(), StartPoint.y()));
+   }
+
+   bool IsInsideLastPaintedObjectBoundingBox(QPointF const &Point)
+   {
+      return LastPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));
+   }
    bool IsCutoutActive() {return CutMode;}
    void ClearLastPaintedObjectBoundingBox() { LastPaintedObjectBoundingBox.Clear();}
    void MoveOrigin(QPointF Offset) {
-
       Origin -= Offset;
       if (!Frozen) {
          BackgroundImagesOrigin -= Offset;
@@ -261,6 +268,12 @@ public:
    void DeleteSelectedPostits();
    void DuplicateSelectedPostits();
 private:
+private:
+QString GetAutoSaveName();
+public slots:
+   void AutoSaveDatabase();
+
+
 private:
    double CalculatePenWidthLinear(double Pressure, int BaseWidth);
    double CalculatePenWidthQuadratic(double Pressure, int BaseWidth);

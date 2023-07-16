@@ -361,7 +361,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
       StateMachine.Context.MyDatas.MakeSelectionFromLastDrawnObject(StateMachine.Context.MyDatas.IsCutoutActive());
       StateMachine.Context.MyDatas.ClearLastPaintedObjectBoundingBox();
       StateMachine.Context.MyDatas.ClearLastDrawnObjectPoints();
-      StateMachine.Context.MyDatas.SetModified();
+      //StateMachine.Context.MyDatas.SetModified();
 
       //MoveSelected = true;
       //NewDrawingStarted = false;

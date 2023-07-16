@@ -44,6 +44,7 @@
 #include <QList>
 #include <QMainWindow>
 #include "Settings.hpp"
+#include <QTimer>
 
 class ScribbleArea;
 class QActionGroup;
@@ -140,6 +141,7 @@ private:
     QAction *SettingsAct;
     QAction *aboutAct;
     QAction *aboutQtAct;
+
 
     bool SaveFile(const QByteArray &fileFormat);
     void SetWhiteBoardColors();
