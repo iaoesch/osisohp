@@ -72,15 +72,22 @@ ScribbleArea::ScribbleArea(class SettingClass &MySettings, QWidget *parent)
 
     connect(&AutoSaveTimer, &QTimer::timeout, &MyDatas, &DatabaseClass::AutoSaveDatabase);
     AutoSaveTimer.setSingleShot(false);
-    std::chrono::minutes AutosaveIntervallInMinutes = std::chrono::minutes(MySettings.DefaultAutoSaveIntervall);
-    if (AutosaveIntervallInMinutes > 0ms) {
-       AutoSaveTimer.start(AutosaveIntervallInMinutes);
-    }
+    ActualizeAutoSaveIntervall();
+    MySettings.RegisterCallback(&MySettings.DefaultAutoSaveIntervall, [this](){ActualizeAutoSaveIntervall();});
 
     setMouseTracking(true);
 }
 //! [0]
-
+void ScribbleArea::ActualizeAutoSaveIntervall()
+{
+   std::cout << "Autosaveintervall changed" << std::endl;
+   std::chrono::minutes AutosaveIntervallInMinutes = std::chrono::minutes(Settings.DefaultAutoSaveIntervall);
+   if (AutosaveIntervallInMinutes > 0ms) {
+      AutoSaveTimer.start(AutosaveIntervallInMinutes);
+   } else {
+      AutoSaveTimer.stop();
+   }
+}
 
 //! [3]
 bool ScribbleArea::ExportImage(const QString &fileName, const char *fileFormat)
@@ -205,7 +212,7 @@ void ScribbleArea::CopyImageToClipboard()
 //! [11]
 void ScribbleArea::mousePressEvent(QMouseEvent *event)
 {
-   std::cout << event->device()->name().toStdString();
+   std::cout << event->device()->name().toStdString() << std::endl;
    DEBUG_LOG << "Mouse: press";
    StateMachine.HandlePressEventSM(event->button(), event->pos(), ControllingStateMachine::Milliseconds(event->timestamp()));
 }
@@ -239,7 +246,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 void ScribbleArea::tabletEvent(QTabletEvent * event)
 {
   // DEBUG_LOG << "Tablett Pen Type " << event->pointerType() << std::endl;
-   std::cout << event->device()->name().toStdString();
+   std::cout << event->device()->name().toStdString() << std::endl;
     switch(event->type()){
        case QEvent::TabletRelease:
           DEBUG_LOG << "Tablett up " << event->type() << "/"<< event->button() << std::endl;
@@ -291,7 +298,7 @@ bool ScribbleArea::TouchEvent(QTouchEvent *event)
    switch (event->type()) {
       case QEvent::TouchBegin:
          DEBUG_LOG << "Got touch begin" << std::endl;
-         std::cout << event->device()->name().toStdString();
+         std::cout << event->device()->name().toStdString() << std::endl;
          {
          QPointF MeanPosition(0,0);
          for (auto &p: event->points()) {

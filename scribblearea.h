@@ -161,6 +161,7 @@ private:
 
 
     bool TouchEvent(QTouchEvent *event);
+    void ActualizeAutoSaveIntervall();
 public:
     void UpdateGUI(const std::vector<bool> &Visibilities);
     bool IsInSelectingState() {return StateMachine.IsInSelectingState();}

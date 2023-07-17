@@ -99,7 +99,7 @@ class EntityDescriptorTemplate {
 public:
    typedef std::variant<ValueDescriptor<Types>...> ValueType;
    typedef std::variant<Types...> VariantType;
-   typedef void (*CallbackType)();
+   typedef std::function<void()> CallbackType;
 
    bool Update() {Modified = std::visit(overloaded_Update<InvokeUpdate, Types...>(),Value);
                   if (Modified && (Notify != nullptr)) {Notify();}
