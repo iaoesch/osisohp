@@ -57,6 +57,10 @@ class MainWindow : public QMainWindow
 public:
     MainWindow();
 
+signals:
+    void ValueChanged();
+
+
 protected:
     void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
@@ -92,6 +96,9 @@ private:
     void createMenus();
     bool maybeSave();
     bool ExportFile(const QByteArray &fileFormat);
+
+    QString initialPath;
+    static constexpr auto DefaultExtension = "ohp";
 
     ScribbleArea *scribbleArea;
     class SettingClass Settings;

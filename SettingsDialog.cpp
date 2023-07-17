@@ -278,12 +278,16 @@ void TabDescriptor::AddEntry(const std::string &Name, const std::string &Help, E
 
 
 
-
-void TabDialogDescriptor::Update()
+bool TabDialogDescriptor::Update()
 {
+   bool AnyValueChanged = false;
+
    for(auto &t: Tabs) {
-      t.Update();
+      if (t.Update()) {
+         AnyValueChanged = true;
+      }
    }
+   return AnyValueChanged;
 }
 
 void TabDialogDescriptor::Fetch()

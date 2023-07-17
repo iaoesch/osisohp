@@ -21,12 +21,16 @@ constexpr std::size_t variant_index() {
 
 template <class T>
 class InvokeUpdate {
-public: static void Invoke(T &o) {o.Update();}
+public:
+   typedef bool ResultType;
+   static ResultType Invoke(T &o) {return o.Update();}
 };
 
 template <class T>
 class InvokeFetch {
-public: static void Invoke(T &o) {o.Fetch();}
+public:
+   typedef void ResultType;
+   static ResultType Invoke(T &o) {o.Fetch();}
 };
 
 template <class... Types>
@@ -51,7 +55,7 @@ class EntityDescriptorTemplate {
       const T &getValue() const { return NewValue;}
       const T &GetDefaultValue() const { return Default;}
       void setValue(const T &newNewValue) const {  NewValue = newNewValue;}
-      void Update() {  Source = NewValue;}
+      bool Update() {  bool Modified = (Source != NewValue); Source = NewValue; return Modified;}
       void Fetch() {  NewValue = Source;}
    };
 #ifdef Visitor_experiments
@@ -89,14 +93,17 @@ class EntityDescriptorTemplate {
    struct overloaded_Update<MemberFct, T,  Ts...> : overloaded_Update<MemberFct, Ts...> {
       using overloaded_Update<MemberFct, Ts...>::operator();
      // void operator() (ValueDescriptor<T> &v) {v.Update();}
-      void operator() (ValueDescriptor<T> &v) {MemberFct<ValueDescriptor<T>>::Invoke(v);}
+      typename MemberFct<ValueDescriptor<T>>::ResultType operator() (ValueDescriptor<T> &v) {return MemberFct<ValueDescriptor<T>>::Invoke(v);}
    };
 
 public:
    typedef std::variant<ValueDescriptor<Types>...> ValueType;
    typedef std::variant<Types...> VariantType;
+   typedef void (*CallbackType)();
 
-   void Update() {std::visit(overloaded_Update<InvokeUpdate, Types...>(),Value);}
+   bool Update() {Modified = std::visit(overloaded_Update<InvokeUpdate, Types...>(),Value);
+                  if (Modified && (Notify != nullptr)) {Notify();}
+                  return Modified;}
    void Fetch() {std::visit(overloaded_Update<InvokeFetch, Types...>(),Value);}
    template <class T>
    static constexpr int IdOf() {return variant_index<ValueType, ValueDescriptor<T>>();}
@@ -113,17 +120,20 @@ public:
    template <class T>
    void SetValue(const T &Value) const {GetDescriptor<T>().setValue(Value);}
    //  typedef std::variant<ValueDescriptor<bool>, ValueDescriptor<int>, ValueDescriptor<double>, ValueDescriptor<std::string>> ValueType2;
-
+   bool WasModified() {return Modified; }
+   CallbackType RegisterCallback(CallbackType Callback) {CallbackType OldCallback = Notify; Notify = Callback; return OldCallback;}
   // ValueType2 NewVal;
    std::string Title;
    std::string HelpText;
    ValueType Value;
+   bool Modified;
+   CallbackType Notify;
 
    template <class U>
    EntityDescriptorTemplate(std::string const &Name, std::string const &Help, U &Val, U Default, U LimitLow, U LimitHigh) :
  //  EntityDescriptorTemplate(std::string const &Name, std::string const &Help, EntityDescriptor::ValueType Val, EntityDescriptor::ValueType LimitLow, EntityDescriptor::ValueType LimitHigh) :
  //  NewVal(Val, Val, LimitLow, LimitHigh),
-   Title(Name), HelpText(Help), Value(ValueDescriptor<U>(Val, Default, LimitLow, LimitHigh)) {}
+   Title(Name), HelpText(Help), Value(ValueDescriptor<U>(Val, Default, LimitLow, LimitHigh)), Modified(false), Notify(nullptr) {}
 
    EntityDescriptorTemplate(const EntityDescriptorTemplate &) = default;
    EntityDescriptorTemplate(EntityDescriptorTemplate &&) = default;
@@ -143,23 +153,26 @@ private:
    std::string GroupName;
    std::vector<EntityDescriptor> Entries;
 
+
 public:
    GroupDescriptor() {}
 
    typedef EntityDescriptor::VariantType VariantType;
+   typedef EntityDescriptor::CallbackType CallbackType;
 
    GroupDescriptor(std::string Name) : GroupName(Name) {}
    GroupDescriptor(const GroupDescriptor &src) = default;
    template <class U>
-   void AddEntry(std::string const &Name, std::string const &Help, U &Value, U Default, U LowerLimit = std::numeric_limits<U>::lowest(), U UpperLimit = std::numeric_limits<U>::max())
+   EntityDescriptor &AddEntry(std::string const &Name, std::string const &Help, U &Value, U Default, U LowerLimit = std::numeric_limits<U>::lowest(), U UpperLimit = std::numeric_limits<U>::max())
    {
       Entries.push_back(EntityDescriptor(Name, Help, Value, Default, LowerLimit, UpperLimit));
+      return Entries.back();
    }
 
    //void AddEntry(std::string const &Name, std::string const &Help, double Value, double LowerLimit = 0.0, double UpperLimit = 100.0E10);
   // void AddEntry(std::string const &Name, std::string const &Help, const char *&Value) {AddEntry(Name, Help, std::string(Value));}
-   void AddEntry(std::string const &Name, std::string const &Help, std::string &Value, std::string Default) {
-      AddEntry<std::string>(Name, Help, Value, Default, std::string(), std::string());
+   EntityDescriptor & AddEntry(std::string const &Name, std::string const &Help, std::string &Value, std::string Default) {
+      return AddEntry<std::string>(Name, Help, Value, Default, std::string(), std::string());
    }
 
    const std::string &GetGroupName() const
@@ -172,11 +185,15 @@ public:
       return Entries;
    }
 
-   void Update()
+   bool Update()
    {
+      bool AnyValueChanged = false;
       for(auto &e: Entries) {
-         e.Update();
+         if (e.Update()) {
+            AnyValueChanged = true;
+         }
       }
+      return AnyValueChanged;
    }
 
    void Fetch()

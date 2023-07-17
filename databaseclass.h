@@ -13,8 +13,11 @@
 
 class ScribbleArea;
 
-class DatabaseClass
+class DatabaseClass : public QObject
 {
+   Q_OBJECT
+
+
    ScribbleArea &Parent;
    SettingClass &Settings;
    struct PostIt {

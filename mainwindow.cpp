@@ -49,6 +49,9 @@
 MainWindow::MainWindow()
 {
     SetOHPColors();
+
+    initialPath = QDir::homePath() + "/untitled." + DefaultExtension;
+
     readSettings();
     scribbleArea = new ScribbleArea(Settings);
     setCentralWidget(scribbleArea);
@@ -151,6 +154,7 @@ MainWindow::MainWindow()
             this, &MainWindow::ShowOverviewChanged);
     connect(scribbleArea, &ScribbleArea::SwitchToNextPenColor,
               this, &MainWindow::SwitchToNextPenColor);
+
 
 
 
@@ -274,7 +278,7 @@ void MainWindow::Export()
 void MainWindow::Save()
 //! [5] //! [6]
 {
-   SaveFile("ohp");
+   SaveFile(DefaultExtension);
 }
 
 void MainWindow::ProtectImage()
@@ -568,7 +572,9 @@ void MainWindow::ShowSettings()
     SettingsDialog MySettings(Descriptor);
     auto Result  = MySettings.exec();
     if (Result == QDialog::Accepted) {
-       Descriptor.Update();
+       if (Descriptor.Update()) {
+          emit(ValueChanged());
+       }
     }
 
 }
@@ -677,7 +683,6 @@ bool MainWindow::ExportFile(const QByteArray &fileFormat)
 bool MainWindow::SaveFile(const QByteArray &fileFormat)
 //! [19] //! [20]
 {
-    QString initialPath = QDir::currentPath() + "/untitled." + fileFormat;
 
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),
                                initialPath,
@@ -741,6 +746,7 @@ void MainWindow::writeSettings()
     SettingsManager.setValue("ScrollHintColor", ScrollHintColor);
     SettingsManager.setValue("SelectionHintColor", SelectionHintColor);
     SettingsManager.setValue("PostItBackgroundColor", PostItBackgroundColor);
+    SettingsManager.setValue("DefaultFileName", initialPath);
 
     SettingsManager.beginGroup("SensorNames");
     SettingsManager.endGroup();
@@ -804,6 +810,7 @@ void MainWindow::readSettings()
     SelectionHintColor = SettingsManager.value("SelectionHintColor").value<QColor>();
     PostItBackgroundColor = SettingsManager.value("PostItBackgroundColor").value<QColor>();
 
+    initialPath = SettingsManager.value("DefaultFileName", QVariant(initialPath)).value<QString>();
     SettingsManager.beginGroup("SensorNames");
     SettingsManager.endGroup();
     SettingsManager.endGroup();

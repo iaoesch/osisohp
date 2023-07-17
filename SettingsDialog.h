@@ -71,7 +71,7 @@ private:
 
 public:
    TabDialogDescriptor(std::string Name) : Title(Name) {}
-   void Update();
+   bool Update();
    void Fetch();
    void AddTab(std::vector<GroupDescriptor> &Descriptors);
    void AddTab(GroupDescriptor &Descriptor);
@@ -101,6 +101,7 @@ private slots:
     void NewState(int State);
 
     void DefaultClicked();
+
 private:
     std::map<QWidget *, const EntityDescriptor *> DescriptorMap;
 

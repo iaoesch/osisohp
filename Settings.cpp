@@ -1,6 +1,10 @@
 #include "Settings.hpp"
 #include "SettingsDialog.h"
 
+#include <QDir>
+
+#ifdef UseFlatSettings
+#error "Old variant, just for reference, throw away soon"
 
 void SettingClass::getSettings(GroupDescriptor &Descriptor)
 {
@@ -37,6 +41,7 @@ void SettingClass::getSettings(GroupDescriptor &Descriptor)
 #endif
 }
 //Lausanne: Mobilis 2 Zonen Badi Fleurie Wandern Uferweg
+#endif
 
 SettingClass::SettingClass()
 {
@@ -63,6 +68,8 @@ SettingClass::SettingClass()
 
    InitInfoEntry(&EraserSize, "EraserSize", "EraserSize");
    InitInfoEntry(&SpongeSize, "SpongeSize", "SpongeSize");
+   InitInfoEntry(&AutoSavePath, "AutoSavePath", "AutoSavePath");
+   InitInfoEntry(&DefaultAutoSaveIntervall, "DefaultAutoSaveIntervall", "DefaultAutoSaveIntervall");
 
 }
 
@@ -86,6 +93,19 @@ void SettingClass::SetDefaultValues()
    PointerHoldon = 250;
    EraserSize = 2;
    SpongeSize = 15;
+
+   DefaultAutoSaveIntervall = 1;
+   AutoSavePath = QDir::homePath().toStdString();
+}
+
+GroupDescriptor::CallbackType SettingClass::RegisterCallback(void *Value, GroupDescriptor::CallbackType Callback)
+{
+   if (Infos[Value].Descriptor != nullptr) {
+      return Infos[Value].Descriptor->RegisterCallback(Callback);
+   } else {
+      // Should not happen, probably good idea to throw here..
+      return Callback;
+   }
 }
 
 void SettingClass::SetCurrentGroup(std::string Group)

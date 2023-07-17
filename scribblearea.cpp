@@ -72,7 +72,7 @@ ScribbleArea::ScribbleArea(class SettingClass &MySettings, QWidget *parent)
 
     connect(&AutoSaveTimer, &QTimer::timeout, &MyDatas, &DatabaseClass::AutoSaveDatabase);
     AutoSaveTimer.setSingleShot(false);
-    std::chrono::minutes AutosaveIntervallInMinutes = 10min;
+    std::chrono::minutes AutosaveIntervallInMinutes = std::chrono::minutes(MySettings.DefaultAutoSaveIntervall);
     if (AutosaveIntervallInMinutes > 0ms) {
        AutoSaveTimer.start(AutosaveIntervallInMinutes);
     }

@@ -39,6 +39,7 @@ class SettingClass {
       std::string Name;
       std::string Helptext;
       EntityDescriptor::VariantType DefaultValue;
+      EntityDescriptor *Descriptor;
    };
 
    std::map<void *, SettingInfo> Infos;
@@ -65,21 +66,28 @@ public:
    double PointerHoldon = 250;
    int    EraserSize = 2;
    int    SpongeSize = 15;
+   std::string AutoSavePath;
+   int    DefaultAutoSaveIntervall;
 
    std::vector<GroupDescriptor> &getSettings() {return Groups;}
-   void getSettings(GroupDescriptor &Descriptor);
+#ifdef UseFlatSettings
+#error "Old variant, just for reference, throw away soon"
+      void getSettings(GroupDescriptor &Descriptor);
+#endif
    SettingClass();
    void SetDefaultValues();
+   GroupDescriptor::CallbackType RegisterCallback(void *Value, GroupDescriptor::CallbackType Callback);
 private:
    template<class U>
-   void AddSettingsEntry(GroupDescriptor &Descriptor, U &Value) {
-      Descriptor.AddEntry(Infos[&Value].Name, Infos[&Value].Helptext, Value, std::get<U>(Infos[&Value].DefaultValue));
+   EntityDescriptor &AddSettingsEntry(GroupDescriptor &Descriptor, U &Value) {
+      return Descriptor.AddEntry(Infos[&Value].Name, Infos[&Value].Helptext, Value, std::get<U>(Infos[&Value].DefaultValue));
    }
 
    template<class U>
    void InitInfoEntry(U *Value, std::string Name, std::string HelpText) {
-      Infos[Value] = {Name, HelpText, *Value};
-      AddSettingsEntry(*CurrentGroup, *Value);
+      Infos[Value] = {Name, HelpText, *Value, nullptr};
+      EntityDescriptor &Descriptor = AddSettingsEntry(*CurrentGroup, *Value);
+      Infos[Value].Descriptor = &Descriptor;
    }
 
    void SetCurrentGroup(std::string Group);
