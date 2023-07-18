@@ -69,6 +69,7 @@ protected:
 private slots:
     void open();
     void Export();
+    void ImportToLayer();
     void penColor();
     void BackGroundColorColor();
     void BackGroundColorWhiteBoard();
@@ -135,6 +136,7 @@ private:
     QAction *openAct;
     QAction *saveAct;
     QList<QAction *> saveAsActs;
+    QAction *ImportAsLayerAct;
     QAction *PasteAct;
     QAction *CopyAct;
     QAction *exitAct;

@@ -279,6 +279,18 @@ void MainWindow::open()
     }
 }
 //! [4]
+void MainWindow::ImportToLayer()
+//! [3] //! [4]
+{
+
+        QString fileName = QFileDialog::getOpenFileName(this,
+                                   tr("Import File"), CurrentFile.absoluteFilePath());
+        if (!fileName.isEmpty()) {
+            scribbleArea->ImportImageToBackgroundLayer(fileName);
+        }
+
+
+}
 
 //! [5]
 void MainWindow::Export()
@@ -449,6 +461,11 @@ void MainWindow::createActions()
     openAct->setShortcuts(QKeySequence::Open);
     connect(openAct, SIGNAL(triggered()), this, SLOT(open()));
 
+    ImportAsLayerAct = new QAction(tr("&Import Layer"), this);
+    //ImportAsLayerAct->setShortcuts(QKeySequence::Open);
+    connect(ImportAsLayerAct, &QAction::triggered, this, &MainWindow::ImportToLayer);
+
+
     saveAct = new QAction(tr("&Save..."), this);
     saveAct->setShortcuts(QKeySequence::Save);
     connect(saveAct, SIGNAL(triggered()), this, SLOT(Save()));
@@ -615,6 +632,7 @@ void MainWindow::createMenus()
     fileMenu->addAction(openAct);
     fileMenu->addAction(saveAct);
     fileMenu->addMenu(saveAsMenu);
+    fileMenu->addAction(ImportAsLayerAct);
     fileMenu->addAction(printAct);
     fileMenu->addAction(CopyAct);
     fileMenu->addAction(PasteAct);

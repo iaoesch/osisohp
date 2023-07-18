@@ -266,6 +266,7 @@ public:
       return ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()+2));
    }
 
+   bool ImportImageToBackgroundLayer(const QString &fileName);
    void ClearLastDrawnPicture();
 
    void DeleteSelectedPostits();

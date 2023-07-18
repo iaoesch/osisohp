@@ -101,10 +101,16 @@ bool ScribbleArea::SaveImage(const QString &fileName)
    return MyDatas.SaveDatabase(fileName);
 }
 //! [3] //! [4]
+bool ScribbleArea::ImportImageToBackgroundLayer(const QString &fileName)
+{
+   return MyDatas.ImportImageToBackgroundLayer(fileName);
+}
+
 bool ScribbleArea::LoadImage(const QString &fileName)
 {
    return MyDatas.LoadDatabase(fileName);
 }
+
 //! [1] //! [2]
 //! [4]
 

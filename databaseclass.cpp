@@ -422,6 +422,19 @@ void DatabaseClass::setPenWidth(int newWidth)
     }
 }
 
+bool DatabaseClass::ImportImageToBackgroundLayer(const QString &fileName)
+{
+   QImage loadedImage;
+   if (!loadedImage.load(fileName))
+       return false;
+
+      // QSize newSize = loadedImage.size().expandedTo(Parent.size());
+      // resizeImage(&loadedImage, newSize);
+
+   BackgroundImages.push_back(std::make_unique<QImage>(loadedImage));
+   UpdateGUIElements(BackgroundImages.size());
+}
+
 void DatabaseClass::MoveImageToBackgroundLayer()
 {
    CompleteImage();
@@ -429,7 +442,6 @@ void DatabaseClass::MoveImageToBackgroundLayer()
    clearImage();
    UpdateGUIElements(BackgroundImages.size());
 }
-
 void DatabaseClass::MoveTopBackgroundLayerToImage()
 {
    if (!BackgroundImages.empty()) {

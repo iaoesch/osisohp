@@ -80,7 +80,7 @@ class ScribbleArea : public QWidget
 public:
     ScribbleArea(SettingClass &MySettings, QWidget *parent = nullptr);
 
-    bool ImportImage(const QString &fileName);
+    bool ImportImageToBackgroundLayer(const QString &fileName);
     bool LoadImage(const QString &fileName);
     void SetAutosaveFileName(const QString &Name) {MyDatas.SetAutosaveName(Name);}
     QString GetFileName();
