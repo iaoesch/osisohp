@@ -50,7 +50,7 @@ MainWindow::MainWindow()
 {
     SetOHPColors();
 
-    initialPath = QDir::homePath() + "/untitled." + DefaultExtension;
+    DefaultFileName = QDir::homePath() + "/untitled." + DefaultExtension;
 
     readSettings();
     scribbleArea = new ScribbleArea(Settings);
@@ -259,9 +259,12 @@ void MainWindow::open()
 {
     if (maybeSave()) {
         QString fileName = QFileDialog::getOpenFileName(this,
-                                   tr("Open File"), QDir::currentPath());
-        if (!fileName.isEmpty())
+                                   tr("Open File"), CurrentFile.absolutePath());
+        if (!fileName.isEmpty()) {
             scribbleArea->LoadImage(fileName);
+            CurrentFile.setFile(fileName);
+        }
+
     }
 }
 //! [4]
@@ -654,7 +657,7 @@ bool MainWindow::maybeSave()
                           QMessageBox::Save | QMessageBox::Discard
                           | QMessageBox::Cancel);
         if (ret == QMessageBox::Save) {
-            return SaveFile("ohp");
+            return SaveFile(DefaultExtension);
         } else if (ret == QMessageBox::Cancel) {
             return false;
         }
@@ -670,7 +673,7 @@ bool MainWindow::ExportFile(const QByteArray &fileFormat)
     QString initialPath = QDir::currentPath() + "/untitled." + fileFormat;
 
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),
-                               initialPath,
+                               CurrentFile.absolutePath(),
                                tr("%1 Files (*.%2);;All Files (*)")
                                .arg(QString::fromLatin1(fileFormat.toUpper()))
                                .arg(QString::fromLatin1(fileFormat)));
@@ -685,13 +688,15 @@ bool MainWindow::SaveFile(const QByteArray &fileFormat)
 {
 
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),
-                               initialPath,
+                               CurrentFile.absoluteFilePath(),
                                tr("%1 Files (*.%2);;All Files (*)")
                                .arg(QString::fromLatin1(fileFormat.toUpper()))
                                .arg(QString::fromLatin1(fileFormat)));
     if (fileName.isEmpty()) {
         return false;
     } else {
+        CurrentFile.setFile(fileName);
+        DefaultFileName = fileName;
         return scribbleArea->SaveImage(fileName);
     }
 }
@@ -746,7 +751,8 @@ void MainWindow::writeSettings()
     SettingsManager.setValue("ScrollHintColor", ScrollHintColor);
     SettingsManager.setValue("SelectionHintColor", SelectionHintColor);
     SettingsManager.setValue("PostItBackgroundColor", PostItBackgroundColor);
-    SettingsManager.setValue("DefaultFileName", initialPath);
+    SettingsManager.setValue("DefaultFileName", DefaultFileName);
+    SettingsManager.setValue("CurrentFile", CurrentFile.absolutePath());
 
     SettingsManager.beginGroup("SensorNames");
     SettingsManager.endGroup();
@@ -810,7 +816,8 @@ void MainWindow::readSettings()
     SelectionHintColor = SettingsManager.value("SelectionHintColor").value<QColor>();
     PostItBackgroundColor = SettingsManager.value("PostItBackgroundColor").value<QColor>();
 
-    initialPath = SettingsManager.value("DefaultFileName", QVariant(initialPath)).value<QString>();
+    DefaultFileName = SettingsManager.value("DefaultFileName", QVariant(DefaultFileName)).value<QString>();
+    CurrentFile = QFileInfo(SettingsManager.value("CurrentFile", QVariant(DefaultFileName)).value<QString>());
     SettingsManager.beginGroup("SensorNames");
     SettingsManager.endGroup();
     SettingsManager.endGroup();
