@@ -270,7 +270,7 @@ void MainWindow::open()
 {
     if (maybeSave()) {
         QString fileName = QFileDialog::getOpenFileName(this,
-                                   tr("Open File"), CurrentFile.absolutePath());
+                                   tr("Open File"), CurrentFile.absoluteFilePath());
         if (!fileName.isEmpty()) {
             scribbleArea->LoadImage(fileName);
             CurrentFile.setFile(fileName);

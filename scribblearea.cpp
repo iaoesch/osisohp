@@ -212,7 +212,7 @@ void ScribbleArea::CopyImageToClipboard()
 //! [11]
 void ScribbleArea::mousePressEvent(QMouseEvent *event)
 {
-   std::cout << event->device()->name().toStdString() << std::endl;
+   std::cout << "<" << event->device()->name().toStdString() << "> : " << event->device()->systemId() << std::endl;
    DEBUG_LOG << "Mouse: press";
    StateMachine.HandlePressEventSM(event->button(), event->pos(), ControllingStateMachine::Milliseconds(event->timestamp()));
 }
@@ -246,7 +246,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 void ScribbleArea::tabletEvent(QTabletEvent * event)
 {
   // DEBUG_LOG << "Tablett Pen Type " << event->pointerType() << std::endl;
-   std::cout << event->device()->name().toStdString() << std::endl;
+   std::cout << "<" << event->device()->name().toStdString() << "> : " << event->device()->systemId() << std::endl;
     switch(event->type()){
        case QEvent::TabletRelease:
           DEBUG_LOG << "Tablett up " << event->type() << "/"<< event->button() << std::endl;
@@ -298,7 +298,7 @@ bool ScribbleArea::TouchEvent(QTouchEvent *event)
    switch (event->type()) {
       case QEvent::TouchBegin:
          DEBUG_LOG << "Got touch begin" << std::endl;
-         std::cout << event->device()->name().toStdString() << std::endl;
+         std::cout << "<" << event->device()->name().toStdString() << "> : " << event->device()->systemId() << std::endl;
          {
          QPointF MeanPosition(0,0);
          for (auto &p: event->points()) {

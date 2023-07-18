@@ -586,8 +586,10 @@ QString DatabaseClass::GetAutoSaveName()
 
 void DatabaseClass::AutoSaveDatabase()
 {
+   std::cout << "Autosaving " << std::endl;
    if (AutosaveNeeded) {
       QString AutoSavefileName = GetAutoSaveName();
+      std::cout << "saving to " << AutoSavefileName.toStdString() << std::endl;
       if (SaveDatabase(AutoSavefileName)) {
          AutosaveNeeded = false;
          // Und clear of autosave from SaveDataBasae()

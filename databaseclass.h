@@ -194,7 +194,7 @@ public:
    void clearImage();
 
    bool isModified() const { return modified; }
-   void SetModified() {modified =  true;}
+   void SetModified() {modified =  true; AutosaveNeeded = true;}
    QColor penColor() const { return myPenColor; }
    int penWidth() const { return SelectedPenWidth; }
    void Freeze(bool Mode) {Frozen = Mode;}
