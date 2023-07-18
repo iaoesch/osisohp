@@ -50,9 +50,19 @@ MainWindow::MainWindow()
 {
     SetOHPColors();
 
-    DefaultFileName = QDir::homePath() + "/untitled." + DefaultExtension;
+   // DefaultFileName = QDir::homePath() + "/untitled." + DefaultExtension;
 
+    CurrentFile.setFile(QDir::homePath() + "/untitled." + DefaultExtension);
     readSettings();
+    CurrentFile.setFile(CurrentFile.absolutePath() + "/untitled." + DefaultExtension);
+
+    if (Settings.AutoSavePath.length() == 0) {
+
+       CurrentAutosaveFile.setFile(QDir::homePath() + "/untitled."  + DefaultExtension + AutosaveExtension);
+    } else {
+       CurrentAutosaveFile.setFile(QString::fromStdString(Settings.AutoSavePath + "/untitled."  + DefaultExtension + AutosaveExtension));
+    }
+
     scribbleArea = new ScribbleArea(Settings);
     setCentralWidget(scribbleArea);
     QWidget::setAttribute(Qt::WA_AcceptTouchEvents);
@@ -696,7 +706,7 @@ bool MainWindow::SaveFile(const QByteArray &fileFormat)
         return false;
     } else {
         CurrentFile.setFile(fileName);
-        DefaultFileName = fileName;
+        CurrentAutosaveFile.setFile(fileName + AutosaveExtension);
         return scribbleArea->SaveImage(fileName);
     }
 }
@@ -751,7 +761,7 @@ void MainWindow::writeSettings()
     SettingsManager.setValue("ScrollHintColor", ScrollHintColor);
     SettingsManager.setValue("SelectionHintColor", SelectionHintColor);
     SettingsManager.setValue("PostItBackgroundColor", PostItBackgroundColor);
-    SettingsManager.setValue("DefaultFileName", DefaultFileName);
+   // SettingsManager.setValue("DefaultFileName", DefaultFileName);
     SettingsManager.setValue("CurrentFile", CurrentFile.absolutePath());
 
     SettingsManager.beginGroup("SensorNames");
@@ -816,8 +826,8 @@ void MainWindow::readSettings()
     SelectionHintColor = SettingsManager.value("SelectionHintColor").value<QColor>();
     PostItBackgroundColor = SettingsManager.value("PostItBackgroundColor").value<QColor>();
 
-    DefaultFileName = SettingsManager.value("DefaultFileName", QVariant(DefaultFileName)).value<QString>();
-    CurrentFile = QFileInfo(SettingsManager.value("CurrentFile", QVariant(DefaultFileName)).value<QString>());
+ //   DefaultFileName = SettingsManager.value("DefaultFileName", QVariant(DefaultFileName)).value<QString>();
+    CurrentFile = QFileInfo(SettingsManager.value("CurrentFile", QVariant(CurrentFile.absolutePath())).value<QString>());
     SettingsManager.beginGroup("SensorNames");
     SettingsManager.endGroup();
     SettingsManager.endGroup();

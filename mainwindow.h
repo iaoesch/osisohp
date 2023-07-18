@@ -46,6 +46,7 @@
 #include "Settings.hpp"
 #include <QTimer>
 #include <QFileInfo>
+#include <QDir>
 
 class ScribbleArea;
 class QActionGroup;
@@ -98,10 +99,12 @@ private:
     bool maybeSave();
     bool ExportFile(const QByteArray &fileFormat);
 
-    QString DefaultFileName;
+    //QString DefaultFileName;
     static constexpr auto DefaultExtension = "ohp";
+    static constexpr auto AutosaveExtension = ".autosave";
 
     QFileInfo CurrentFile;
+    QFileInfo CurrentAutosaveFile;
 
     ScribbleArea *scribbleArea;
     class SettingClass Settings;
