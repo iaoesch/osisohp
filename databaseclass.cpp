@@ -580,7 +580,7 @@ bool DatabaseClass::SaveImage(const QString &fileName, const char *fileFormat)
 
 QString DatabaseClass::GetAutoSaveName()
 {
-
+   return AutosaveName;
 }
 
 
@@ -588,10 +588,11 @@ void DatabaseClass::AutoSaveDatabase()
 {
    if (AutosaveNeeded) {
       QString AutoSavefileName = GetAutoSaveName();
-      SaveDatabase(AutoSavefileName);
-      AutosaveNeeded = false;
-      // Und clear of autosave from SaveDataBasae()
-      modified = true;
+      if (SaveDatabase(AutoSavefileName)) {
+         AutosaveNeeded = false;
+         // Und clear of autosave from SaveDataBasae()
+         modified = true;
+      }
    }
 }
 
@@ -601,36 +602,39 @@ bool DatabaseClass::SaveDatabase(const QString &fileName)
    // todo: read and save colors pen and background and backgroundimages
 
    QFile file(fileName);
-   file.open(QIODevice::WriteOnly);
-   QDataStream out(&file);
+   if (file.open(QIODevice::WriteOnly)) {
+      QDataStream out(&file);
 
-   // Write a header with a "magic number" and a version
-   out << static_cast<quint32>(0x139A1A7F);
-   out << static_cast<quint32>(110);
+      // Write a header with a "magic number" and a version
+      out << static_cast<quint32>(0x139A1A7F);
+      out << static_cast<quint32>(110);
 
-   out.setVersion(QDataStream::Qt_6_0);
-   CompleteImage();
+      out.setVersion(QDataStream::Qt_6_0);
+      CompleteImage();
 
-   // Write the data
-   out << image;
-   out << Origin;
-   out << BackgroundImagesOrigin;
-   // Now save all postits
-   out << static_cast<quint32>(PostIts.size());
-   for (auto &&Picture: PostIts) {
-      out << Picture.Position;
-      out << Picture.Image;
-      out << Picture.Box;
-      out << Picture.BorderPath;
+      // Write the data
+      out << image;
+      out << Origin;
+      out << BackgroundImagesOrigin;
+      // Now save all postits
+      out << static_cast<quint32>(PostIts.size());
+      for (auto &&Picture: PostIts) {
+         out << Picture.Position;
+         out << Picture.Image;
+         out << Picture.Box;
+         out << Picture.BorderPath;
+      }
+      out << static_cast<quint32>(BackgroundImages.size());
+      for (auto &Picture: BackgroundImages) {
+         out << Picture.IsVisible();
+         out << *Picture;
+      }
+      modified = false;
+      AutosaveNeeded = false;
+      return true;
+   } else {
+      return false;
    }
-   out << static_cast<quint32>(BackgroundImages.size());
-   for (auto &Picture: BackgroundImages) {
-      out << Picture.IsVisible();
-      out << *Picture;
-   }
-   modified = false;
-   AutosaveNeeded = false;
-   return true;
 }
 
 bool DatabaseClass::LoadDatabase(const QString &fileName)

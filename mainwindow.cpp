@@ -64,6 +64,7 @@ MainWindow::MainWindow()
     }
 
     scribbleArea = new ScribbleArea(Settings);
+    scribbleArea->SetAutosaveFileName(CurrentAutosaveFile.absoluteFilePath());
     setCentralWidget(scribbleArea);
     QWidget::setAttribute(Qt::WA_AcceptTouchEvents);
     //QWidget::setAttribute(Qt::WA_TouchPadAcceptSingleTouchEvents);
@@ -707,6 +708,8 @@ bool MainWindow::SaveFile(const QByteArray &fileFormat)
     } else {
         CurrentFile.setFile(fileName);
         CurrentAutosaveFile.setFile(fileName + AutosaveExtension);
+        scribbleArea->SetAutosaveFileName(CurrentAutosaveFile.absoluteFilePath());
+
         return scribbleArea->SaveImage(fileName);
     }
 }

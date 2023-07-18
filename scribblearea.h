@@ -82,6 +82,7 @@ public:
 
     bool ImportImage(const QString &fileName);
     bool LoadImage(const QString &fileName);
+    void SetAutosaveFileName(const QString &Name) {MyDatas.SetAutosaveName(Name);}
     QString GetFileName();
     bool ExportImage(const QString &fileName, const char *fileFormat);
     void setPenColor(const QColor &newColor);

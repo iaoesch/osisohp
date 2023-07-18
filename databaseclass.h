@@ -271,8 +271,11 @@ public:
    void DeleteSelectedPostits();
    void DuplicateSelectedPostits();
 private:
+public:
+   void SetAutosaveName(const QString &Name) {AutosaveName = Name;}
 private:
-QString GetAutoSaveName();
+   QString AutosaveName;
+   QString GetAutoSaveName();
 public slots:
    void AutoSaveDatabase();
 
