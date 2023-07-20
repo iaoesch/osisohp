@@ -419,7 +419,7 @@ void DatabaseClass::CopyImageToClipboard()
 {
    QImage ImageToSave(image.size(), QImage::Format_ARGB32);
    QPainter painter(&ImageToSave);
-   PaintVisibleDrawing(painter, image.rect(), {0,0}, BackgroundImagesOrigin-Origin);
+   PaintVisibleDrawing(painter, image.rect(), {0,0}, -Origin);
 
    QApplication::clipboard()->setImage(ImageToSave);
 }
@@ -428,7 +428,7 @@ bool DatabaseClass::SaveImage(const QString &fileName, const char *fileFormat)
 {
    QImage ImageToSave(image.size(), QImage::Format_ARGB32);
    QPainter painter(&ImageToSave);
-   PaintVisibleDrawing(painter, image.rect(), {0,0}, BackgroundImagesOrigin-Origin);
+   PaintVisibleDrawing(painter, image.rect(), {0,0}, -Origin);
 
     if (ImageToSave.save(fileName, fileFormat)) {
         return true;
@@ -619,7 +619,7 @@ void DatabaseClass::PaintOverview(QPainter &p, QSize const &OutputSize)
 {
    QImage Overview(image.size(), QImage::Format_ARGB32);
    QPainter painter(&Overview);
-   PaintVisibleDrawing(painter, Overview.rect(), {0,0}, BackgroundImagesOrigin-Origin);
+   PaintVisibleDrawing(painter, Overview.rect(), {0,0}, -Origin);
    painter.setPen(QPen(ScrollHintBorderColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                        Qt::RoundJoin));
    painter.setBrush(QBrush(ScrollHintColor));
@@ -653,7 +653,7 @@ QPointF DatabaseClass::TranslateCoordinateOffsetFromOverview(QPointF Coordinates
     return UpScaledCoordinates;
 }
 
-void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRect, QPointF const &Origin, QPointF const &Offset)
+void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRect, QPointF const &Origin, QPointF const &BackgroundOffset)
 {
     //QPainter painter(this);
 
@@ -669,7 +669,7 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
    // for (auto &p: BackgroundImages) {
    //    if (p.IsVisible()) {
 
-    BackgroundImages.DrawAllVisible(painter, dirtyRect, Offset,);
+    BackgroundImages.DrawAllVisible(painter, dirtyRect, BackgroundOffset);
  //         painter.drawImage(dirtyRect, *p, dirtyRect.translated(BackgroundImagOrigin.toPoint()));
    //    }
    // }
