@@ -20,70 +20,6 @@ int DatabaseClass::PostIt::NextId = 0;
 
 int ToInt(double d) {return static_cast<int>(d + 0.5);}
 
-bool DatabaseClass::getLastDrawingValid() const
-{
-   return LastDrawingValid;
-}
-
-void DatabaseClass::setLastDrawingValid(bool newLastDrawingValid)
-{
-   LastDrawingValid = newLastDrawingValid;
-}
-
-void DatabaseClass::setLastPoint(QPointF newLastPoint)
-{
-   lastPointDrawn = newLastPoint;
-}
-
-void DatabaseClass::setButtonDownPosition(QPointF newButtonDownPosition)
-{
-   ButtonDownPosition = newButtonDownPosition;
-}
-
-bool DatabaseClass::getDiscardSelection() const
-{
-   return DiscardSelection;
-}
-
-void DatabaseClass::setDiscardSelection(bool newDiscardSelection)
-{
-   DiscardSelection = newDiscardSelection;
-}
-
-QPointF DatabaseClass::getSelectedCurrentPosition() const
-{
-   return SelectedCurrentPosition;
-}
-
-void DatabaseClass::setSelectedCurrentPosition(QPointF newSelectedCurrentPosition)
-{
-   SelectedCurrentPosition = newSelectedCurrentPosition;
-}
-
-QPointF DatabaseClass::getButtonDownPosition() const
-{
-   return ButtonDownPosition;
-}
-
-int DatabaseClass::getMyPenWidth() const
-{
-   return myPenWidth;
-}
-
-void DatabaseClass::setShowPostitsFrame(bool newShowPostitsFrame)
-{
-   ShowPostitsFrame = newShowPostitsFrame;
-}
-
-const QColor &DatabaseClass::getScrollHintColor() const
-{
-   return ScrollHintColor;
-}
-
-void DatabaseClass::setScrollHintColor(const QColor &newScrollHintColor)
-{
-   ScrollHintColor = newScrollHintColor;
-}
 
 DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySettings)
    : Parent(Parent), Settings(MySettings)
@@ -97,7 +33,6 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
    CutMode = true;
 
    PasteStatus = None;
-
 
    myPenWidth = 2;
    myEraserWidth = Settings.EraserSize;
@@ -120,8 +55,6 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
    ShowPostitsFrame = false;
 
    SelectedPostit.clear();
-
-
 }
 
 void DatabaseClass::update()
@@ -130,19 +63,18 @@ void DatabaseClass::update()
    Parent.update();
 }
 
-void DatabaseClass::update(QRect const &r)
+void DatabaseClass::update(const QRect &r)
 {
    /// @todo propagate
    Parent.update(r);
 }
-//! [1]
-bool DatabaseClass::ImportImage(const QString &fileName)
-//! [1] //! [2]
-{
-    QImage loadedImage;
-    if (!loadedImage.load(fileName))
-        return false;
 
+bool DatabaseClass::ImportImage(const QString &fileName)
+{
+   QImage loadedImage;
+   if (!loadedImage.load(fileName)) {
+        return false;
+    }
     QSize newSize = loadedImage.size().expandedTo(Parent.size());
     resizeImage(&loadedImage, newSize);
     image = loadedImage;
@@ -229,7 +161,6 @@ double DatabaseClass::CalculatePenWidthQuadratic(double Pressure, int BaseWidth)
    constexpr double dy = MaxPenScaling - MinPenScaling;
 
    return (BaseWidth * qMax(MinPenScaling, Pressure*Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*MinPenForce*dy/dx))) + 0.5);
-
 }
 
 double DatabaseClass::CalculatePenWidthLinear(double Pressure, int BaseWidth)
@@ -242,14 +173,11 @@ double DatabaseClass::CalculatePenWidthLinear(double Pressure, int BaseWidth)
    constexpr double dy = MaxPenScaling - MinPenScaling;
 
    return (BaseWidth * qMax(MinPenScaling, Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*dy/dx))) + 0.5);
-
 }
 
 void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
-//! [17] //! [18]
 {
    DEBUG_LOG << "Drawing Pressure: " << Pressure << std::endl;
-
 
     double ModifiedPenWidth = CalculatePenWidthLinear(Pressure, myPenWidth);
 //    double ModifiedPenWidth = CalculatePenWidthQuadratic(Pressure, myPenWidth);
@@ -266,11 +194,9 @@ void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
                                      .adjusted(-rad, -rad, +rad, +rad));
     lastPointDrawn = endPoint;
     EraseLastDrawnObject = false;
-
 }
 
 void DatabaseClass::EraseLineTo(const QPointF &endPoint, double Pressure)
-//! [17] //! [18]
 {
     DEBUG_LOG << "Erasing ";
     QPainter painter(&LastDrawnObject);
@@ -289,7 +215,6 @@ void DatabaseClass::EraseLineTo(const QPointF &endPoint, double Pressure)
     lastPointDrawn = endPoint;
 }
 
-//! [17]
 void DatabaseClass::DrawLastDrawnPicture()
 {
     QPainter painter(&image);
@@ -304,12 +229,8 @@ void DatabaseClass::DrawLastDrawnPicture()
     painter.drawImage(Origin, LastDrawnObject);
     LastDrawnObject.fill(TransparentColor);
     SetModified();
-
     update();
-
 }
-
-
 
 void DatabaseClass::GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size)
 {
@@ -332,8 +253,6 @@ void DatabaseClass::GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPo
        Size.setHeight(Image.size().height());
    }
 }
-
-
 
 void DatabaseClass::resizeScrolledImage()
 //! [19] //! [20]
@@ -360,16 +279,11 @@ void DatabaseClass::resizeScrolledImage()
     for (auto &&Picture: PostIts) {
        Picture.Position += Offset;
        Picture.Box.Move(PositionClass(Offset.x(), Offset.y()));
-
     }
-
 }
 
 
-
-//! [19]
 void DatabaseClass::resizeImage(QImage *image, const QSize &newSize, QPoint Offset)
-//! [19] //! [20]
 {
     if (image->size() == newSize && Offset == QPoint(0,0))
         return;
@@ -382,8 +296,6 @@ void DatabaseClass::resizeImage(QImage *image, const QSize &newSize, QPoint Offs
     *image = newImage;
 }
 
-
-//! [5] //! [6]
 void DatabaseClass::setPenColor(const QColor &newColor)
 {
     auto alpha = myPenColor.alpha();
@@ -391,8 +303,6 @@ void DatabaseClass::setPenColor(const QColor &newColor)
     myPenColor.setAlpha(alpha);
     //myPenWidth = SelectedPenWidth;
 }
-//! [6]
-//!
 
 void DatabaseClass::UpdateGUIElements(unsigned long NumberOfLayers)
 {
@@ -413,7 +323,6 @@ bool DatabaseClass::SetLayerVisibility(unsigned int SelectedLayer, bool Visibili
 }
 
 void DatabaseClass::setPenWidth(int newWidth)
-//! [7] //! [8]
 {
     myPenWidth = newWidth;
     SelectedPenWidth = myPenWidth;
@@ -425,8 +334,9 @@ void DatabaseClass::setPenWidth(int newWidth)
 bool DatabaseClass::ImportImageToBackgroundLayer(const QString &fileName)
 {
    QImage loadedImage;
-   if (!loadedImage.load(fileName))
+   if (!loadedImage.load(fileName)) {
        return false;
+   }
 
       // QSize newSize = loadedImage.size().expandedTo(Parent.size());
       // resizeImage(&loadedImage, newSize);
@@ -442,6 +352,7 @@ void DatabaseClass::MoveImageToBackgroundLayer()
    clearImage();
    UpdateGUIElements(BackgroundImages.size());
 }
+
 void DatabaseClass::MoveTopBackgroundLayerToImage()
 {
    if (!BackgroundImages.empty()) {
@@ -511,11 +422,8 @@ void DatabaseClass::CollapseAllVisibleLayersToTop()
    }
    UpdateGUIElements(BackgroundImages.size());
 }
-//! [8]
 
-//! [9]
 void DatabaseClass::clearImage()
-//! [9] //! [10]
 {
     image.fill(TransparentColor);
     SetModified();
@@ -531,9 +439,7 @@ void DatabaseClass::ToggleShowOverview(bool Mode)
    ShowOverview = Mode;
    Parent.UpdateShowOverviewChanged(Mode);
    update();
-   }
-//! [10]
-
+}
 
 
 void DatabaseClass::PasteImage(QImage ImageToPaste)
@@ -807,7 +713,6 @@ QPointF DatabaseClass::TranslateCoordinateOffsetFromOverview(QPointF Coordinates
 }
 
 void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRect, QPointF const &Origin, QPointF const &BackgroundImagesOrigin)
-//! [13] //! [14]
 {
     //QPainter painter(this);
 
@@ -887,20 +792,15 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
     if (RecentlyPastedObjectValid == true) {
         painter.drawImage(RecentlyPastedObjectPosition, RecentlyPastedObject);
     }
-
 }
-//! [14]
 
 void DatabaseClass::DrawMovedSelection(const QPointF Offset)
 {
     QPainter painter(&image);
 
-
     painter.drawImage(SelectedOffset+Offset+Origin, SelectedImagePart);
     SetModified();
-
     update();
-
 };
 
 
@@ -929,11 +829,8 @@ void DatabaseClass::CompleteImage()
 {
    if (LastDrawingValid) {
       DrawLastDrawnPicture();
-
       LastDrawingValid = false;
       LastDrawnObjectPoints.clear();
-
-
    }
 }
 
@@ -963,7 +860,6 @@ void DatabaseClass::FlushLastDrawnPicture()
       LastDrawingValid = false;
       LastDrawnObjectPoints.clear();
       LastDrawnObjectPoints.append(lastPointDrawn);
-
    }
 }
 void DatabaseClass::ClearLastDrawnPicture()
@@ -1004,7 +900,6 @@ void DatabaseClass::DuplicateSelectedPostits()
       PostIts.push_back(*r.postit);
    }
    SetModified();
-
 }
 
 void DatabaseClass::DeleteSelectedPostits()
@@ -1013,7 +908,6 @@ void DatabaseClass::DeleteSelectedPostits()
       PostIts.erase(r.postit);
    }
    SetModified();
-
 }
 
 void DatabaseClass::SetImageToPaste(QImage Image)
@@ -1036,7 +930,6 @@ void DatabaseClass::SetImageToPaste(QImage Image)
          }
       }
    }
-
 }
 
 void DatabaseClass::DoPasteImage(PasteEvent Event)
@@ -1116,8 +1009,8 @@ void DatabaseClass::ScaleImageToPaste(double ScalingFactor)
 
 void DatabaseClass::ExtendBoundingboxAndShape(QPointF Position)
 {
-LastDrawnObjectPoints.append(Position);
-CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
+   LastDrawnObjectPoints.append(Position);
+   CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
 }
 
 void DatabaseClass::UpdateBoundingboxesForFinishedShape(QPointF Position)

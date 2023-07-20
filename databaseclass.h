@@ -232,37 +232,76 @@ public:
    void ResizeAll(int width, int height);
    void UpdateBoundingboxesForFinishedShape(QPointF Position);
    void PaintOverview(QPainter &p, const QSize &OutputSize);
-   bool getLastDrawingValid() const;
-   void setLastDrawingValid(bool newLastDrawingValid);
+   bool getLastDrawingValid() const
+   {
+      return LastDrawingValid;
+   }
+   void setLastDrawingValid(bool newLastDrawingValid)
+   {
+      LastDrawingValid = newLastDrawingValid;
+   }
 
-   void setLastPoint(QPointF newLastPoint);
+   void setLastPoint(QPointF newLastPoint)
+   {
+      lastPointDrawn = newLastPoint;
+   }
    QPointF getLastPointDrawn() {return lastPointDrawn;}
 
-   void setButtonDownPosition(QPointF newButtonDownPosition);
+   void setButtonDownPosition(QPointF newButtonDownPosition)
+   {
+      ButtonDownPosition = newButtonDownPosition;
+   }
 
-   bool getDiscardSelection() const;
-   void setDiscardSelection(bool newDiscardSelection);
+   bool getDiscardSelection() const
+   {
+      return DiscardSelection;
+   }
+   void setDiscardSelection(bool newDiscardSelection)
+   {
+      DiscardSelection = newDiscardSelection;
+   }
 
-   QPointF getSelectedCurrentPosition() const;
-   void setSelectedCurrentPosition(QPointF newSelectedCurrentPosition);
+   QPointF getSelectedCurrentPosition() const
+   {
+      return SelectedCurrentPosition;
+   }
+   void setSelectedCurrentPosition(QPointF newSelectedCurrentPosition)
+   {
+      SelectedCurrentPosition = newSelectedCurrentPosition;
+   }
    void MoveSelectedCurrentPosition(QPointF delta) {SelectedCurrentPosition += delta;}
 
-   QPointF getButtonDownPosition() const;
+   QPointF getButtonDownPosition() const
+   {
+      return ButtonDownPosition;
+   }
 
-   int getMyPenWidth() const;
+   int getMyPenWidth() const
+   {
+      return myPenWidth;
+   }
 
    void ExtendBoundingboxAndShape(QPointF Position);
-   void setShowPostitsFrame(bool newShowPostitsFrame);
+   void setShowPostitsFrame(bool newShowPostitsFrame)
+   {
+      ShowPostitsFrame = newShowPostitsFrame;
+   }
 
    QPointF TranslateCoordinateOffsetFromOverview(QPointF Coordinates);
-   const QColor &getScrollHintColor() const;
-   void setScrollHintColor(const QColor &newScrollHintColor);
+   const QColor &getScrollHintColor() const
+   {
+      return ScrollHintColor;
+   }
+   void setScrollHintColor(const QColor &newScrollHintColor)
+   {
+      ScrollHintColor = newScrollHintColor;
+   }
 
    static constexpr double JitterPressureLimit = 0.6;
    bool IsJitter(QPointF OldPoint, QPointF NewPoint, double Pressure) {
       return ((Pressure < JitterPressureLimit) && ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()*3+2)));
    }
-   bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, double Pressure [[maybe_unused]]) {
+   bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, double Pressure /* [[maybe_unused]] */) {
       return ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()+2));
    }
 
