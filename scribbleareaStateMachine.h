@@ -102,21 +102,21 @@ public:
    float tilty;
    float rotation;
    float Pressure;
-   bool  Eraser;
+   bool  Erasing;
 
    PenInfoClass(QTabletEvent * event) :
        tiltx(event->xTilt()),
        tilty(event->yTilt()),
        rotation(event->rotation()),
        Pressure(event->pressure()),
-       Eraser(event->pointerType() == QPointingDevice::PointerType::Eraser)
+       Erasing(event->pointerType() == QPointingDevice::PointerType::Eraser)
    {}
    PenInfoClass(nullptr_t event) :
        tiltx(0),
        tilty(0),
        rotation(0),
        Pressure(0),
-       Eraser(false)
+       Erasing(false)
    {}
 };
 
