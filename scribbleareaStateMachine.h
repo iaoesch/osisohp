@@ -118,6 +118,13 @@ public:
        Pressure(0),
        Erasing(false)
    {}
+   PenInfoClass(bool Eraser) :
+       tiltx(0),
+       tilty(0),
+       rotation(0),
+       Pressure(0),
+       Erasing(Eraser)
+   {}
 };
 
 class StateBaseClass {

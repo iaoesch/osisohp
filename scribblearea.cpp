@@ -237,14 +237,14 @@ void ScribbleArea::PointerTimeout()
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
    DEBUG_LOG << "Mouse: move" << event->pointCount() << std::endl;
-   StateMachine.HandleMoveEventSM(event->buttons(), event->pos(), ControllingStateMachine::Milliseconds(event->timestamp()), PenInfoClass(nullptr));
+   StateMachine.HandleMoveEventSM(event->buttons(), event->pos(), ControllingStateMachine::Milliseconds(event->timestamp()), PenInfoClass(event->modifiers() == Qt::ShiftModifier));
 }
 
 
 void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {
    DEBUG_LOG << "Mouse: ";
-   StateMachine.HandleReleaseEventSM(event->button(), event->pos(), PenInfoClass(nullptr));
+   StateMachine.HandleReleaseEventSM(event->button(), event->pos(), PenInfoClass(event->modifiers() == Qt::ShiftModifier));
 }
 
 
