@@ -96,6 +96,36 @@ enum ScribblingState {
    WaitingToPasteClippboardImage
 };
 }
+class PenInfoClass {
+public:
+   float tiltx;
+   float tilty;
+   float rotation;
+   float Pressure;
+   bool  Erasing;
+
+   PenInfoClass(QTabletEvent * event) :
+       tiltx(event->xTilt()),
+       tilty(event->yTilt()),
+       rotation(event->rotation()),
+       Pressure(event->pressure()),
+       Erasing(event->pointerType() == QPointingDevice::PointerType::Eraser)
+   {}
+   PenInfoClass(nullptr_t event) :
+       tiltx(0),
+       tilty(0),
+       rotation(0),
+       Pressure(0),
+       Erasing(false)
+   {}
+   PenInfoClass(bool Eraser) :
+       tiltx(0),
+       tilty(0),
+       rotation(0),
+       Pressure(0),
+       Erasing(Eraser)
+   {}
+};
 
 class StateBaseClass {
 protected:
@@ -109,8 +139,8 @@ public:
 
    StateBaseClass(ControllingStateMachine &sm) : StateMachine(sm) {}
    virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp);
-   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure);
-   virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
+   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
+   virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo);
    virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    virtual void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
@@ -131,8 +161,8 @@ class StateClass : public StateBaseClass {
 public:
    StateClass(ControllingStateMachine &sm) : StateBaseClass(sm) {}
    virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp) override;
-   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure) override;
-   virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure) override;
+   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo) override;
+   virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo) override;
    virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
@@ -247,8 +277,8 @@ public:
    bool IsInSelectingState() {return ((CurrentState == &MovingSelection)||(CurrentState == &WaitingToLeaveJitterProtectionWithSelectedAreaForMoving)||(CurrentState == &MovingSelectionPaused));}
 
    void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp);
-   void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, bool Erasing, double Pressure);
-   void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
+   void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
+   void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo);
    void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
