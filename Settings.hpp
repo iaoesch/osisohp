@@ -52,6 +52,7 @@ public:
 
    double ThrowingSpeedLimit = 0.25;
    double Touchscaling = 4.0;
+   double ScrollScaling = 5.0;
    double DirectSelectTimeout = 10.0;
    double CopyTimeout = 500*4;
    double GestureTimeout = 800*4;

@@ -401,7 +401,7 @@ bool ScribbleArea::event(QEvent *event)
             QPointF Delta (static_cast<QWheelEvent*>(event)->angleDelta());
 
             MyDatas.CompleteImage();
-            MyDatas.MoveOrigin(Delta/5.0);
+            MyDatas.MoveOrigin(Delta/Settings.ScrollScaling);
             MyDatas.resizeScrolledImage();
 
             update();
