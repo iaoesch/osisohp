@@ -76,7 +76,6 @@ MainWindow::MainWindow()
   //  toolBar->insertAction(0, new PushButtonAction(QIcon(":/Refresh.gif"), "Refresh"));
 
     QPixmap ToolIcon(15, 15);
-#if 1
     int PenId = 0;
     for (auto &p: PenInfo) {
        ToolIcon.fill(p.PenColor);
@@ -85,32 +84,6 @@ MainWindow::MainWindow()
        p.SetPenColorAct->setData(QVariant(p.PenColor));
     }
     PenInfo[NumberOfPens-1].SetPenColorAct->setText("MarkerYellow");
-#else
-    ToolIcon.fill(Qt::blue);
-    toolBar->addAction(QIcon(ToolIcon), "Blue")->setChecked(true);
-
-    ToolIcon.fill(Qt::darkGreen);
-    Group->addAction(toolBar->addAction(ToolIcon, "Green"))->setCheckable(true);
-
-
-    ToolIcon.fill(Qt::darkYellow);
-    Group->addAction(toolBar->addAction(ToolIcon, "Yellow"))->setCheckable(true);
-
-    ToolIcon.fill(QColor(255, 128, 0));
-    Group->addAction(toolBar->addAction(ToolIcon, "Orange"))->setCheckable(true);
-
-    ToolIcon.fill(Qt::red);
-    Group->addAction(toolBar->addAction(ToolIcon, "Red"));
-
-    ToolIcon.fill(Qt::magenta);
-    Group->addAction(toolBar->addAction(ToolIcon, "Magenta"));
-
-    ToolIcon.fill(Qt::black);
-    Group->addAction(toolBar->addAction(ToolIcon, "Black"));
-
-    ToolIcon.fill(Qt::yellow);
-    toolBar->addAction(ToolIcon, "MarkerYellow");
-#endif
     PenColorGroup->setExclusive(true);
     PenInfo[0].SetPenColorAct->setChecked(true);
     scribbleArea->setPenColor(PenInfo[0].PenColor);
@@ -577,28 +550,8 @@ void MainWindow::ShowOverviewChanged(bool OverviewEnabled)
 
 void MainWindow::ShowSettings()
 {
-#if 0
-   static struct Settings {
-    bool Value1 = true;
-    int Value2 = 128;
-    double Value3 = 3.14;
-    std::string Value4 = "Fritz";
-    std::string Value5 = "guess";
-   } MyLocalSettings;
-    TabDialogDescriptor Descriptor("Test");
-    Descriptor.AddTab("Tab1");
-    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value1, false);
-    Descriptor.GetTab().AddEntry("Val 2", "Help for Val 2", MyLocalSettings.Value2, 0);
-    Descriptor.GetTab().AddEntry("Val 3", "Help for Val 3", MyLocalSettings.Value3, 0.0);
-    Descriptor.GetTab().AddEntry("Val 4", "Help for Val 4", MyLocalSettings.Value4, std::string(""));
-    Descriptor.AddTab("Tab2");
-    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value5, std::string(""));
-    Descriptor.AddTab("Timings");
-    this->Settings.getSettings(Descriptor.GetTab());
-#else
    TabDialogDescriptor Descriptor("Preferences");
    Descriptor.AddTab( Settings.getSettings());
-#endif
    Descriptor.Fetch();
     SettingsDialog MySettings(Descriptor);
     auto Result  = MySettings.exec();

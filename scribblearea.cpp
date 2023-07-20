@@ -223,16 +223,6 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
    StateMachine.HandlePressEventSM(event->button(), event->pos(), ControllingStateMachine::Milliseconds(event->timestamp()));
 }
 
-#if 0
-void ScribbleArea::PointerTimeout()
-{
-#ifndef USE_NEW_STATEMACHINE
-
-   ShowPointer = false;
-#endif
-   update();
-}
-#endif
 
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
