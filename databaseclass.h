@@ -10,6 +10,7 @@
 
 #include "box.hpp"
 #include "Settings.hpp"
+#include "backgroundimagemanagerclass.h"
 
 class ScribbleArea;
 
@@ -38,33 +39,17 @@ class DatabaseClass : public QObject
    } ;
    std::list<PostItDescriptor> SelectedPostit;
 
+   BackgroundImageManagerClass BackgroundImages;
+
    int myPenWidth;
    int myEraserWidth;
    int SelectedPenWidth;
    QColor myPenColor;
    QImage image;
    QImage LastDrawnObject;
-    class ImageDescriptor {
-      std::unique_ptr<QImage> Image;
-      bool Visible;
 
-      public:
-      ImageDescriptor(std::unique_ptr<QImage> TheImage) : Image(std::move(TheImage)), Visible(true) {}
-      ImageDescriptor(std::unique_ptr<QImage> TheImage, bool v) : Image(std::move(TheImage)), Visible(v) {}
-      QImage &operator * () {return *Image;}
-      QImage *operator -> () {return Image.operator ->();}
-      bool IsVisible() {return Visible;}
-      void SetVisible(bool v) {Visible = v;}
-
-   };
-
-   //std::vector<std::unique_ptr<QImage>> BackgroundImages;
-   std::deque<ImageDescriptor> BackgroundImages;
 
    QPointF Origin;
-   QPointF BackgroundImagesOrigin;
-   bool Frozen;
-
 
    bool EraseLastDrawnObject;
    bool modified;
@@ -136,9 +121,7 @@ public:
    void ClearLastPaintedObjectBoundingBox() { LastPaintedObjectBoundingBox.Clear();}
    void MoveOrigin(QPointF Offset) {
       Origin -= Offset;
-      if (!Frozen) {
-         BackgroundImagesOrigin -= Offset;
-      }
+      BackgroundImages.MoveOrigin(Offset);
    }
    QPointF GetOrigin() {return Origin;}
 
@@ -187,17 +170,17 @@ public:
    void CopyImageToClipboard();
 
 
-   void MoveImageToBackgroundLayer();
-   void MoveTopBackgroundLayerToImage();
-   void CollapseBackgroundLayers();
-   void CollapseAllVisibleLayersToTop();
+   void MoveImageToBackgroundLayer_();
+   void MoveTopBackgroundLayerToImage_();
+   void CollapseBackgroundLayers_();
+   void CollapseAllVisibleLayersToTop_();
    void clearImage();
 
    bool isModified() const { return modified; }
    void SetModified() {modified =  true; AutosaveNeeded = true;}
    QColor penColor() const { return myPenColor; }
    int penWidth() const { return SelectedPenWidth; }
-   void Freeze(bool Mode) {Frozen = Mode;}
+   void Freeze(bool Mode) {BackgroundImages.Freeze(Mode);}
    bool GetShowOverview() {return ShowOverview;}
    void ToggleShowOverview(bool Mode);
 
@@ -313,6 +296,11 @@ public:
 private:
 public:
    void SetAutosaveName(const QString &Name) {AutosaveName = Name;}
+   const QColor &getTransparentColor() const
+   {
+      return TransparentColor;
+   }
+
 private:
    QString AutosaveName;
    QString GetAutoSaveName();
@@ -325,7 +313,7 @@ private:
    double CalculatePenWidthQuadratic(double Pressure, int BaseWidth);
    void update();
    void update(const QRect &r);
-   void UpdateGUIElements(unsigned long NumberOfLayers);
+   void UpdateGUIElements();
    void CreatePostit(QImage BackgroundImage, QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path);
 };
 

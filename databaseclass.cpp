@@ -21,6 +21,8 @@ int DatabaseClass::PostIt::NextId = 0;
 int ToInt(double d) {return static_cast<int>(d + 0.5);}
 
 
+
+
 DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySettings)
    : Parent(Parent), Settings(MySettings)
 {
@@ -28,7 +30,6 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
    AutosaveNeeded = false;
    LastDrawingValid = false;
    EraseLastDrawnObject = false;
-   Frozen = false;
    ShowOverview = false;
    CutMode = true;
 
@@ -81,10 +82,9 @@ bool DatabaseClass::ImportImage(const QString &fileName)
     modified = false;
     AutosaveNeeded = false;
     Origin = {0,0};
-    BackgroundImagesOrigin = {0,0};
+    BackgroundImages.Clear();
     LastDrawingValid = false;
     EraseLastDrawnObject = false;
-    BackgroundImages.clear();
     update();
     return true;
 }
@@ -267,13 +267,7 @@ void DatabaseClass::resizeScrolledImage()
     GetOffsetAndAdjustOrigin(image, Origin, Offset, Size);
 
     resizeImage(&image, Size, Offset);
-    if (!Frozen && !BackgroundImages.empty()) {
-       GetOffsetAndAdjustOrigin(*BackgroundImages[0], BackgroundImagesOrigin, Offset, Size);
-
-       for (auto &p: BackgroundImages) {
-          resizeImage(&*p, Size, Offset);
-       }
-    }
+    BackgroundImages.resizeScrolledImage(Size, Offset, *this);
 
     // Now adjust all postits
     for (auto &&Picture: PostIts) {
@@ -304,22 +298,14 @@ void DatabaseClass::setPenColor(const QColor &newColor)
     //myPenWidth = SelectedPenWidth;
 }
 
-void DatabaseClass::UpdateGUIElements(unsigned long NumberOfLayers)
+void DatabaseClass::UpdateGUIElements()
 {
-   std::vector<bool> Visibilities;
-   for (unsigned int i = 0; i < NumberOfLayers; i++) {
-            Visibilities.push_back( BackgroundImages[i].IsVisible());
-   }
-   Parent.UpdateGUI(Visibilities);
+   Parent.UpdateGUI(BackgroundImages.GetLayervisibilities());
 }
 
 bool DatabaseClass::SetLayerVisibility(unsigned int SelectedLayer, bool Visibility)
 {
-   if (SelectedLayer < BackgroundImages.size()) {
-      BackgroundImages[SelectedLayer].SetVisible(Visibility);
-      return true;
-   }
-   return false;
+   return BackgroundImages.SetLayerVisibility(SelectedLayer, Visibility);
 }
 
 void DatabaseClass::setPenWidth(int newWidth)
@@ -341,86 +327,41 @@ bool DatabaseClass::ImportImageToBackgroundLayer(const QString &fileName)
       // QSize newSize = loadedImage.size().expandedTo(Parent.size());
       // resizeImage(&loadedImage, newSize);
 
-   BackgroundImages.push_back(std::make_unique<QImage>(loadedImage));
-   UpdateGUIElements(BackgroundImages.size());
+   BackgroundImages.AddLayer(loadedImage);
+   UpdateGUIElements();
+   return true;
 }
 
-void DatabaseClass::MoveImageToBackgroundLayer()
+void DatabaseClass::MoveImageToBackgroundLayer_()
 {
    CompleteImage();
-   BackgroundImages.push_back(std::make_unique<QImage>(image));
+   BackgroundImages.AddLayer(image);
    clearImage();
-   UpdateGUIElements(BackgroundImages.size());
+   UpdateGUIElements();
 }
 
-void DatabaseClass::MoveTopBackgroundLayerToImage()
+void DatabaseClass::MoveTopBackgroundLayerToImage_()
 {
-   if (!BackgroundImages.empty()) {
-      // create empty image
-      QImage newImage(image.size(), QImage::Format_ARGB32);
-      newImage.fill(TransparentColor);
-      QPainter painter(&newImage);
-
-      // draw top bg layer onto it
-      painter.drawImage((BackgroundImagesOrigin-Origin).toPoint(), *BackgroundImages.back());
-      BackgroundImages.pop_back();
-
-      // Then draw our current image (Without the currently drawn object)
-      painter.drawImage(QPoint(0,0), image);
-
-      //Set combined image as new image
-      image = newImage;
+   if (BackgroundImages.MoveTopBackgroundLayerToImage(image, *this)) {
       SetModified();
    }
-   UpdateGUIElements(BackgroundImages.size());
-
+   UpdateGUIElements();
 }
 
-void DatabaseClass::CollapseBackgroundLayers()
+void DatabaseClass::CollapseBackgroundLayers_()
 {
-   if (!BackgroundImages.empty()) {
-      QImage newImage;
-      QPainter painter;
-      auto it = BackgroundImages.begin();
-      while (it != BackgroundImages.end()) {
-         if (it->IsVisible()) {
-            if (newImage.isNull()) {
-               newImage = **it;
-               painter.begin(&newImage);
-            } else {
-               painter.drawImage(QPoint(0,0), **it);
-            }
-            it = BackgroundImages.erase(it);
-         } else {
-            it++;
-         }
-      }
-      BackgroundImages.push_back(std::make_unique<QImage>(newImage));
+   if (BackgroundImages.CollapseBackgroundLayers()) {
       SetModified();
    }
-   UpdateGUIElements(BackgroundImages.size());
+   UpdateGUIElements();
 }
 
-void DatabaseClass::CollapseAllVisibleLayersToTop()
+void DatabaseClass::CollapseAllVisibleLayersToTop_()
 {
-   if (!BackgroundImages.empty()) {
-      QImage newImage(image.size(), QImage::Format_ARGB32);
-      newImage.fill(TransparentColor);
-      QPainter painter(&newImage);
-      auto it = BackgroundImages.begin();
-      while (it != BackgroundImages.end()) {
-         if (it->IsVisible()) {
-            painter.drawImage(BackgroundImagesOrigin-Origin, **it);
-            it = BackgroundImages.erase(it);
-         } else {
-            it++;
-         }
-      }
-      painter.drawImage(QPoint(0,0), image);
-      image = newImage;
+   if (!BackgroundImages.CollapseAllVisibleLayersToTop(image, *this)) {
       SetModified();
    }
-   UpdateGUIElements(BackgroundImages.size());
+   UpdateGUIElements();
 }
 
 void DatabaseClass::clearImage()
@@ -712,7 +653,7 @@ QPointF DatabaseClass::TranslateCoordinateOffsetFromOverview(QPointF Coordinates
     return UpScaledCoordinates;
 }
 
-void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRect, QPointF const &Origin, QPointF const &BackgroundImagesOrigin)
+void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRect, QPointF const &Origin, QPointF const &Offset)
 {
     //QPainter painter(this);
 
@@ -725,11 +666,13 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
 
     painter.drawRect(dirtyRect);
 
-    for (auto &p: BackgroundImages) {
-       if (p.IsVisible()) {
-          painter.drawImage(dirtyRect, *p, dirtyRect.translated(BackgroundImagesOrigin.toPoint()));
-       }
-    }
+   // for (auto &p: BackgroundImages) {
+   //    if (p.IsVisible()) {
+
+    BackgroundImages.DrawAllVisible(painter, dirtyRect, Offset,);
+ //         painter.drawImage(dirtyRect, *p, dirtyRect.translated(BackgroundImagOrigin.toPoint()));
+   //    }
+   // }
 
     // In marker mode, last drawn objec belongs into background
     if (MarkerActive) {
@@ -842,7 +785,7 @@ void DatabaseClass::ResizeAll(int width, int height)
       int newHeight = qMax(height + 128, image.height());
       resizeImage(&image, QSize(newWidth+ToInt(Origin.x()), newHeight+ToInt(Origin.y())));
       resizeImage(&LastDrawnObject, QSize(newWidth, newHeight));
-      if (!Frozen) {
+      if (!BackgroundFrozen) {
          for (auto &p: BackgroundImages) {
             resizeImage(&*p, QSize(newWidth+ToInt(BackgroundImagesOrigin.x()), ToInt(newHeight+BackgroundImagesOrigin.y())));
          }
@@ -940,7 +883,7 @@ void DatabaseClass::DoPasteImage(PasteEvent Event)
    QSize RequiredSize = image.size().expandedTo(DestSize.toSize() + QSize(ToInt(Origin.x()), ToInt(Origin.y())));
    resizeImage(&image, RequiredSize);
    // Should also resize all layers
-   if (!Frozen && !BackgroundImages.empty()) {
+   if (!BackgroundFrozen && !BackgroundImages.empty()) {
       for (auto &p: BackgroundImages) {
          resizeImage(&*p, RequiredSize);
       }
