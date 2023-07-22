@@ -7,6 +7,7 @@ HEADERS       = mainwindow.h \
    SettingsDialog.h \
    ValueGroupDescriptor.h \
    animatedcursorclass.h \
+   backgroundimagemanagerclass.h \
    databaseclass.h \
    gesturetracker.hpp \
    interface.hpp \
@@ -18,6 +19,7 @@ SOURCES       = main.cpp \
    Settings.cpp \
    SettingsDialog.cpp \
    animatedcursorclass.cpp \
+   backgroundimagemanagerclass.cpp \
    databaseclass.cpp \
    gesturetracker.cpp \
                 mainwindow.cpp \

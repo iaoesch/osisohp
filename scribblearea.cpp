@@ -387,7 +387,7 @@ bool ScribbleArea::event(QEvent *event)
          return QWidget::event(event);
       case QEvent::Wheel:
          DEBUG_LOG << "Wheel" << static_cast<QWheelEvent*>(event)->angleDelta().x() << ":" << static_cast<QWheelEvent*>(event)->angleDelta().y() << std::endl;
-        // std::cout << "Wheel" << static_cast<QWheelEvent*>(event)->angleDelta().x() << ":" << static_cast<QWheelEvent*>(event)->angleDelta().y() << std::endl;
+         std::cout << "Wheel" << static_cast<QWheelEvent*>(event)->angleDelta().x() << ":" << static_cast<QWheelEvent*>(event)->angleDelta().y() << std::endl;
          {
             QPointF Delta (static_cast<QWheelEvent*>(event)->angleDelta());
 
