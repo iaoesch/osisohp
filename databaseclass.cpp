@@ -327,20 +327,20 @@ bool DatabaseClass::ImportImageToBackgroundLayer(const QString &fileName)
       // QSize newSize = loadedImage.size().expandedTo(Parent.size());
       // resizeImage(&loadedImage, newSize);
 
-   BackgroundImages.AddLayer(loadedImage);
+   BackgroundImages.AddLayerTop(loadedImage);
    UpdateGUIElements();
    return true;
 }
 
-void DatabaseClass::MoveImageToBackgroundLayer_()
+void DatabaseClass::MoveImageToBackgroundLayer()
 {
    CompleteImage();
-   BackgroundImages.AddLayer(image);
+   BackgroundImages.AddLayerTop(image);
    clearImage();
    UpdateGUIElements();
 }
 
-void DatabaseClass::MoveTopBackgroundLayerToImage_()
+void DatabaseClass::MoveTopBackgroundLayerToImage()
 {
    if (BackgroundImages.MoveTopBackgroundLayerToImage(image, *this)) {
       SetModified();
@@ -348,7 +348,7 @@ void DatabaseClass::MoveTopBackgroundLayerToImage_()
    UpdateGUIElements();
 }
 
-void DatabaseClass::CollapseBackgroundLayers_()
+void DatabaseClass::CollapseBackgroundLayers()
 {
    if (BackgroundImages.CollapseBackgroundLayers()) {
       SetModified();
@@ -356,7 +356,7 @@ void DatabaseClass::CollapseBackgroundLayers_()
    UpdateGUIElements();
 }
 
-void DatabaseClass::CollapseAllVisibleLayersToTop_()
+void DatabaseClass::CollapseAllVisibleLayersToTop()
 {
    if (!BackgroundImages.CollapseAllVisibleLayersToTop(image, *this)) {
       SetModified();
@@ -476,7 +476,6 @@ bool DatabaseClass::SaveDatabase(const QString &fileName)
       // Write the data
       out << image;
       out << Origin;
-      out << BackgroundImagesOrigin;
       // Now save all postits
       out << static_cast<quint32>(PostIts.size());
       for (auto &&Picture: PostIts) {
@@ -485,11 +484,8 @@ bool DatabaseClass::SaveDatabase(const QString &fileName)
          out << Picture.Box;
          out << Picture.BorderPath;
       }
-      out << static_cast<quint32>(BackgroundImages.size());
-      for (auto &Picture: BackgroundImages) {
-         out << Picture.IsVisible();
-         out << *Picture;
-      }
+      BackgroundImages.Save(out);
+
       modified = false;
       AutosaveNeeded = false;
       return true;
@@ -532,7 +528,6 @@ bool DatabaseClass::LoadDatabase(const QString &fileName)
    // Write the data
    in >> image;
    in >> Origin;
-   in >> BackgroundImagesOrigin;
 
    // Now read all postits
    qint32 NumberOfSavedPostits = 0;
@@ -549,19 +544,7 @@ bool DatabaseClass::LoadDatabase(const QString &fileName)
       in >> BorderPath;
       PostIts.push_back(PostIt(NewImage, Position, NewBox, BorderPath));
    }
-   qint32 NumberOfBackgroundLayers = 0;
-   in >> NumberOfBackgroundLayers;
-   BackgroundImages.clear();
-   bool Visible;
-   std::vector<bool> Visibilities;
-   //emit(NumberOfLayerChanged(NumberOfBackgroundLayers));
-   for (int i = 0; i < NumberOfBackgroundLayers; i++) {
-      in >> Visible;
-      in >> NewImage;
-      BackgroundImages.push_back(ImageDescriptor(std::make_unique<QImage>(NewImage), Visible));
-      Visibilities.push_back(Visible);
-      //emit(SetVisibilityIndicatorOfLayer(i, Visible));
-   }
+   std::vector<bool> Visibilities = BackgroundImages.Load(in);
    Parent.UpdateGUI(Visibilities);
 
    modified = false;
@@ -602,7 +585,6 @@ bool DatabaseClass::FindSelectedPostIts(QPointF Position, SelectMode Mode)
    return Found;
 }
 
-
 bool DatabaseClass::IsInsideAnyPostIt(QPointF Position)
 {
    Position += Origin;
@@ -613,7 +595,6 @@ bool DatabaseClass::IsInsideAnyPostIt(QPointF Position)
    }
    return false;
 }
-
 
 void DatabaseClass::PaintOverview(QPainter &p, QSize const &OutputSize)
 {
@@ -785,11 +766,8 @@ void DatabaseClass::ResizeAll(int width, int height)
       int newHeight = qMax(height + 128, image.height());
       resizeImage(&image, QSize(newWidth+ToInt(Origin.x()), newHeight+ToInt(Origin.y())));
       resizeImage(&LastDrawnObject, QSize(newWidth, newHeight));
-      if (!BackgroundFrozen) {
-         for (auto &p: BackgroundImages) {
-            resizeImage(&*p, QSize(newWidth+ToInt(BackgroundImagesOrigin.x()), ToInt(newHeight+BackgroundImagesOrigin.y())));
-         }
-      }
+      BackgroundImages.Resize(newWidth, newHeight, *this);
+
       update();
    }
 }
@@ -883,11 +861,8 @@ void DatabaseClass::DoPasteImage(PasteEvent Event)
    QSize RequiredSize = image.size().expandedTo(DestSize.toSize() + QSize(ToInt(Origin.x()), ToInt(Origin.y())));
    resizeImage(&image, RequiredSize);
    // Should also resize all layers
-   if (!BackgroundFrozen && !BackgroundImages.empty()) {
-      for (auto &p: BackgroundImages) {
-         resizeImage(&*p, RequiredSize);
-      }
-   }
+   // ToDo: required size is based on origin, should probably be based on BackgroundImagesOrigin
+   BackgroundImages.Expand(RequiredSize, *this);
    //QPainter painter(&image);
 
    switch(Event) {
@@ -897,8 +872,8 @@ void DatabaseClass::DoPasteImage(PasteEvent Event)
             NewImage.fill(TransparentColor);
             QPainter painter(&NewImage);
             painter.drawImage(Destination, ImageToPaste);
-            BackgroundImages.push_back(std::make_unique<QImage>(NewImage));
-            UpdateGUIElements(BackgroundImages.size());
+            BackgroundImages.AddLayerTop(NewImage);
+            UpdateGUIElements();
             SetModified();
          }
          break;
@@ -908,8 +883,8 @@ void DatabaseClass::DoPasteImage(PasteEvent Event)
             NewImage.fill(TransparentColor);
             QPainter painter(&NewImage);
             painter.drawImage(Destination, ImageToPaste);
-            BackgroundImages.push_front(std::make_unique<QImage>(NewImage));
-            UpdateGUIElements(BackgroundImages.size());
+            BackgroundImages.AddLayerBottom(NewImage);
+            UpdateGUIElements();
             SetModified();
          }
          break;

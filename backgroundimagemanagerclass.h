@@ -52,8 +52,13 @@ public:
    std::vector<bool> GetLayervisibilities();
 
    bool SetLayerVisibility(unsigned int SelectedLayer, bool Visibility);
-   bool AddLayer(QImage NewImage);
+   bool AddLayerTop(QImage NewImage);
    void DrawAllVisible(QPainter &painter, const QRect &dirtyRect, const QPointF Offset);
+   void Save(QDataStream &out);
+   std::vector<bool> Load(QDataStream &in);
+   void Resize(int width, int height, DatabaseClass &UglyPatchNeedsFixing);
+   void Expand(QSize RequiredSize, DatabaseClass &UglyPatchNeedsFixing);
+   void AddLayerBottom(QImage NewImage);
 };
 
 

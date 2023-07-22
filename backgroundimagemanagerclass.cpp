@@ -2,6 +2,9 @@
 #include "databaseclass.h"
 #include <QPainter>
 
+static inline int ToInt(double d) {return static_cast<int>(d + 0.5);}
+
+
 BackgroundImageManagerClass::BackgroundImageManagerClass()
 {
    BackgroundFrozen = false;
@@ -77,6 +80,25 @@ bool BackgroundImageManagerClass::CollapseAllVisibleLayersToTop(QImage &Image, D
    return false;
 }
 
+void BackgroundImageManagerClass::Resize(int width, int height, DatabaseClass &UglyPatchNeedsFixing)
+{
+   if (!BackgroundFrozen) {
+      for (auto &p: BackgroundImages) {
+         UglyPatchNeedsFixing.resizeImage(&*p, QSize(width+ToInt(BackgroundImagesOrigin.x()), ToInt(height+BackgroundImagesOrigin.y())));
+      }
+   }
+}
+
+void BackgroundImageManagerClass::Expand(QSize RequiredSize, DatabaseClass &UglyPatchNeedsFixing)
+{
+if (!BackgroundFrozen && !BackgroundImages.empty()) {
+   for (auto &p: BackgroundImages) {
+      // ToDo: required size is based on origin, should probably be based on BackgroundImagesOrigin
+      UglyPatchNeedsFixing.resizeImage(&*p, RequiredSize);
+   }
+}
+}
+
 void BackgroundImageManagerClass::DrawAllVisible(QPainter &painter, QRect const &dirtyRect, QPointF const Offset)
 {
    for (auto &p: BackgroundImages) {
@@ -86,7 +108,39 @@ void BackgroundImageManagerClass::DrawAllVisible(QPainter &painter, QRect const 
    }
 }
 
+void BackgroundImageManagerClass::Save(QDataStream &out)
+{
+   // todo: read and save colors pen and background and backgroundimages
+      out << BackgroundImagesOrigin;
+      out << static_cast<quint32>(BackgroundImages.size());
+      for (auto &Picture: BackgroundImages) {
+         out << Picture.IsVisible();
+         out << *Picture;
+      }
+}
 
+std::vector<bool> BackgroundImageManagerClass::Load(QDataStream &in)
+{
+   // Write the data
+   in >> BackgroundImagesOrigin;
+
+   qint32 NumberOfBackgroundLayers = 0;
+   in >> NumberOfBackgroundLayers;
+   BackgroundImages.clear();
+   bool Visible;
+   QImage NewImage;
+
+   std::vector<bool> Visibilities;
+   //emit(NumberOfLayerChanged(NumberOfBackgroundLayers));
+   for (int i = 0; i < NumberOfBackgroundLayers; i++) {
+      in >> Visible;
+      in >> NewImage;
+      BackgroundImages.push_back(ImageDescriptor(std::make_unique<QImage>(NewImage), Visible));
+      Visibilities.push_back(Visible);
+      //emit(SetVisibilityIndicatorOfLayer(i, Visible));
+   }
+   return Visibilities;
+}
 
 void BackgroundImageManagerClass::Clear()
 {
@@ -127,7 +181,12 @@ bool BackgroundImageManagerClass::SetLayerVisibility(unsigned int SelectedLayer,
    return false;
 }
 
-bool BackgroundImageManagerClass::AddLayer(QImage NewImage)
+bool BackgroundImageManagerClass::AddLayerTop(QImage NewImage)
 {
    BackgroundImages.push_back(std::make_unique<QImage>(NewImage));
+}
+
+void BackgroundImageManagerClass::AddLayerBottom(QImage NewImage)
+{
+   BackgroundImages.push_front(std::make_unique<QImage>(NewImage));
 }

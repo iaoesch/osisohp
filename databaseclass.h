@@ -170,10 +170,10 @@ public:
    void CopyImageToClipboard();
 
 
-   void MoveImageToBackgroundLayer_();
-   void MoveTopBackgroundLayerToImage_();
-   void CollapseBackgroundLayers_();
-   void CollapseAllVisibleLayersToTop_();
+   void MoveImageToBackgroundLayer();
+   void MoveTopBackgroundLayerToImage();
+   void CollapseBackgroundLayers();
+   void CollapseAllVisibleLayersToTop();
    void clearImage();
 
    bool isModified() const { return modified; }
