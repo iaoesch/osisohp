@@ -9,6 +9,7 @@ HEADERS       = mainwindow.h \
    animatedcursorclass.h \
    backgroundimagemanagerclass.h \
    databaseclass.h \
+   drawingobjectclass.h \
    gesturetracker.hpp \
    interface.hpp \
    postitmanagerclass.h \
@@ -22,6 +23,7 @@ SOURCES       = main.cpp \
    animatedcursorclass.cpp \
    backgroundimagemanagerclass.cpp \
    databaseclass.cpp \
+   drawingobjectclass.cpp \
    gesturetracker.cpp \
                 mainwindow.cpp \
    postitmanagerclass.cpp \

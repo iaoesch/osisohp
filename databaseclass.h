@@ -12,6 +12,7 @@
 #include "Settings.hpp"
 #include "backgroundimagemanagerclass.h"
 #include "postitmanagerclass.h"
+#include "drawingobjectclass.h"
 
 class ScribbleArea;
 
@@ -26,21 +27,15 @@ class DatabaseClass : public QObject
    BackgroundImageManagerClass BackgroundImages;
 
    PostitManagerClass Postits;
+   DrawingObjectClass CurrentlyDrawnObject;
 
-   int myPenWidth;
-   int myEraserWidth;
-   int SelectedPenWidth;
-   QColor myPenColor;
    QImage image;
-   QImage LastDrawnObject;
 
 
    QPointF Origin;
 
-   bool EraseLastDrawnObject;
    bool modified;
    bool AutosaveNeeded;
-   bool LastDrawingValid;
    bool DiscardSelection;
    bool MarkerActive;
    bool ShowOverview;
@@ -50,7 +45,6 @@ class DatabaseClass : public QObject
 
    QPointF SelectedOffset;
    QPointF SelectedCurrentPosition;
-   QPointF lastPointDrawn;
    QPointF ButtonDownPosition;
 
 
@@ -64,7 +58,6 @@ class DatabaseClass : public QObject
    QColor SelectionHintBorderColor;
 
 
-   QPolygonF LastDrawnObjectPoints;
    QImage SelectedImagePart;
    QPainterPath SelectedImagePartPath;
    QImage HintSelectedImagePart;
@@ -80,7 +73,6 @@ class DatabaseClass : public QObject
 
    BoundingBoxClass LastPaintedObjectBoundingBox;
    BoundingBoxClass SelectedImageBoundingBox;
-   BoundingBoxClass CurrentPaintedObjectBoundingBox;
 
 
 public:
@@ -93,8 +85,7 @@ public:
 
    void RestartCurrentPaintedObjectBoundingBox(QPointF const &StartPoint)
    {
-      CurrentPaintedObjectBoundingBox.Clear();
-      CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(StartPoint.x(), StartPoint.y()));
+      CurrentlyDrawnObject.RestartCurrentPaintedObjectBoundingBox(StartPoint);
    }
 
    bool IsInsideLastPaintedObjectBoundingBox(QPointF const &Point)
