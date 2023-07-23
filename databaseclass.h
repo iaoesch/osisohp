@@ -37,7 +37,6 @@ class DatabaseClass : public QObject
    bool modified;
    bool AutosaveNeeded;
    bool DiscardSelection;
-   bool MarkerActive;
    bool ShowOverview;
 
    bool CutMode;
@@ -52,6 +51,8 @@ class DatabaseClass : public QObject
    QColor BackGroundColor;
 //   QColor Markercolor;
    QColor DefaultBackGroundColor;
+
+   static constexpr int HintBorderPenWidth = 2;
    QColor ScrollHintColor;
    QColor ScrollHintBorderColor;
    QColor SelectionHintColor;
@@ -71,7 +72,7 @@ class DatabaseClass : public QObject
    QImage RecentlyPastedObject;
    BoundingBoxClass RecentlyPastedObjectBoundingBox;
 
-   BoundingBoxClass LastPaintedObjectBoundingBox;
+   DrawingObjectClass::ShapeClass LastPaintedObjectBoundingBox;
    BoundingBoxClass SelectedImageBoundingBox;
 
 
@@ -90,10 +91,10 @@ public:
 
    bool IsInsideLastPaintedObjectBoundingBox(QPointF const &Point)
    {
-      return LastPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));
+      return LastPaintedObjectBoundingBox.CurrentPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));
    }
    bool IsCutoutActive() {return CutMode;}
-   void ClearLastPaintedObjectBoundingBox() { LastPaintedObjectBoundingBox.Clear();}
+   void ClearLastPaintedObjectBoundingBox() { LastPaintedObjectBoundingBox.CurrentPaintedObjectBoundingBox.Clear();}
    void MoveOrigin(QPointF Offset) {
       Origin -= Offset;
       BackgroundImages.MoveOrigin(Offset);
@@ -109,7 +110,10 @@ public:
    void DrawMovedSelection(const QPointF Offset);
    void MakeSreenMoveHint();
 
+private:
    void DrawLastDrawnPicture();
+public:
+
    void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
    void resizeScrolledImage();
    void MakeSelectionFromLastDrawnObject(bool Cutout = false);
@@ -177,7 +181,6 @@ public:
    void UseSpongeAsEraser(bool UseSponge) {if (UseSponge) {myEraserWidth = Settings.SpongeSize;} else {myEraserWidth = Settings.EraserSize;}}
    void CutSelection(bool DoCut) {CutMode = DoCut;}
    void RestorePenWidth() {myPenWidth = SelectedPenWidth;}
-   void ExtendPenWidthForMarker() {myPenWidth = SelectedPenWidth * 5 + 2;}
 
    // Planes
    void MoveImageToBackgroundLayer();
@@ -301,8 +304,6 @@ public:
    }
 
 private:
-   double CalculatePenWidthLinear(double Pressure, int BaseWidth);
-   double CalculatePenWidthQuadratic(double Pressure, int BaseWidth);
    void update();
    void update(const QRect &r);
    void UpdateGUIElements();

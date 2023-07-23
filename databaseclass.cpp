@@ -27,17 +27,11 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
 {
    modified = false;
    AutosaveNeeded = false;
-   LastDrawingValid = false;
-   EraseLastDrawnObject = false;
    ShowOverview = false;
    CutMode = true;
 
    PasteStatus = None;
 
-   myPenWidth = 2;
-   myEraserWidth = Settings.EraserSize;
-   SelectedPenWidth = myPenWidth;
-   myPenColor = Qt::blue;
 
    TransparentColor = QColor(255, 255, 255, 0);
    BackGroundColor = QColor(230,230, 200,255);
@@ -50,7 +44,6 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
    DefaultBackGroundColor = BackGroundColor;
 
    RecentlyPastedObjectValid = false;
-   MarkerActive = false;
 }
 
 void DatabaseClass::update()
@@ -78,16 +71,15 @@ bool DatabaseClass::ImportImage(const QString &fileName)
     AutosaveNeeded = false;
     Origin = {0,0};
     BackgroundImages.Clear();
-    LastDrawingValid = false;
-    EraseLastDrawnObject = false;
+    CurrentlyDrawnObject.Clear();
     update();
     return true;
 }
 
 void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
 {
-   SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.QRectangle().translated(Origin.toPoint()));
-   SelectedImageBoundingBox = LastPaintedObjectBoundingBox;
+   SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.CurrentPaintedObjectBoundingBox.QRectangle().translated(Origin.toPoint()));
+   SelectedImageBoundingBox = LastPaintedObjectBoundingBox.CurrentPaintedObjectBoundingBox;
 
    HintSelectedImagePart = SelectedImagePart;
    HintSelectedImagePart.fill(qRgba(0, 0, 0, 0));
@@ -95,21 +87,16 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
 
    if (Cutout == true) {
       QPainter painter2(&image);
-      painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                           Qt::RoundJoin));
-      painter2.setBrush(QBrush(QColor(0, 0, 0, 0)));
-      painter2.setCompositionMode(QPainter::CompositionMode_Source);
-      // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
-      painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+      CurrentlyDrawnObject.CutOut(painter2, Origin);
    }
    QPainter painter(&HintSelectedImagePart);
-   painter.setPen(QPen(SelectionHintBorderColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
+   painter.setPen(QPen(SelectionHintBorderColor, HintBorderPenWidth, Qt::SolidLine, Qt::RoundCap,
                        Qt::RoundJoin));
    painter.setBrush(QBrush(SelectionHintColor));
-   LastDrawnObjectPoints.translate(-SelectedImageBoundingBox.GetLeft(), -SelectedImageBoundingBox.GetTop());
-   painter.drawPolygon(LastDrawnObjectPoints);
+   LastPaintedObjectBoundingBox.LastDrawnObjectPoints.translate(-SelectedImageBoundingBox.GetLeft(), -SelectedImageBoundingBox.GetTop());
+   painter.drawPolygon(LastPaintedObjectBoundingBox.LastDrawnObjectPoints);
    QPainterPath Path;
-   Path.addPolygon(LastDrawnObjectPoints);
+   Path.addPolygon(LastPaintedObjectBoundingBox.LastDrawnObjectPoints);
    QImage MaskedSelectedImagePart = SelectedImagePart;
    MaskedSelectedImagePart.fill(qRgba(0, 0, 0, 0));
    QPainter painter3(&MaskedSelectedImagePart);
@@ -131,7 +118,7 @@ void DatabaseClass::CreeatePostitFromSelection()
 }
 
 
-
+#if 0
 double DatabaseClass::CalculatePenWidthQuadratic(double Pressure, int BaseWidth)
 {
    constexpr double MaxPenScaling = 11.0;
@@ -155,60 +142,28 @@ double DatabaseClass::CalculatePenWidthLinear(double Pressure, int BaseWidth)
 
    return (BaseWidth * qMax(MinPenScaling, Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*dy/dx))) + 0.5);
 }
+#endif
 
 void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
 {
    DEBUG_LOG << "Drawing Pressure: " << Pressure << std::endl;
 
-    double ModifiedPenWidth = CalculatePenWidthLinear(Pressure, myPenWidth);
-//    double ModifiedPenWidth = CalculatePenWidthQuadratic(Pressure, myPenWidth);
-//   int ModifiedPenWidth = myPenWidth * qMax(1.0, Pressure*Pressure*4);
-    QPainter painter(&LastDrawnObject);
-    painter.setCompositionMode(QPainter::CompositionMode_Source);
-    painter.setPen(QPen(myPenColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
-                        Qt::RoundJoin));
-    painter.drawLine(lastPointDrawn, endPoint);
     SetModified();
-
-    int rad = (ModifiedPenWidth / 2) + 2;
-    update(QRect(lastPointDrawn.toPoint(), endPoint.toPoint()).normalized()
-                                     .adjusted(-rad, -rad, +rad, +rad));
-    lastPointDrawn = endPoint;
-    EraseLastDrawnObject = false;
+    update(CurrentlyDrawnObject.drawLineTo(endPoint, Pressure));
 }
 
 void DatabaseClass::EraseLineTo(const QPointF &endPoint, double Pressure)
 {
     DEBUG_LOG << "Erasing ";
-    QPainter painter(&LastDrawnObject);
-    int ModifiedPenWidth = static_cast<int>((myPenWidth+myEraserWidth)*3*(1.0 + Pressure*Pressure*10) + 0.5);
-    painter.setPen(QPen(BackGroundColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
-                        Qt::RoundJoin));
-   // painter.setCompositionMode(QPainter::CompositionMode_Source);
-    //painter.setCompositionMode(QPainter::CompositionMode_Clear);
-    painter.drawLine(lastPointDrawn, endPoint);
     SetModified();
-    EraseLastDrawnObject = true;
-
-    int rad = (ModifiedPenWidth / 2) + 2;
-    update(QRect(lastPointDrawn.toPoint(), endPoint.toPoint()).normalized()
-                                     .adjusted(-rad, -rad, +rad, +rad));
-    lastPointDrawn = endPoint;
+    update(CurrentlyDrawnObject.EraseLineTo(endPoint, Pressure));
 }
 
 void DatabaseClass::DrawLastDrawnPicture()
 {
     QPainter painter(&image);
-    //painter.setCompositionMode(QPainter::CompositionMode_Source);
-    if (EraseLastDrawnObject) {
-       painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    }
-    if (MarkerActive) {
-       painter.setCompositionMode(QPainter::CompositionMode_DestinationOver);
 
-    }
-    painter.drawImage(Origin, LastDrawnObject);
-    LastDrawnObject.fill(TransparentColor);
+    CurrentlyDrawnObject.DrawLastDrawnPicture(painter, Origin);
     SetModified();
     update();
 }
@@ -274,10 +229,7 @@ void DatabaseClass::resizeImage(QImage *image, const QSize &newSize, QPoint Offs
 
 void DatabaseClass::setPenColor(const QColor &newColor)
 {
-    auto alpha = myPenColor.alpha();
-    myPenColor = newColor;
-    myPenColor.setAlpha(alpha);
-    //myPenWidth = SelectedPenWidth;
+    CurrentlyDrawnObject.setPenColor(newColor);
 }
 
 void DatabaseClass::UpdateGUIElements()
@@ -292,11 +244,7 @@ bool DatabaseClass::SetLayerVisibility(unsigned int SelectedLayer, bool Visibili
 
 void DatabaseClass::setPenWidth(int newWidth)
 {
-    myPenWidth = newWidth;
-    SelectedPenWidth = myPenWidth;
-    if (MarkerActive) {
-       ExtendPenWidthForMarker();
-    }
+    CurrentlyDrawnObject.setPenWidth(newWidth);
 }
 
 bool DatabaseClass::ImportImageToBackgroundLayer(const QString &fileName)
@@ -350,10 +298,7 @@ void DatabaseClass::clearImage()
 {
     image.fill(TransparentColor);
     SetModified();
-    LastDrawingValid = false;
-    LastDrawnObjectPoints.clear();
-    LastDrawnObject.fill(TransparentColor);
-
+    CurrentlyDrawnObject.Clear();
     update();
 }
 
@@ -517,8 +462,7 @@ bool DatabaseClass::LoadDatabase(const QString &fileName)
 
    modified = false;
    AutosaveNeeded = false;
-   LastDrawingValid = false;
-   EraseLastDrawnObject = false;
+   CurrentlyDrawnObject.Clear();
 
    update();
    return true;
@@ -534,7 +478,7 @@ void DatabaseClass::PaintOverview(QPainter &p, QSize const &OutputSize)
    QImage Overview(image.size(), QImage::Format_ARGB32);
    QPainter painter(&Overview);
    PaintVisibleDrawing(painter, Overview.rect(), {0,0}, -Origin);
-   painter.setPen(QPen(ScrollHintBorderColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
+   painter.setPen(QPen(ScrollHintBorderColor, HintBorderPenWidth, Qt::SolidLine, Qt::RoundCap,
                        Qt::RoundJoin));
    painter.setBrush(QBrush(ScrollHintColor));
 
@@ -573,7 +517,7 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
 
     // First draw the background
     //QRect dirtyRect = event->rect();
-    painter.setPen(QPen(QColor(0,0,0,0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
+    painter.setPen(QPen(QColor(0,0,0,0), 1, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
     painter.setBrush(QBrush(BackGroundColor));
     //painter.setBrush(QBrush(QColor(50,0,0,100)));
@@ -589,22 +533,11 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
    // }
 
     // In marker mode, last drawn objec belongs into background
-    if (MarkerActive) {
-        painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
-    }
+    CurrentlyDrawnObject.DrawIfMarking(painter, dirtyRect);
 
     // Then draw our current image (Without the currently drawn object)
-    if (EraseLastDrawnObject) {
-       QImage ModifiedImage(image);
-       QPainter MIpainter(&ModifiedImage);
-       MIpainter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-       MIpainter.drawImage(Origin, LastDrawnObject);
-       painter.drawImage(dirtyRect, ModifiedImage, dirtyRect.translated(Origin.toPoint()));
+    CurrentlyDrawnObject.DrawIfErasing(painter, image, Origin, dirtyRect);
 
-    } else {
-      painter.drawImage(dirtyRect, image, dirtyRect.translated(Origin.toPoint()));
-    //painter.setCompositionMode(QPainter::CompositionMode_Source);
-    }
 #if 0
     // Probably nonsense, as widget cannot be transparent ???
     if (EraseLastDrawnObject) {
@@ -613,9 +546,7 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
     }
 #endif
     // Now draw the currently drawn object, in marker mode it was already drawn earlier in background
-    if (!MarkerActive && !EraseLastDrawnObject) {
-       painter.drawImage(dirtyRect, LastDrawnObject, dirtyRect);
-    }
+    CurrentlyDrawnObject.DrawNormal(painter, dirtyRect);
 #if 0
     if (EraseLastDrawnObject) {
        painter.setCompositionMode(QPainter::CompositionMode_SourceOut);
@@ -664,22 +595,17 @@ void DatabaseClass::MakeSreenMoveHint()
 
 void DatabaseClass::FilllastDrawnShape()
 {
-   QPainter painter2(&image);
-   painter2.setPen(QPen(QColor(0, 0, 0, 0), myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                        Qt::RoundJoin));
-   painter2.setBrush(QBrush(myPenColor));
-   painter2.setCompositionMode(QPainter::CompositionMode_Source);
-   // LastDrawnObjectPoints.translate(-LastPaintedObjectBoundingBox.GetTop(), -LastPaintedObjectBoundingBox.GetLeft());
-   painter2.drawPolygon(LastDrawnObjectPoints.translated(Origin));
+   CurrentlyDrawnObject.FillLastDrawnShape(QPainter(&image), Origin);
    SetModified();
 }
 
 void DatabaseClass::CompleteImage()
 {
-   if (LastDrawingValid) {
-      DrawLastDrawnPicture();
-      LastDrawingValid = false;
-      LastDrawnObjectPoints.clear();
+   QPainter painter(&image);
+
+   if (CurrentlyDrawnObject.CompleteImage(painter, Origin)) {
+      SetModified();
+      update();
    }
 }
 
@@ -700,19 +626,15 @@ void DatabaseClass::ResizeAll(int width, int height)
 
 void DatabaseClass::FlushLastDrawnPicture()
 {
-   if (LastDrawingValid) {
-      DrawLastDrawnPicture();
-
-      LastDrawingValid = false;
-      LastDrawnObjectPoints.clear();
-      LastDrawnObjectPoints.append(lastPointDrawn);
+   QPainter painter(&image);
+   if (CurrentlyDrawnObject.FlushLastDrawnPicture(painter, Origin)) {
+      SetModified();
+      update();
    }
 }
 void DatabaseClass::ClearLastDrawnPicture()
 {
-      LastDrawnObject.fill(TransparentColor);
-      LastDrawingValid = false;
-      LastDrawnObjectPoints.clear();
+   CurrentlyDrawnObject.Clear();
 }
 
 void DatabaseClass::MoveSelectedPostits(QPointF Position)
@@ -834,17 +756,13 @@ void DatabaseClass::ScaleImageToPaste(double ScalingFactor)
 
 void DatabaseClass::ExtendBoundingboxAndShape(QPointF Position)
 {
-   LastDrawnObjectPoints.append(Position);
-   CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
+   CurrentlyDrawnObject.ExtendBoundingboxAndShape(Position);
 }
 
 void DatabaseClass::UpdateBoundingboxesForFinishedShape(QPointF Position)
 {
-   LastDrawnObjectPoints.append(Position);
-   LastDrawingValid = true;
-   CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
-   LastPaintedObjectBoundingBox = CurrentPaintedObjectBoundingBox;
-   CurrentPaintedObjectBoundingBox.Clear();
+   LastPaintedObjectBoundingBox = CurrentlyDrawnObject.UpdateBoundingboxesForFinishedShape(Position);
+
 }
 
 
