@@ -865,7 +865,7 @@ template<>
 void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving>
 ::timeoutSM()
 {
-   if (StateMachine.Context.MyDatas.FindSelectedPostIts(StateMachine.Context.MyDatas.getSelectedCurrentPosition(), DatabaseClass::All)) {
+   if (StateMachine.Context.MyDatas.FindSelectedPostIts(StateMachine.Context.MyDatas.getSelectedCurrentPosition(), DatabaseClass::SelectMode::All)) {
       //scribbling = false;
       //NewDrawingStarted = false;
       StateMachine.Interface.SetCursor(CursorManager::TimedPointerForDeletePostit, StateMachine.Settings.DeletePostItTimeout);
@@ -916,7 +916,7 @@ template<>
 void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving>
 ::timeoutSM()
 {
-   if (StateMachine.Context.MyDatas.FindSelectedPostIts(StateMachine.Context.MyDatas.getSelectedCurrentPosition(), DatabaseClass::All)) {
+   if (StateMachine.Context.MyDatas.FindSelectedPostIts(StateMachine.Context.MyDatas.getSelectedCurrentPosition(), DatabaseClass::SelectMode::All)) {
       //scribbling = false;
       //NewDrawingStarted = false;
       StateMachine.Interface.SetCursor(CursorManager::StandardPointer);

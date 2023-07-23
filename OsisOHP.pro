@@ -11,6 +11,7 @@ HEADERS       = mainwindow.h \
    databaseclass.h \
    gesturetracker.hpp \
    interface.hpp \
+   postitmanagerclass.h \
                 scribblearea.h \
     box.hpp \
     position.hpp \
@@ -23,6 +24,7 @@ SOURCES       = main.cpp \
    databaseclass.cpp \
    gesturetracker.cpp \
                 mainwindow.cpp \
+   postitmanagerclass.cpp \
                 scribblearea.cpp \
     Box.cpp \
     position.cpp \
