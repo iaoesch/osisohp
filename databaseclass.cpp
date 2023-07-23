@@ -16,7 +16,6 @@
 
 #include "DebugStream.hpp"
 
-int DatabaseClass::PostIt::NextId = 0;
 
 int ToInt(double d) {return static_cast<int>(d + 0.5);}
 
@@ -49,13 +48,9 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
    SelectionHintBorderColor = QColor(0, 30, 0, 50);
 
    DefaultBackGroundColor = BackGroundColor;
-   PostItBackgroundColor = QColor(100, 0, 0, 50);
 
    RecentlyPastedObjectValid = false;
    MarkerActive = false;
-   ShowPostitsFrame = false;
-
-   SelectedPostit.clear();
 }
 
 void DatabaseClass::update()
@@ -127,29 +122,15 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
 
 void DatabaseClass::CreeatePostitFromSelection()
 {
-   std::cout << "new postit (" << PostIts.size() << ")" << std::flush;
+   //std::cout << "new postit (" << PostIts.size() << ")" << std::flush;
 
    BoundingBoxClass TranslatedBoundingBox (SelectedImageBoundingBox);
    TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
-   CreatePostit(HintSelectedImagePart, SelectedImagePart, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox, SelectedImagePartPath);
-   SelectedPostit.push_back({std::prev(PostIts.end()), PostIts.back().Position});
+   Postits.CreatePostitAndSelect(HintSelectedImagePart, SelectedImagePart, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox, SelectedImagePartPath);
    SetModified();
 }
 
-void DatabaseClass::CreatePostit(QImage BackgroundImage, QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path)
-{
-   QImage NewPostit(BackgroundImage);
-   // Here we could add a different background for postits
-   QPainter painter(&NewPostit);
-   painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-   painter.setBrush(QBrush(PostItBackgroundColor));
-   painter.drawRect(Image.rect());
-   painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-   painter.drawImage(0,0,Image);
-   //BoundingBoxClass TranslatedBoundingBox (SelectedImageBoundingBox);
-   //TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
-   PostIts.push_back(PostIt(NewPostit, Position, Box, Path));
-}
+
 
 double DatabaseClass::CalculatePenWidthQuadratic(double Pressure, int BaseWidth)
 {
@@ -270,10 +251,11 @@ void DatabaseClass::resizeScrolledImage()
     BackgroundImages.resizeScrolledImage(Size, Offset, *this);
 
     // Now adjust all postits
-    for (auto &&Picture: PostIts) {
-       Picture.Position += Offset;
-       Picture.Box.Move(PositionClass(Offset.x(), Offset.y()));
-    }
+    Postits.MoveAllPostits(Offset);
+   // for (auto &&Picture: PostIts) {
+   //    Picture.Position += Offset;
+   //    Picture.Box.Move(PositionClass(Offset.x(), Offset.y()));
+   // }
 }
 
 
@@ -476,14 +458,11 @@ bool DatabaseClass::SaveDatabase(const QString &fileName)
       // Write the data
       out << image;
       out << Origin;
+
       // Now save all postits
-      out << static_cast<quint32>(PostIts.size());
-      for (auto &&Picture: PostIts) {
-         out << Picture.Position;
-         out << Picture.Image;
-         out << Picture.Box;
-         out << Picture.BorderPath;
-      }
+      Postits.Save(out);
+
+      // Now save all planes
       BackgroundImages.Save(out);
 
       modified = false;
@@ -530,20 +509,9 @@ bool DatabaseClass::LoadDatabase(const QString &fileName)
    in >> Origin;
 
    // Now read all postits
-   qint32 NumberOfSavedPostits = 0;
-   in >> NumberOfSavedPostits;
-   QImage NewImage;
-   QPoint Position;
-   BoundingBoxClass NewBox;
-   QPainterPath BorderPath;
-   PostIts.clear();
-   for (int i = 0; i < NumberOfSavedPostits; i++) {
-      in >> Position;
-      in >> NewImage;
-      in >> NewBox;
-      in >> BorderPath;
-      PostIts.push_back(PostIt(NewImage, Position, NewBox, BorderPath));
-   }
+   Postits.Load(in);
+
+   // Now read all planes
    std::vector<bool> Visibilities = BackgroundImages.Load(in);
    Parent.UpdateGUI(Visibilities);
 
@@ -557,44 +525,9 @@ bool DatabaseClass::LoadDatabase(const QString &fileName)
 #endif
 }
 
-bool DatabaseClass::FindSelectedPostIts(QPointF Position, SelectMode Mode)
-{
-   bool Found = false;
-   SelectedPostit.clear();
-   Position += Origin;
-#if 0
-   std::list<PostIt>::iterator Start = PostIts.begin();
-   auto End = PostIts.end();
-   if (Mode == Last) {
-      Start = PostIts.rbegin();
-      End = PostIts.rend();
-   }
-#endif
 
-   for (auto PostIt = PostIts.begin(); PostIt != PostIts.end(); PostIt++) {
-     if (PostIt->Box.IsInside(PositionClass(Position.x(), Position.y()))) {
-        SelectedPostit.push_back({PostIt, PostIt->Position});
-        Found = true;
-        if (Mode == First) {
-           // Only select first (Bottom one)
-           return true;
-        }
-        // Select last not implemented yet (Probably use reverse iterator for this case)
-     }
-   }
-   return Found;
-}
 
-bool DatabaseClass::IsInsideAnyPostIt(QPointF Position)
-{
-   Position += Origin;
-   for (auto &&PostIt: PostIts) {
-     if (PostIt.Box.IsInside(PositionClass(Position.x(), Position.y()))) {
-        return true;
-     }
-   }
-   return false;
-}
+
 
 void DatabaseClass::PaintOverview(QPainter &p, QSize const &OutputSize)
 {
@@ -697,15 +630,7 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
     }
 
     // Now draw all postits
-    for (auto &&Picture: PostIts) {
-       painter.drawImage(Picture.Position-Origin, Picture.Image);
-       if (ShowPostitsFrame == true) {
-          painter.setBrush(QBrush(Qt::NoBrush));
-          painter.setPen(Markercolor);
-          painter.drawRect(Picture.Box.QRectangle().translated(-Origin.toPoint()));
-          painter.drawText(Picture.Box.QRectangle().translated(-Origin.toPoint()), QString::number(Picture.Id));
-       }
-    }
+    Postits.DrawAll(painter, Origin);
 
     // If we have something selected, draw it
     if ((Parent.IsInSelectingState()) && (DiscardSelection == false)) {
@@ -792,42 +717,24 @@ void DatabaseClass::ClearLastDrawnPicture()
 
 void DatabaseClass::MoveSelectedPostits(QPointF Position)
 {
-   for(auto &r: SelectedPostit) {
-      //SelectedPostit->Position = Position;
-      QPointF LastPosition = r.postit->Position;
-      r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
-
-      r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
-  //  SelectedPostit->Position = SelectedPostit->Position  Origin + Position;
-   }
+   Postits.MoveSelectedPostits(Position - ButtonDownPosition);
 }
 
 void DatabaseClass::FinishMovingSelectedPostits(QPointF Position)
 {
-   for (auto &r: SelectedPostit) {
-      QPointF LastPosition = r.postit->Position;
-      r.postit->Position = r.StartPosition + (Position - ButtonDownPosition);
-
-      r.postit->Box.Move(PositionClass(r.postit->Position.x()-LastPosition.x(), r.postit->Position.y()-LastPosition.y()));
-      // Place moved postits on top of each other
-      PostIts.splice( PostIts.end(), PostIts, r.postit);
-   }
+   Postits.FinishMovingSelectedPostits(Position - ButtonDownPosition);
    SetModified();
 }
 
 void DatabaseClass::DuplicateSelectedPostits()
 {
-   for (auto &r: SelectedPostit) {
-      PostIts.push_back(*r.postit);
-   }
+   Postits.DuplicateSelectedPostits();
    SetModified();
 }
 
 void DatabaseClass::DeleteSelectedPostits()
 {
-   for (auto &r: SelectedPostit) {
-      PostIts.erase(r.postit);
-   }
+   Postits.DeleteSelectedPostits();
    SetModified();
 }
 
