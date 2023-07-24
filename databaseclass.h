@@ -94,7 +94,6 @@ public:
       return LastPaintedObjectBoundingBox.CurrentPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));
    }
    bool IsCutoutActive() {return CutMode;}
-   void ClearLastPaintedObjectBoundingBox() { LastPaintedObjectBoundingBox.CurrentPaintedObjectBoundingBox.Clear();}
    void MoveOrigin(QPointF Offset) {
       Origin -= Offset;
       BackgroundImages.MoveOrigin(Offset);
@@ -178,9 +177,9 @@ public:
 
    void setPenColor(const QColor &newColor);
    void setPenWidth(int newWidth);
-   void UseSpongeAsEraser(bool UseSponge) {if (UseSponge) {myEraserWidth = Settings.SpongeSize;} else {myEraserWidth = Settings.EraserSize;}}
+   void UseSpongeAsEraser(bool UseSponge) {CurrentlyDrawnObject.UseSpongeAsEraser(UseSponge);}
    void CutSelection(bool DoCut) {CutMode = DoCut;}
-   void RestorePenWidth() {myPenWidth = SelectedPenWidth;}
+   void RestorePenWidth() {CurrentlyDrawnObject.RestorePenWidth();}
 
    // Planes
    void MoveImageToBackgroundLayer();
@@ -196,8 +195,8 @@ public:
 
    bool isModified() const { return modified; }
    void SetModified() {modified =  true; AutosaveNeeded = true;}
-   QColor penColor() const { return myPenColor; }
-   int penWidth() const { return SelectedPenWidth; }
+   QColor penColor() const {return CurrentlyDrawnObject.penColor(); }
+   int penWidth() const { return CurrentlyDrawnObject.penWidth(); }
 
    bool GetShowOverview() {return ShowOverview;}
    void ToggleShowOverview(bool Mode);
@@ -213,26 +212,21 @@ public:
 
    void setMarkerActive(bool newMarkerActive)
    {
-      MarkerActive = newMarkerActive;
-      if (MarkerActive) {
-         ExtendPenWidthForMarker();
-      } else {
-         RestorePenWidth();
-      }
+      CurrentlyDrawnObject.setMarkerActive(newMarkerActive);
    }
 
    void FlushLastDrawnPicture();
-   void ClearLastDrawnObjectPoints() {LastDrawnObjectPoints.clear();}
+  // void ClearLastDrawnObjectPoints() {LastDrawnObjectPoints.clear();}
 
    void ResizeAll(int width, int height);
    void UpdateBoundingboxesForFinishedShape(QPointF Position);
    bool getLastDrawingValid() const
    {
-      return LastDrawingValid;
+      return CurrentlyDrawnObject.getLastDrawingValid();
    }
    void setLastDrawingValid(bool newLastDrawingValid)
    {
-      LastDrawingValid = newLastDrawingValid;
+      CurrentlyDrawnObject.setLastDrawingValid(newLastDrawingValid);
    }
 
    void setLastPoint(QPointF newLastPoint)
@@ -272,7 +266,7 @@ public:
 
    int getMyPenWidth() const
    {
-      return myPenWidth;
+      return CurrentlyDrawnObject.getMyPenWidth();
    }
 
    void ExtendBoundingboxAndShape(QPointF Position);

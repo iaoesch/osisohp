@@ -82,7 +82,7 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
    SelectedImageBoundingBox = LastPaintedObjectBoundingBox.CurrentPaintedObjectBoundingBox;
 
    HintSelectedImagePart = SelectedImagePart;
-   HintSelectedImagePart.fill(qRgba(0, 0, 0, 0));
+   HintSelectedImagePart.fill(TransparentColor);
    DiscardSelection = false;
 
    if (Cutout == true) {
@@ -98,13 +98,15 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
    QPainterPath Path;
    Path.addPolygon(LastPaintedObjectBoundingBox.LastDrawnObjectPoints);
    QImage MaskedSelectedImagePart = SelectedImagePart;
-   MaskedSelectedImagePart.fill(qRgba(0, 0, 0, 0));
+   MaskedSelectedImagePart.fill(TransparentColor);
    QPainter painter3(&MaskedSelectedImagePart);
    painter3.setClipPath(Path);
    painter3.drawImage(QPoint(0,0), SelectedImagePart);
    SelectedImagePart = MaskedSelectedImagePart;
    SelectedImagePartPath = Path;
-   LastDrawnObject.fill(qRgba(0, 0, 0, 0));
+   CurrentlyDrawnObject.Clear();
+   LastPaintedObjectBoundingBox.CurrentPaintedObjectBoundingBox.Clear();
+   //LastDrawnObject.fill(qRgba(0, 0, 0, 0));
 }
 
 void DatabaseClass::CreeatePostitFromSelection()
@@ -612,11 +614,11 @@ void DatabaseClass::CompleteImage()
 void DatabaseClass::ResizeAll(int width, int height)
 {
 
-   if (width > LastDrawnObject.width() || height > LastDrawnObject.height()) {
+   if (width > CurrentlyDrawnObject.Image().width() || height > CurrentlyDrawnObject.Image().height()) {
       int newWidth = qMax(width + 128, image.width());
       int newHeight = qMax(height + 128, image.height());
       resizeImage(&image, QSize(newWidth+ToInt(Origin.x()), newHeight+ToInt(Origin.y())));
-      resizeImage(&LastDrawnObject, QSize(newWidth, newHeight));
+      resizeImage(&CurrentlyDrawnObject.Image(), QSize(newWidth, newHeight));
       BackgroundImages.Resize(newWidth, newHeight, *this);
 
       update();

@@ -3,6 +3,7 @@
 
 #include "box.hpp"
 #include <QImage>
+#include "Settings.hpp"
 
 
 class DrawingObjectClass
@@ -26,6 +27,7 @@ private:
    bool MarkerActive;
 
    QColor &TransparentColor;
+   SettingClass &Settings;
 
    QPointF lastPointDrawn;
 
@@ -48,6 +50,35 @@ public:
    void DrawLastDrawnPicture(QPainter &painter, const QPointF &Offset);
    void setPenColor(const QColor &newColor);
    void setPenWidth(int newWidth);
+   QColor penColor() const { return myPenColor; }
+   int penWidth() const { return SelectedPenWidth; }
+
+   void UseSpongeAsEraser(bool UseSponge) {if (UseSponge) {myEraserWidth = Settings.SpongeSize;} else {myEraserWidth = Settings.EraserSize;}}
+   void RestorePenWidth() {myPenWidth = SelectedPenWidth;}
+
+   void setMarkerActive(bool newMarkerActive)
+   {
+      MarkerActive = newMarkerActive;
+      if (MarkerActive) {
+         ExtendPenWidthForMarker();
+      } else {
+         RestorePenWidth();
+      }
+   }
+
+   bool getLastDrawingValid() const
+   {
+      return LastDrawingValid;
+   }
+   void setLastDrawingValid(bool newLastDrawingValid)
+   {
+      LastDrawingValid = newLastDrawingValid;
+   }
+   int getMyPenWidth() const
+   {
+      return myPenWidth;
+   }
+
    void Clear();
    void DrawIfMarking(QPainter &painter, const QRect &dirtyRect);
    void DrawIfErasing(QPainter &painter, const QImage &image, const QPointF &Offset, const QRect &dirtyRect);
@@ -58,6 +89,7 @@ public:
    void ExtendBoundingboxAndShape(QPointF Position);
    ShapeClass UpdateBoundingboxesForFinishedShape(QPointF Position);
    void CutOut(QPainter &painter2, QPointF Offset);
+   QImage &Image() {return LastDrawnObject;}
 private:
    double CalculatePenWidthLinear(double Pressure, int BaseWidth);
    double CalculatePenWidthQuadratic(double Pressure, int BaseWidth);
