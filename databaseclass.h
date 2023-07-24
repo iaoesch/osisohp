@@ -41,7 +41,7 @@ class DatabaseClass : public QObject
 
    bool CutMode;
 
-
+   QPointF lastPointDrawn;
    QPointF SelectedOffset;
    QPointF SelectedCurrentPosition;
    QPointF ButtonDownPosition;
@@ -231,6 +231,7 @@ public:
 
    void setLastPoint(QPointF newLastPoint)
    {
+      CurrentlyDrawnObject.setLastPoint(newLastPoint);
       lastPointDrawn = newLastPoint;
    }
    QPointF getLastPointDrawn() {return lastPointDrawn;}
@@ -287,6 +288,9 @@ public:
    }
    bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, double Pressure /* [[maybe_unused]] */) {
       return ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()+2));
+   }
+   bool IsSelectionJitter(QPointF OldPoint, double Pressure /* [[maybe_unused]] */) {
+      return IsSelectionJitter(OldPoint, lastPointDrawn, Pressure);
    }
 
 

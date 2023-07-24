@@ -78,6 +78,11 @@ public:
    {
       return myPenWidth;
    }
+   void setLastPoint(QPointF newLastPoint)
+   {
+      lastPointDrawn = newLastPoint;
+   }
+
 
    void Clear();
    void DrawIfMarking(QPainter &painter, const QRect &dirtyRect);
