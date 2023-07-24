@@ -26,7 +26,7 @@ private:
    bool LastDrawingValid;
    bool MarkerActive;
 
-   QColor &TransparentColor;
+   const QColor &TransparentColor;
    SettingClass &Settings;
 
    QPointF lastPointDrawn;
@@ -38,7 +38,7 @@ private:
 
 
 public:
-   DrawingObjectClass();
+   DrawingObjectClass(const QColor &Transparent, SettingClass &MySettings);
    void RestartCurrentPaintedObjectBoundingBox(QPointF const &StartPoint)
    {
       CurrentShape.CurrentPaintedObjectBoundingBox.Clear();
@@ -46,7 +46,7 @@ public:
    }
 
    QRect drawLineTo(const QPointF &endPoint, double Pressure);
-   QRect EraseLineTo(const QPointF &endPoint, double Pressure);
+   QRect EraseLineTo(const QPointF &endPoint, double Pressure, QColor &BackGroundColor);
    void DrawLastDrawnPicture(QPainter &painter, const QPointF &Offset);
    void setPenColor(const QColor &newColor);
    void setPenWidth(int newWidth);

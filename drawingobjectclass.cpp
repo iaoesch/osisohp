@@ -1,8 +1,11 @@
 #include "drawingobjectclass.h"
 #include "DebugStream.hpp"
 #include <QPainter>
+#include "databaseclass.h"
 
-DrawingObjectClass::DrawingObjectClass()
+DrawingObjectClass::DrawingObjectClass(const QColor &Transparent, SettingClass &MySettings)
+   : TransparentColor(Transparent),
+     Settings(MySettings)
 {
    LastDrawingValid = false;
    EraseLastDrawnObject = false;
@@ -39,7 +42,7 @@ QRect DrawingObjectClass::drawLineTo(const QPointF &endPoint, double Pressure)
                                         .adjusted(-rad, -rad, +rad, +rad);
 }
 
-QRect DrawingObjectClass::EraseLineTo(const QPointF &endPoint, double Pressure)
+QRect DrawingObjectClass::EraseLineTo(const QPointF &endPoint, double Pressure, QColor &BackGroundColor)
 {
     DEBUG_LOG << "Erasing ";
     QPainter painter(&LastDrawnObject);
@@ -59,6 +62,31 @@ QRect DrawingObjectClass::EraseLineTo(const QPointF &endPoint, double Pressure)
     return QRect(lastPointDrawn.toPoint(), endPoint.toPoint()).normalized()
                                      .adjusted(-rad, -rad, +rad, +rad);
 }
+
+double DrawingObjectClass::CalculatePenWidthQuadratic(double Pressure, int BaseWidth)
+{
+   constexpr double MaxPenScaling = 11.0;
+   constexpr double MinPenScaling = 1.0;
+   constexpr double MaxPenForce = 0.9;
+   constexpr double MinPenForce = DatabaseClass::JitterPressureLimit;
+   constexpr double dx = MaxPenForce*MaxPenForce - MinPenForce*MinPenForce;
+   constexpr double dy = MaxPenScaling - MinPenScaling;
+
+   return (BaseWidth * qMax(MinPenScaling, Pressure*Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*MinPenForce*dy/dx))) + 0.5);
+}
+
+double DrawingObjectClass::CalculatePenWidthLinear(double Pressure, int BaseWidth)
+{
+   constexpr double MaxPenScaling = 11.0;
+   constexpr double MinPenScaling = 1.0;
+   constexpr double MaxPenForce = 0.9;
+   constexpr double MinPenForce = DatabaseClass::JitterPressureLimit;
+   constexpr double dx = MaxPenForce - MinPenForce;
+   constexpr double dy = MaxPenScaling - MinPenScaling;
+
+   return (BaseWidth * qMax(MinPenScaling, Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*dy/dx))) + 0.5);
+}
+
 
 void DrawingObjectClass::DrawLastDrawnPicture(QPainter &painter, const QPointF &Offset)
 {

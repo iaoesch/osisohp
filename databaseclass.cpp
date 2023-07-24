@@ -23,7 +23,9 @@ int ToInt(double d) {return static_cast<int>(d + 0.5);}
 
 
 DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySettings)
-   : Parent(Parent), Settings(MySettings)
+   : Parent(Parent), Settings(MySettings),
+     CurrentlyDrawnObject(TransparentColor, Settings)
+
 {
    modified = false;
    AutosaveNeeded = false;
@@ -158,7 +160,7 @@ void DatabaseClass::EraseLineTo(const QPointF &endPoint, double Pressure)
 {
     DEBUG_LOG << "Erasing ";
     SetModified();
-    update(CurrentlyDrawnObject.EraseLineTo(endPoint, Pressure));
+    update(CurrentlyDrawnObject.EraseLineTo(endPoint, Pressure, BackGroundColor));
 }
 
 void DatabaseClass::DrawLastDrawnPicture()
