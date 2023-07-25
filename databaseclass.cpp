@@ -80,8 +80,8 @@ bool DatabaseClass::ImportImage(const QString &fileName)
 
 void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
 {
-   SelectedImagePart =  image.copy(LastPaintedObjectBoundingBox.CurrentPaintedObjectBoundingBox.QRectangle().translated(Origin.toPoint()));
-   SelectedImageBoundingBox = LastPaintedObjectBoundingBox.CurrentPaintedObjectBoundingBox;
+   SelectedImagePart =  image.copy(LastPaintedObject.Box().QRectangle().translated(Origin.toPoint()));
+   SelectedImageBoundingBox = LastPaintedObject.Box();
 
    HintSelectedImagePart = SelectedImagePart;
    HintSelectedImagePart.fill(TransparentColor);
@@ -95,10 +95,10 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
    painter.setPen(QPen(SelectionHintBorderColor, HintBorderPenWidth, Qt::SolidLine, Qt::RoundCap,
                        Qt::RoundJoin));
    painter.setBrush(QBrush(SelectionHintColor));
-   LastPaintedObjectBoundingBox.LastDrawnObjectPoints.translate(-SelectedImageBoundingBox.GetLeft(), -SelectedImageBoundingBox.GetTop());
-   painter.drawPolygon(LastPaintedObjectBoundingBox.LastDrawnObjectPoints);
+   LastPaintedObject.Points().translate(-SelectedImageBoundingBox.GetLeft(), -SelectedImageBoundingBox.GetTop());
+   painter.drawPolygon(LastPaintedObject.Points());
    QPainterPath Path;
-   Path.addPolygon(LastPaintedObjectBoundingBox.LastDrawnObjectPoints);
+   Path.addPolygon(LastPaintedObject.Points());
    QImage MaskedSelectedImagePart = SelectedImagePart;
    MaskedSelectedImagePart.fill(TransparentColor);
    QPainter painter3(&MaskedSelectedImagePart);
@@ -107,7 +107,7 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
    SelectedImagePart = MaskedSelectedImagePart;
    SelectedImagePartPath = Path;
    CurrentlyDrawnObject.Clear();
-   LastPaintedObjectBoundingBox.CurrentPaintedObjectBoundingBox.Clear();
+   LastPaintedObject.Clear();
    //LastDrawnObject.fill(qRgba(0, 0, 0, 0));
 }
 
@@ -148,7 +148,7 @@ double DatabaseClass::CalculatePenWidthLinear(double Pressure, int BaseWidth)
 }
 #endif
 
-void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
+void DatabaseClass::drawLineTo(const QPointF &endPoint, float Pressure)
 {
    DEBUG_LOG << "Drawing Pressure: " << Pressure << std::endl;
 
@@ -156,13 +156,13 @@ void DatabaseClass::drawLineTo(const QPointF &endPoint, double Pressure)
     update(CurrentlyDrawnObject.drawLineTo(endPoint, Pressure));
 }
 
-void DatabaseClass::EraseLineTo(const QPointF &endPoint, double Pressure)
+void DatabaseClass::EraseLineTo(const QPointF &endPoint, float Pressure)
 {
     DEBUG_LOG << "Erasing ";
     SetModified();
     update(CurrentlyDrawnObject.EraseLineTo(endPoint, Pressure, BackGroundColor));
 }
-
+#if 0
 void DatabaseClass::DrawLastDrawnPicture()
 {
     QPainter painter(&image);
@@ -171,7 +171,7 @@ void DatabaseClass::DrawLastDrawnPicture()
     SetModified();
     update();
 }
-
+#endif
 void DatabaseClass::GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size)
 {
    if (Origin.x() < 0) {
@@ -760,12 +760,13 @@ void DatabaseClass::ScaleImageToPaste(double ScalingFactor)
 
 void DatabaseClass::ExtendBoundingboxAndShape(QPointF Position)
 {
+#warning should be done in draw/erase line!!!
    CurrentlyDrawnObject.ExtendBoundingboxAndShape(Position);
 }
 
 void DatabaseClass::UpdateBoundingboxesForFinishedShape(QPointF Position)
 {
-   LastPaintedObjectBoundingBox = CurrentlyDrawnObject.UpdateBoundingboxesForFinishedShape(Position);
+   LastPaintedObject = CurrentlyDrawnObject.UpdateBoundingboxesForFinishedShape(Position);
 
 }
 

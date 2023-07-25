@@ -72,7 +72,7 @@ class DatabaseClass : public QObject
    QImage RecentlyPastedObject;
    BoundingBoxClass RecentlyPastedObjectBoundingBox;
 
-   DrawingObjectClass::ShapeClass LastPaintedObjectBoundingBox;
+   DrawingObjectClass::ShapeClass LastPaintedObject;
    BoundingBoxClass SelectedImageBoundingBox;
 
 
@@ -91,7 +91,7 @@ public:
 
    bool IsInsideLastPaintedObjectBoundingBox(QPointF const &Point)
    {
-      return LastPaintedObjectBoundingBox.CurrentPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));
+      return LastPaintedObject.Box().IsInside(PositionClass(Point.x(), Point.y()));
    }
    bool IsCutoutActive() {return CutMode;}
    void MoveOrigin(QPointF Offset) {
@@ -103,14 +103,14 @@ public:
    DatabaseClass(ScribbleArea &Parent, class SettingClass &MySettings);
    bool ImportImage(const QString &fileName);
 
-   void drawLineTo(const QPointF &endPoint, double Pressure);
-   void EraseLineTo(const QPointF &endPoint, double Pressure);
+   void drawLineTo(const QPointF &endPoint, float Pressure);
+   void EraseLineTo(const QPointF &endPoint, float Pressure);
    void drawrectangle(const BoundingBoxClass &Region);
    void DrawMovedSelection(const QPointF Offset);
    void MakeSreenMoveHint();
 
 private:
-   void DrawLastDrawnPicture();
+   //void DrawLastDrawnPicture();
 public:
 
    void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
@@ -145,7 +145,7 @@ public:
    void DeleteSelectedPostits();
    void DuplicateSelectedPostits();
 private:
-   void CreatePostit_(QImage BackgroundImage, QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path);
+   //void CreatePostit_(QImage BackgroundImage, QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path);
 public:
 
 
@@ -286,10 +286,10 @@ public:
    bool IsJitter(QPointF OldPoint, QPointF NewPoint, double Pressure) {
       return ((Pressure < JitterPressureLimit) && ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()*3+2)));
    }
-   bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, double Pressure /* [[maybe_unused]] */) {
+   bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, float Pressure /* [[maybe_unused]] */) {
       return ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()+2));
    }
-   bool IsSelectionJitter(QPointF OldPoint, double Pressure /* [[maybe_unused]] */) {
+   bool IsSelectionJitter(QPointF OldPoint, float Pressure /* [[maybe_unused]] */) {
       return IsSelectionJitter(OldPoint, lastPointDrawn, Pressure);
    }
 

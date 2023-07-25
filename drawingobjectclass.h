@@ -14,6 +14,23 @@ public:
    public:
       QPolygonF LastDrawnObjectPoints;
       BoundingBoxClass CurrentPaintedObjectBoundingBox;
+
+   public:
+
+      const BoundingBoxClass &Box() { return CurrentPaintedObjectBoundingBox;}
+      const QPolygonF &Points() const { return LastDrawnObjectPoints;}
+      QPolygonF &Points() { return LastDrawnObjectPoints;}
+
+      void AddPoint(QPointF Position)
+      {
+         LastDrawnObjectPoints.append(Position);
+         CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(Position.x(), Position.y()));
+      }
+      void Clear()
+      {
+         LastDrawnObjectPoints.clear();
+         CurrentPaintedObjectBoundingBox.Clear();
+      }
    };
 
 private:
@@ -34,7 +51,7 @@ private:
    ShapeClass CurrentShape;
 
    QColor myPenColor;
-   QImage LastDrawnObject;
+   QImage CurrentImage;
 
 
 public:
@@ -45,8 +62,8 @@ public:
       CurrentShape.CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(StartPoint.x(), StartPoint.y()));
    }
 
-   QRect drawLineTo(const QPointF &endPoint, double Pressure);
-   QRect EraseLineTo(const QPointF &endPoint, double Pressure, QColor &BackGroundColor);
+   QRect drawLineTo(const QPointF &endPoint, float Pressure);
+   QRect EraseLineTo(const QPointF &endPoint, float Pressure, QColor &BackGroundColor);
    void DrawLastDrawnPicture(QPainter &painter, const QPointF &Offset);
    void setPenColor(const QColor &newColor);
    void setPenWidth(int newWidth);
@@ -94,7 +111,7 @@ public:
    void ExtendBoundingboxAndShape(QPointF Position);
    ShapeClass UpdateBoundingboxesForFinishedShape(QPointF Position);
    void CutOut(QPainter &painter2, QPointF Offset);
-   QImage &Image() {return LastDrawnObject;}
+   QImage &Image() {return CurrentImage;}
 private:
    double CalculatePenWidthLinear(double Pressure, int BaseWidth);
    double CalculatePenWidthQuadratic(double Pressure, int BaseWidth);
