@@ -64,7 +64,6 @@ public:
 
    QRect drawLineTo(const QPointF &endPoint, float Pressure);
    QRect EraseLineTo(const QPointF &endPoint, float Pressure, QColor &BackGroundColor);
-   void DrawLastDrawnPicture(QPainter &painter, const QPointF &Offset);
    void setPenColor(const QColor &newColor);
    void setPenWidth(int newWidth);
    QColor penColor() const { return myPenColor; }
@@ -108,7 +107,7 @@ public:
    void FillLastDrawnShape(QPainter &&painter2, const QPointF &Offset);
    bool CompleteImage(QPainter &painter, const QPointF &Offset);
    bool FlushLastDrawnPicture(QPainter &painter, const QPointF &Offset);
-   void ExtendBoundingboxAndShape(QPointF Position);
+  // void ExtendBoundingboxAndShape(QPointF Position);
    ShapeClass UpdateBoundingboxesForFinishedShape(QPointF Position);
    void CutOut(QPainter &painter2, QPointF Offset);
    QImage &Image() {return CurrentImage;}
@@ -116,6 +115,7 @@ private:
    double CalculatePenWidthLinear(double Pressure, int BaseWidth);
    double CalculatePenWidthQuadratic(double Pressure, int BaseWidth);
    void ExtendPenWidthForMarker() {myPenWidth = SelectedPenWidth * 5 + 2;}
+  // void DrawLastDrawnPicture(QPainter &painter, const QPointF &Offset);
 
 
 };

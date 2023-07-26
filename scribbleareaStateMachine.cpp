@@ -332,7 +332,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
       } else {
          StateMachine.Context.MyDatas.drawLineTo(Position, PenInfo.Pressure);
       }
-      StateMachine.Context.MyDatas.ExtendBoundingboxAndShape(Position);
+    //  StateMachine.Context.MyDatas.ExtendBoundingboxAndShape(Position);
 
        //StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
 
@@ -428,7 +428,7 @@ void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPo
       } else {
          StateMachine.Context.MyDatas.drawLineTo(Position, PenInfo.Pressure);
       }
-      StateMachine.Context.MyDatas.ExtendBoundingboxAndShape(Position);
+   //   StateMachine.Context.MyDatas.ExtendBoundingboxAndShape(Position);
 
    }  else {
       HandleMoveNoLeftButtonEvent(Buttons, Position);

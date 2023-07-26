@@ -757,12 +757,13 @@ void DatabaseClass::ScaleImageToPaste(double ScalingFactor)
    update();
 }
 
-
+#if 0
 void DatabaseClass::ExtendBoundingboxAndShape(QPointF Position)
 {
 #warning should be done in draw/erase line!!!
    CurrentlyDrawnObject.ExtendBoundingboxAndShape(Position);
 }
+#endif
 
 void DatabaseClass::UpdateBoundingboxesForFinishedShape(QPointF Position)
 {

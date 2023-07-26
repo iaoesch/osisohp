@@ -32,6 +32,8 @@ QRect DrawingObjectClass::drawLineTo(const QPointF &endPoint, float Pressure)
                         Qt::RoundJoin));
     painter.drawLine(lastPointDrawn, endPoint);
 //    SetModified();
+    CurrentShape.AddPoint(endPoint);
+
     lastPointDrawn = endPoint;
     EraseLastDrawnObject = false;
 
@@ -53,6 +55,8 @@ QRect DrawingObjectClass::EraseLineTo(const QPointF &endPoint, float Pressure, Q
     //painter.setCompositionMode(QPainter::CompositionMode_Clear);
     painter.drawLine(lastPointDrawn, endPoint);
   //  SetModified();
+    CurrentShape.AddPoint(endPoint);
+
     EraseLastDrawnObject = true;
     lastPointDrawn = endPoint;
 
@@ -87,22 +91,6 @@ double DrawingObjectClass::CalculatePenWidthLinear(double Pressure, int BaseWidt
    return (BaseWidth * qMax(MinPenScaling, Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*dy/dx))) + 0.5);
 }
 
-
-void DrawingObjectClass::DrawLastDrawnPicture(QPainter &painter, const QPointF &Offset)
-{
-    //painter.setCompositionMode(QPainter::CompositionMode_Source);
-    if (EraseLastDrawnObject) {
-       painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    }
-    if (MarkerActive) {
-       painter.setCompositionMode(QPainter::CompositionMode_DestinationOver);
-
-    }
-    painter.drawImage(Offset, CurrentImage);
-    CurrentImage.fill(TransparentColor);
-    //SetModified();
-    //update();
-}
 
 void DrawingObjectClass::setPenColor(const QColor &newColor)
 {
@@ -167,10 +155,30 @@ void DrawingObjectClass::FillLastDrawnShape(QPainter &&painter2, const QPointF &
    painter2.drawPolygon(CurrentShape.Points().translated(Offset));
 }
 
+
+bool DrawingObjectClass::FlushLastDrawnPicture(QPainter &painter, const QPointF &Offset)
+{
+   if (CompleteImage(painter, Offset)) {
+      CurrentShape.LastDrawnObjectPoints.append(lastPointDrawn);
+      return true;
+   } else {
+      return false;
+   }
+}
+
 bool DrawingObjectClass::CompleteImage(QPainter &painter, const QPointF &Offset)
 {
    if (LastDrawingValid) {
-      DrawLastDrawnPicture(painter, Offset);
+      if (EraseLastDrawnObject) {
+         painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+      }
+      if (MarkerActive) {
+         painter.setCompositionMode(QPainter::CompositionMode_DestinationOver);
+
+      }
+      painter.drawImage(Offset, CurrentImage);
+      CurrentImage.fill(TransparentColor);
+
       LastDrawingValid = false;
       CurrentShape.LastDrawnObjectPoints.clear();
       return true;
@@ -179,25 +187,17 @@ bool DrawingObjectClass::CompleteImage(QPainter &painter, const QPointF &Offset)
    }
 }
 
-bool DrawingObjectClass::FlushLastDrawnPicture(QPainter &painter, const QPointF &Offset)
-{
-   if (LastDrawingValid) {
-      DrawLastDrawnPicture(painter, Offset);
 
-      LastDrawingValid = false;
-      CurrentShape.LastDrawnObjectPoints.clear();
-      CurrentShape.LastDrawnObjectPoints.append(lastPointDrawn);
-   }
-}
-
+#if 0
 void DrawingObjectClass::ExtendBoundingboxAndShape(QPointF Position)
 {
    CurrentShape.AddPoint(Position);
 }
+#endif
 
 DrawingObjectClass::ShapeClass DrawingObjectClass::UpdateBoundingboxesForFinishedShape(QPointF Position)
 {
-   CurrentShape.AddPoint(Position);
+//   CurrentShape.AddPoint(Position);
    LastDrawingValid = true;
    ShapeClass LastPaintedObject = CurrentShape;
    CurrentShape.CurrentPaintedObjectBoundingBox.Clear();

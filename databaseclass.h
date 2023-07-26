@@ -270,7 +270,7 @@ public:
       return CurrentlyDrawnObject.getMyPenWidth();
    }
 
-   void ExtendBoundingboxAndShape(QPointF Position);
+  // void ExtendBoundingboxAndShape(QPointF Position);
 
    QPointF TranslateCoordinateOffsetFromOverview(QPointF Coordinates);
    const QColor &getScrollHintColor() const
@@ -286,10 +286,10 @@ public:
    bool IsJitter(QPointF OldPoint, QPointF NewPoint, double Pressure) {
       return ((Pressure < JitterPressureLimit) && ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()*3+2)));
    }
-   bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, float Pressure /* [[maybe_unused]] */) {
+   bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, float Pressure  [[maybe_unused]] ) {
       return ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()+2));
    }
-   bool IsSelectionJitter(QPointF OldPoint, float Pressure /* [[maybe_unused]] */) {
+   bool IsSelectionJitter(QPointF OldPoint, float Pressure  [[maybe_unused]] ) {
       return IsSelectionJitter(OldPoint, lastPointDrawn, Pressure);
    }
 
