@@ -16,6 +16,9 @@ public:
       BoundingBoxClass CurrentPaintedObjectBoundingBox;
 
    public:
+      ShapeClass() = default;
+      ShapeClass(const ShapeClass &src) : LastDrawnObjectPoints(src.LastDrawnObjectPoints) ,CurrentPaintedObjectBoundingBox(src.CurrentPaintedObjectBoundingBox) {}
+      ShapeClass &operator = (const ShapeClass &src) = default; //: LastDrawnObjectPoints(src.LastDrawnObjectPoints) ,CurrentPaintedObjectBoundingBox(src.CurrentPaintedObjectBoundingBox) {}
 
       const BoundingBoxClass &Box() { return CurrentPaintedObjectBoundingBox;}
       const QPolygonF &Points() const { return LastDrawnObjectPoints;}
@@ -108,7 +111,7 @@ public:
    bool CompleteImage(QPainter &painter, const QPointF &Offset);
    bool FlushLastDrawnPicture(QPainter &painter, const QPointF &Offset);
   // void ExtendBoundingboxAndShape(QPointF Position);
-   ShapeClass UpdateBoundingboxesForFinishedShape(QPointF Position);
+   ShapeClass EndShape(QPointF Position);
    void CutOut(QPainter &painter2, QPointF Offset);
    QImage &Image() {return CurrentImage;}
 private:

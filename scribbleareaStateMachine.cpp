@@ -446,7 +446,7 @@ void StateClass<State::Drawing>::HandleReleaseEventSM(Qt::MouseButton Button, QP
       } else {
          StateMachine.Context.MyDatas.drawLineTo(Position, PenInfo.Pressure);
       }
-      StateMachine.Context.MyDatas.UpdateBoundingboxesForFinishedShape(Position);
+      StateMachine.Context.MyDatas.EndShape(Position);
       StateMachine.SetNewState(&StateMachine.Idle);
       StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
    }
@@ -606,7 +606,7 @@ void StateClass<State::DrawingKillRequested>::HandleReleaseEventSM(Qt::MouseButt
       } else {
          StateMachine.Context.MyDatas.drawLineTo(Position, PenInfo.Pressure);
       }
-      StateMachine.Context.MyDatas.UpdateBoundingboxesForFinishedShape(Position);
+      StateMachine.Context.MyDatas.EndShape(Position);
       StateMachine.SetNewState(&StateMachine.Idle);
       StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
 
