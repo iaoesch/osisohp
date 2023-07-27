@@ -286,7 +286,7 @@ template<>
 void StateClass<State::Idle>::HandleOverviewEventSM(bool Enabled)
 {
    if (Enabled) {
-      StateMachine.Context.MyDatas.CompleteImage();
+      StateMachine.Context.MyDatas.TransferLastDrawnShape();
       StateMachine.SetNewState(&StateMachine.WaitingToSelectRegionFromOverview);
       StateMachine.Context.MyDatas.ToggleShowOverview(true);
    }
@@ -325,7 +325,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
        StoppTimer();
        StartTimer(StateMachine.Settings.GestureTimeout);
        StateMachine.Interface.RestartAnimatedCursor();
-       StateMachine.Context.MyDatas.FlushLastDrawnPicture();
+       StateMachine.Context.MyDatas.DrawLastDrawnShapeAndStartNewShape();
       //LastDrawnObject.fill(BackgroundColor);
       if (PenInfo.Erasing) {
          StateMachine.Context.MyDatas.EraseLineTo(Position, PenInfo.Pressure);
@@ -421,7 +421,8 @@ void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPo
           StateMachine.Interface.SetCursor(CursorManager::GoingToFillTimer, StateMachine.Settings.GestureTimeout);
 
        }
-       StateMachine.Context.MyDatas.FlushLastDrawnPicture();
+       // most probably unneeded, as allready flushed in transition...
+       StateMachine.Context.MyDatas.DrawLastDrawnShapeAndStartNewShape();
       //LastDrawnObject.fill(BackgroundColor);
       if (PenInfo.Erasing) {
          StateMachine.Context.MyDatas.EraseLineTo(Position, PenInfo.Pressure);
@@ -1083,7 +1084,7 @@ void StateClass<State::ScrollingDrawingArea>::HandleMoveEventSM(Qt::MouseButtons
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position,  PenInfo.Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
-       StateMachine.Context.MyDatas.CompleteImage();
+       StateMachine.Context.MyDatas.TransferLastDrawnShape();
       StateMachine.Context.MyDatas.MoveOrigin(Position- StateMachine.Context.ScrollingLastPosition);
 
 
@@ -1121,7 +1122,7 @@ void StateClass<State::TouchScrollingDrawingArea>::HandleTouchMoveEventSM(int Nu
    if(NumberOfTouchpoints == 2) {
    DEBUG_LOG << "TM(" << MeanPosition.x() <<":" << MeanPosition.y() << ")";
 
-         StateMachine.Context.MyDatas.CompleteImage();
+         StateMachine.Context.MyDatas.TransferLastDrawnShape();
          StateMachine.Context.MyDatas.MoveOrigin(MeanPosition- StateMachine.Context.ScrollingLastPosition);
 
          StateMachine.Context.ScrollingLastPosition = MeanPosition;

@@ -108,8 +108,8 @@ public:
    void DrawIfErasing(QPainter &painter, const QImage &image, const QPointF &Offset, const QRect &dirtyRect);
    void DrawNormal(QPainter &painter, const QRect &dirtyRect);
    void FillLastDrawnShape(QPainter &&painter2, const QPointF &Offset);
-   bool CompleteImage(QPainter &painter, const QPointF &Offset);
-   bool FlushLastDrawnPicture(QPainter &painter, const QPointF &Offset);
+   bool TransferLastDrawnShape(QPainter &painter, const QPointF &Offset);
+   bool DrawLastDrawnShapeAndStartNewShape(QPainter &painter, const QPointF &Offset);
   // void ExtendBoundingboxAndShape(QPointF Position);
    ShapeClass EndShape(QPointF Position);
    void CutOut(QPainter &painter2, QPointF Offset);

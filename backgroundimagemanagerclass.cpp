@@ -181,7 +181,7 @@ bool BackgroundImageManagerClass::SetLayerVisibility(unsigned int SelectedLayer,
    return false;
 }
 
-bool BackgroundImageManagerClass::AddLayerTop(QImage NewImage)
+void BackgroundImageManagerClass::AddLayerTop(QImage NewImage)
 {
    BackgroundImages.push_back(std::make_unique<QImage>(NewImage));
 }

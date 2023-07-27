@@ -156,9 +156,9 @@ void DrawingObjectClass::FillLastDrawnShape(QPainter &&painter2, const QPointF &
 }
 
 
-bool DrawingObjectClass::FlushLastDrawnPicture(QPainter &painter, const QPointF &Offset)
+bool DrawingObjectClass::DrawLastDrawnShapeAndStartNewShape(QPainter &painter, const QPointF &Offset)
 {
-   if (CompleteImage(painter, Offset)) {
+   if (TransferLastDrawnShape(painter, Offset)) {
       CurrentShape.LastDrawnObjectPoints.append(lastPointDrawn);
       return true;
    } else {
@@ -166,7 +166,7 @@ bool DrawingObjectClass::FlushLastDrawnPicture(QPainter &painter, const QPointF 
    }
 }
 
-bool DrawingObjectClass::CompleteImage(QPainter &painter, const QPointF &Offset)
+bool DrawingObjectClass::TransferLastDrawnShape(QPainter &painter, const QPointF &Offset)
 {
    if (LastDrawingValid) {
       if (EraseLastDrawnObject) {

@@ -116,7 +116,7 @@ public:
    void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
    void resizeScrolledImage();
    void MakeSelectionFromLastDrawnObject(bool Cutout = false);
-   void CompleteImage();
+   void TransferLastDrawnShape();
    void FilllastDrawnShape();
    void ClearLastDrawnPicture();
 
@@ -215,7 +215,7 @@ public:
       CurrentlyDrawnObject.setMarkerActive(newMarkerActive);
    }
 
-   void FlushLastDrawnPicture();
+   void DrawLastDrawnShapeAndStartNewShape();
   // void ClearLastDrawnObjectPoints() {LastDrawnObjectPoints.clear();}
 
    void ResizeAll(int width, int height);

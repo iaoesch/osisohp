@@ -268,7 +268,7 @@ bool DatabaseClass::ImportImageToBackgroundLayer(const QString &fileName)
 
 void DatabaseClass::MoveImageToBackgroundLayer()
 {
-   CompleteImage();
+   TransferLastDrawnShape();
    BackgroundImages.AddLayerTop(image);
    clearImage();
    UpdateGUIElements();
@@ -321,7 +321,7 @@ void DatabaseClass::PasteImage(QImage ImageToPaste)
    ControllingStateMachine
 #else
    QSizeF DestSize = ImageToPaste.size();
-   CompleteImage();
+   TransferLastDrawnShape();
 
    bool ShrinkToFit = true;
    if (ShrinkToFit) {
@@ -402,7 +402,7 @@ bool DatabaseClass::SaveDatabase(const QString &fileName)
       out << static_cast<quint32>(110);
 
       out.setVersion(QDataStream::Qt_6_0);
-      CompleteImage();
+      TransferLastDrawnShape();
 
       // Write the data
       out << image;
@@ -603,11 +603,11 @@ void DatabaseClass::FilllastDrawnShape()
    SetModified();
 }
 
-void DatabaseClass::CompleteImage()
+void DatabaseClass::TransferLastDrawnShape()
 {
    QPainter painter(&image);
 
-   if (CurrentlyDrawnObject.CompleteImage(painter, Origin)) {
+   if (CurrentlyDrawnObject.TransferLastDrawnShape(painter, Origin)) {
       SetModified();
       update();
    }
@@ -628,10 +628,10 @@ void DatabaseClass::ResizeAll(int width, int height)
 }
 
 
-void DatabaseClass::FlushLastDrawnPicture()
+void DatabaseClass::DrawLastDrawnShapeAndStartNewShape()
 {
    QPainter painter(&image);
-   if (CurrentlyDrawnObject.FlushLastDrawnPicture(painter, Origin)) {
+   if (CurrentlyDrawnObject.DrawLastDrawnShapeAndStartNewShape(painter, Origin)) {
       SetModified();
       update();
    }
@@ -666,7 +666,7 @@ void DatabaseClass::DeleteSelectedPostits()
 
 void DatabaseClass::SetImageToPaste(QImage Image)
 {
-   CompleteImage();
+   TransferLastDrawnShape();
    PasteStatus = Drawing;
    ImageToPaste = Image;
    ScalingFactorOfImageToPaste = 1.0;
