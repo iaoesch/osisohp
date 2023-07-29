@@ -765,9 +765,9 @@ void DatabaseClass::ExtendBoundingboxAndShape(QPointF Position)
 }
 #endif
 
-void DatabaseClass::EndShape(QPointF Position)
+void DatabaseClass::EndShape()
 {
-   LastPaintedObject = CurrentlyDrawnObject.EndShape(Position);
+   LastPaintedObject = CurrentlyDrawnObject.EndShape();
 
 }
 

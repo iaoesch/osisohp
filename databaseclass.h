@@ -219,7 +219,7 @@ public:
   // void ClearLastDrawnObjectPoints() {LastDrawnObjectPoints.clear();}
 
    void ResizeAll(int width, int height);
-   void EndShape(QPointF Position);
+   void EndShape();
    bool getLastDrawingValid() const
    {
       return CurrentlyDrawnObject.getLastDrawingValid();

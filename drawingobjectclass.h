@@ -111,7 +111,7 @@ public:
    bool TransferLastDrawnShape(QPainter &painter, const QPointF &Offset);
    bool DrawLastDrawnShapeAndStartNewShape(QPainter &painter, const QPointF &Offset);
   // void ExtendBoundingboxAndShape(QPointF Position);
-   ShapeClass EndShape(QPointF Position);
+   ShapeClass EndShape();
    void CutOut(QPainter &painter2, QPointF Offset);
    QImage &Image() {return CurrentImage;}
 private:

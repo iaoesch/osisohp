@@ -263,6 +263,7 @@ void StateClass<State::Idle>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPoint
    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
    StateMachine.ShowBigPointer();
    if ((Buttons & Qt::LeftButton)) {
+       // Should never get here, as Buttondown in idle changees state
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position,  PenInfo.Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
@@ -447,7 +448,7 @@ void StateClass<State::Drawing>::HandleReleaseEventSM(Qt::MouseButton Button, QP
       } else {
          StateMachine.Context.MyDatas.drawLineTo(Position, PenInfo.Pressure);
       }
-      StateMachine.Context.MyDatas.EndShape(Position);
+      StateMachine.Context.MyDatas.EndShape();
       StateMachine.SetNewState(&StateMachine.Idle);
       StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
    }
@@ -607,7 +608,7 @@ void StateClass<State::DrawingKillRequested>::HandleReleaseEventSM(Qt::MouseButt
       } else {
          StateMachine.Context.MyDatas.drawLineTo(Position, PenInfo.Pressure);
       }
-      StateMachine.Context.MyDatas.EndShape(Position);
+      StateMachine.Context.MyDatas.EndShape();
       StateMachine.SetNewState(&StateMachine.Idle);
       StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
 

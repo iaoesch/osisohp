@@ -195,7 +195,7 @@ void DrawingObjectClass::ExtendBoundingboxAndShape(QPointF Position)
 }
 #endif
 
-DrawingObjectClass::ShapeClass DrawingObjectClass::EndShape(QPointF Position)
+DrawingObjectClass::ShapeClass DrawingObjectClass::EndShape(/*QPointF Position*/)
 {
 //   CurrentShape.AddPoint(Position);
    LastDrawingValid = true;
