@@ -355,6 +355,8 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
 {
    if (Button == Qt::LeftButton) {
       StateMachine.Context.MyDatas.DrawLastDrawnShapeAndStartNewShape();
+      // Add small delta, as lines of length 0 are not drawn, probably
+      // add only if Position == Butttondownposition
       StateMachine.Drawing.HandleReleaseEventSM(Button, Position + QPointF(1,1), PenInfo);
    }
 }
