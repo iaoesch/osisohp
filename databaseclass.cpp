@@ -162,6 +162,28 @@ void DatabaseClass::EraseLineTo(const QPointF &endPoint, float Pressure)
     SetModified();
     update(CurrentlyDrawnObject.EraseLineTo(endPoint, Pressure, BackGroundColor));
 }
+
+void DatabaseClass::StoredrawLineTo(const QPointF &endPoint, float Pressure)
+{
+    StoredLineSegments.push_back({endPoint, Pressure, false});
+}
+
+void DatabaseClass::StoreEraseLineTo(const QPointF &endPoint, float Pressure)
+{
+    StoredLineSegments.push_back({endPoint, Pressure, true});
+}
+
+void DatabaseClass::DrawStoredSegments()
+{
+    for (auto &s: StoredLineSegments) {
+      if (s.Erasing) {
+          EraseLineTo(s.endPoint, s.Pressure);
+      } else {
+          drawLineTo(s.endPoint, s.Pressure);
+      }
+    }
+}
+
 #if 0
 void DatabaseClass::DrawLastDrawnPicture()
 {
@@ -635,6 +657,8 @@ void DatabaseClass::DrawLastDrawnShapeAndStartNewShape()
       SetModified();
       update();
    }
+   DrawStoredSegments();
+
 }
 void DatabaseClass::ClearLastDrawnPicture()
 {

@@ -224,6 +224,7 @@ void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF
         StateMachine.Tracker.StartTracking(Position, Timestamp);
 
         StateMachine.Context.MyDatas.setLastPoint(Position);
+        StateMachine.Context.MyDatas.ClearStoredLineSegments();
         StateMachine.Context.MyDatas.setButtonDownPosition(Position);
         StateMachine.Context.MyDatas.RestartCurrentPaintedObjectBoundingBox(Position);
         StateMachine.Context.MyDatas.setSelectedCurrentPosition(Position);
@@ -319,6 +320,11 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
    if ((Buttons & Qt::LeftButton)) {
 
        if (StateMachine.Context.MyDatas.IsJitter(Position, StateMachine.Context.MyDatas.getButtonDownPosition(), PenInfo.Pressure)) {
+           if (PenInfo.Erasing) {
+              StateMachine.Context.MyDatas.StoreEraseLineTo(Position, PenInfo.Pressure);
+           } else {
+              StateMachine.Context.MyDatas.StoredrawLineTo(Position, PenInfo.Pressure);
+           }
            return; // ignore small movements (probably use penwidth*2)
        }
        StateMachine.SetNewState(&StateMachine.Drawing);
@@ -348,7 +354,10 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
 ::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo)
 {
    if (Button == Qt::LeftButton) {
-      StateMachine.Drawing.HandleReleaseEventSM(Button, Position, PenInfo);
+      StateMachine.Context.MyDatas.DrawLastDrawnShapeAndStartNewShape();
+      // Add small delta, as lines of length 0 are not drawn, probably
+      // add only if Position == Butttondownposition
+      StateMachine.Drawing.HandleReleaseEventSM(Button, Position + QPointF(1,1), PenInfo);
    }
 }
 
@@ -423,8 +432,9 @@ void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPo
 
        }
        // most probably unneeded, as allready flushed in transition...
-       StateMachine.Context.MyDatas.DrawLastDrawnShapeAndStartNewShape();
-      //LastDrawnObject.fill(BackgroundColor);
+       // StateMachine.Context.MyDatas.DrawLastDrawnShapeAndStartNewShape();
+
+       //LastDrawnObject.fill(BackgroundColor);
       if (PenInfo.Erasing) {
          StateMachine.Context.MyDatas.EraseLineTo(Position, PenInfo.Pressure);
       } else {

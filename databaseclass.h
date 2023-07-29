@@ -75,6 +75,14 @@ class DatabaseClass : public QObject
    DrawingObjectClass::ShapeClass LastPaintedObject;
    BoundingBoxClass SelectedImageBoundingBox;
 
+   struct LineSegments {
+       QPointF endPoint;
+       float Pressure;
+       bool  Erasing;
+   };
+
+   std::list<LineSegments> StoredLineSegments;
+
 
 public:
    enum PasteEvent {PasteTopLayer, PasteBottomLayer, PasteDrawing, CancelPasting, MakeBigger, MakeSmaller, MakeOriginalSize};
@@ -105,6 +113,9 @@ public:
 
    void drawLineTo(const QPointF &endPoint, float Pressure);
    void EraseLineTo(const QPointF &endPoint, float Pressure);
+   void StoredrawLineTo(const QPointF &endPoint, float Pressure);
+   void StoreEraseLineTo(const QPointF &endPoint, float Pressure);
+   void ClearStoredLineSegments() {StoredLineSegments.clear();}
    void drawrectangle(const BoundingBoxClass &Region);
    void DrawMovedSelection(const QPointF Offset);
    void MakeSreenMoveHint();
@@ -168,7 +179,8 @@ public:
    bool LoadDatabase(const QString &fileName);
 private:
    QString AutosaveName;
-   QString GetAutoSaveName();
+    QString GetAutoSaveName();
+    void DrawStoredSegments();
 public slots:
    void AutoSaveDatabase();
 public:
