@@ -559,25 +559,14 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
    // }
 
     // In marker mode, last drawn objec belongs into background
-    CurrentlyDrawnObject.DrawIfMarking(painter, dirtyRect);
+    CurrentlyDrawnObject.DrawBackgroundPart(painter, dirtyRect);
 
     // Then draw our current image (Without the currently drawn object)
-    CurrentlyDrawnObject.DrawIfErasing(painter, image, Origin, dirtyRect);
+    CurrentlyDrawnObject.DrawForegroundPart(painter, image, Origin, dirtyRect);
 
-#if 0
-    // Probably nonsense, as widget cannot be transparent ???
-    if (EraseLastDrawnObject) {
-
-       painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    }
-#endif
     // Now draw the currently drawn object, in marker mode it was already drawn earlier in background
-    CurrentlyDrawnObject.DrawNormal(painter, dirtyRect);
-#if 0
-    if (EraseLastDrawnObject) {
-       painter.setCompositionMode(QPainter::CompositionMode_SourceOut);
-    }
-#endif
+    //CurrentlyDrawnObject.DrawNormal(painter, dirtyRect);
+
     // Now draw pasted object, if availlable
     if (PasteStatus != None) {
        QSizeF DestSize = ImageToPaste.size();

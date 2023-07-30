@@ -7,7 +7,7 @@ DrawingObjectClass::DrawingObjectClass(const QColor &Transparent, SettingClass &
    : TransparentColor(Transparent),
      Settings(MySettings)
 {
-   LastDrawingValid = false;
+    ShapeNeedsTransfer = false;
    EraseLastDrawnObject = false;
    myPenWidth = 2;
    myEraserWidth = Settings.EraserSize;
@@ -110,27 +110,20 @@ void DrawingObjectClass::setPenWidth(int newWidth)
 
 void DrawingObjectClass::Clear()
 {
-   LastDrawingValid = false;
+    ShapeNeedsTransfer = false;
    EraseLastDrawnObject = false;
    CurrentShape.LastDrawnObjectPoints.clear();
    CurrentImage.fill(TransparentColor);
 }
 
-void DrawingObjectClass::DrawIfMarking(QPainter &painter, const QRect &dirtyRect)
+void DrawingObjectClass::DrawBackgroundPart(QPainter &painter, const QRect &dirtyRect)
 {
    if (MarkerActive) {
       painter.drawImage(dirtyRect, CurrentImage, dirtyRect);
    }
 }
 
-void DrawingObjectClass::DrawNormal(QPainter &painter, const QRect &dirtyRect)
-{
-   if (!MarkerActive && !EraseLastDrawnObject) {
-      painter.drawImage(dirtyRect, CurrentImage, dirtyRect);
-   }
-}
-
-void DrawingObjectClass::DrawIfErasing(QPainter &painter, const QImage &image, const QPointF &Offset, const QRect &dirtyRect)
+void DrawingObjectClass::DrawForegroundPart(QPainter &painter, const QImage &image, const QPointF &Offset, const QRect &dirtyRect)
 {
    if (EraseLastDrawnObject) {
       QImage ModifiedImage(image);
@@ -141,9 +134,14 @@ void DrawingObjectClass::DrawIfErasing(QPainter &painter, const QImage &image, c
 
    } else {
       painter.drawImage(dirtyRect, image, dirtyRect.translated(Offset.toPoint()));
-      //painter.setCompositionMode(QPainter::CompositionMode_Source);
+      if (!MarkerActive) {
+          painter.drawImage(dirtyRect, CurrentImage, dirtyRect);
+      }
    }
 }
+
+
+
 
 void DrawingObjectClass::FillLastDrawnShape(QPainter &&painter2, const QPointF &Offset)
 {
@@ -168,7 +166,7 @@ bool DrawingObjectClass::DrawLastDrawnShapeAndStartNewShape(QPainter &painter, c
 
 bool DrawingObjectClass::TransferLastDrawnShape(QPainter &painter, const QPointF &Offset)
 {
-   if (LastDrawingValid) {
+   if (ShapeNeedsTransfer) {
       if (EraseLastDrawnObject) {
          painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
       }
@@ -177,14 +175,28 @@ bool DrawingObjectClass::TransferLastDrawnShape(QPainter &painter, const QPointF
 
       }
       painter.drawImage(Offset, CurrentImage);
+      ShapeNeedsTransfer = false;
+#if 1
+      BeginNewShape();
+#else
       CurrentImage.fill(TransparentColor);
 
-      LastDrawingValid = false;
+      //LastDrawingValid = false;
       CurrentShape.LastDrawnObjectPoints.clear();
+#endif
       return true;
    } else {
       return false;
    }
+}
+
+void DrawingObjectClass::BeginNewShape()
+{
+      CurrentImage.fill(TransparentColor);
+
+   ShapeNeedsTransfer = false;
+      CurrentShape.Clear();
+      CurrentShape.LastDrawnObjectPoints.append(lastPointDrawn);
 }
 
 
@@ -198,7 +210,7 @@ void DrawingObjectClass::ExtendBoundingboxAndShape(QPointF Position)
 DrawingObjectClass::ShapeClass DrawingObjectClass::EndShape(/*QPointF Position*/)
 {
 //   CurrentShape.AddPoint(Position);
-   LastDrawingValid = true;
+      ShapeNeedsTransfer = true;
    ShapeClass LastPaintedObject = CurrentShape;
    CurrentShape.CurrentPaintedObjectBoundingBox.Clear();
    return LastPaintedObject;

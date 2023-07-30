@@ -43,7 +43,7 @@ private:
    int myEraserWidth;
    int SelectedPenWidth;
    bool EraseLastDrawnObject;
-   bool LastDrawingValid;
+   bool ShapeNeedsTransfer;
    bool MarkerActive;
 
    const QColor &TransparentColor;
@@ -85,13 +85,9 @@ public:
       }
    }
 
-   bool getLastDrawingValid() const
+   void ClearLastDrawingValid()
    {
-      return LastDrawingValid;
-   }
-   void setLastDrawingValid(bool newLastDrawingValid)
-   {
-      LastDrawingValid = newLastDrawingValid;
+      ShapeNeedsTransfer = false;
    }
    int getMyPenWidth() const
    {
@@ -104,8 +100,8 @@ public:
 
 
    void Clear();
-   void DrawIfMarking(QPainter &painter, const QRect &dirtyRect);
-   void DrawIfErasing(QPainter &painter, const QImage &image, const QPointF &Offset, const QRect &dirtyRect);
+   void DrawBackgroundPart(QPainter &painter, const QRect &dirtyRect);
+   void DrawForegroundPart(QPainter &painter, const QImage &image, const QPointF &Offset, const QRect &dirtyRect);
    void DrawNormal(QPainter &painter, const QRect &dirtyRect);
    void FillLastDrawnShape(QPainter &&painter2, const QPointF &Offset);
    bool TransferLastDrawnShape(QPainter &painter, const QPointF &Offset);
@@ -114,7 +110,8 @@ public:
    ShapeClass EndShape();
    void CutOut(QPainter &painter2, QPointF Offset);
    QImage &Image() {return CurrentImage;}
-private:
+   void BeginNewShape();
+   private:
    double CalculatePenWidthLinear(double Pressure, int BaseWidth);
    double CalculatePenWidthQuadratic(double Pressure, int BaseWidth);
    void ExtendPenWidthForMarker() {myPenWidth = SelectedPenWidth * 5 + 2;}
