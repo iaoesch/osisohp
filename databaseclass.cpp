@@ -73,7 +73,7 @@ bool DatabaseClass::ImportImage(const QString &fileName)
     AutosaveNeeded = false;
     Origin = {0,0};
     BackgroundImages.Clear();
-    CurrentlyDrawnObject.Clear();
+    CurrentlyDrawnObject.CancelShape();
     update();
     return true;
 }
@@ -106,7 +106,7 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
    painter3.drawImage(QPoint(0,0), SelectedImagePart);
    SelectedImagePart = MaskedSelectedImagePart;
    SelectedImagePartPath = Path;
-   CurrentlyDrawnObject.Clear();
+   CurrentlyDrawnObject.CancelShape();
    LastPaintedObject.Clear();
    //LastDrawnObject.fill(qRgba(0, 0, 0, 0));
 }
@@ -325,7 +325,7 @@ void DatabaseClass::clearImage()
 {
     image.fill(TransparentColor);
     SetModified();
-    CurrentlyDrawnObject.Clear();
+    CurrentlyDrawnObject.CancelShape();
     update();
 }
 
@@ -489,7 +489,7 @@ bool DatabaseClass::LoadDatabase(const QString &fileName)
 
    modified = false;
    AutosaveNeeded = false;
-   CurrentlyDrawnObject.Clear();
+   CurrentlyDrawnObject.CancelShape();
 
    update();
    return true;
@@ -653,9 +653,9 @@ void DatabaseClass::DrawLastDrawnShapeAndStartNewShape()
       update();
    }
 }
-void DatabaseClass::ClearLastDrawnPicture()
+void DatabaseClass::CancelShape()
 {
-   CurrentlyDrawnObject.Clear();
+   CurrentlyDrawnObject.CancelShape();
 }
 
 void DatabaseClass::MoveSelectedPostits(QPointF Position)

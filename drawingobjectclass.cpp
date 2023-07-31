@@ -109,7 +109,7 @@ void DrawingObjectClass::setPenWidth(int newWidth)
     }
 }
 
-void DrawingObjectClass::Clear()
+void DrawingObjectClass::CancelShape()
 {
     ShapeNeedsTransfer = false;
    EraseLastDrawnObject = false;
@@ -201,6 +201,7 @@ void DrawingObjectClass::BeginNewShape(const QPointF &Startpoint)
       Empty = false;
       CurrentShape.Clear();
       CurrentShape.AddPoint(Startpoint);
+      lastPointDrawn = Startpoint;
       //CurrentShape.LastDrawnObjectPoints.append(Startpoint);
 }
 

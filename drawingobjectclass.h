@@ -87,13 +87,8 @@ public:
    {
       return myPenWidth;
    }
-   void setLastPoint(QPointF newLastPoint)
-   {
-      lastPointDrawn = newLastPoint;
-   }
 
-
-   void Clear();
+   void CancelShape();
    void DrawBackgroundPart(QPainter &painter, const QRect &dirtyRect);
    void DrawForegroundPartAndModifiedImage(QPainter &painter, const QImage &image, const QPointF &Offset, const QRect &dirtyRect);
    void DrawNormal(QPainter &painter, const QRect &dirtyRect);

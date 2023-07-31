@@ -637,7 +637,7 @@ void StateClass<State::DrawingKillRequested>::timeoutSM()
    // StateMachine.Interface.SetCursor(CursorManager::FillingPointer);
    StateMachine.Interface.UpdateRequest();
    StateMachine.SetNewState(&StateMachine.Idle);
-   StateMachine.Context.MyDatas.ClearLastDrawnPicture();
+   StateMachine.Context.MyDatas.CancelShape();
    StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
 }
 

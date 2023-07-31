@@ -126,7 +126,7 @@ public:
    void MakeSelectionFromLastDrawnObject(bool Cutout = false);
    void TransferLastDrawnShape();
    void FilllastDrawnShape();
-   void ClearLastDrawnPicture();
+   void CancelShape();
 
 
    // Postits
@@ -232,7 +232,7 @@ public:
 
    void setLastPoint(QPointF newLastPoint)
    {
-      CurrentlyDrawnObject.setLastPoint(newLastPoint);
+      //CurrentlyDrawnObject.setLastPoint(newLastPoint);
       lastPointDrawn = newLastPoint;
    }
    QPointF getLastPointDrawn() {return lastPointDrawn;}
