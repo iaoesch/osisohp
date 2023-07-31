@@ -62,9 +62,16 @@ private:
 public:
    DrawingObjectClass(const QColor &Transparent, SettingClass &MySettings);
 
+    void BeginNewShape(const QPointF &Startpoint);
+    ShapeClass EndShape();
+    void CancelShape();
+    bool TransferLastDrawnShape(QPainter &painter, const QPointF &Offset);
+    // bool DrawLastDrawnShapeAndStartNewShape(QPainter &painter, const QPointF &Offset);
 
    QRect drawLineTo(const QPointF &endPoint, float Pressure);
    QRect EraseLineTo(const QPointF &endPoint, float Pressure, QColor &BackGroundColor);
+   void FillLastDrawnShape(QPainter &&painter2, const QPointF &Offset);
+
    void setPenColor(const QColor &newColor);
    void setPenWidth(int newWidth);
    QColor penColor() const { return myPenColor; }
@@ -88,19 +95,18 @@ public:
       return myPenWidth;
    }
 
-   void CancelShape();
+
    void DrawBackgroundPart(QPainter &painter, const QRect &dirtyRect);
    void DrawForegroundPartAndModifiedImage(QPainter &painter, const QImage &image, const QPointF &Offset, const QRect &dirtyRect);
-   void DrawNormal(QPainter &painter, const QRect &dirtyRect);
-   void FillLastDrawnShape(QPainter &&painter2, const QPointF &Offset);
-   bool TransferLastDrawnShape(QPainter &painter, const QPointF &Offset);
-   bool DrawLastDrawnShapeAndStartNewShape(QPainter &painter, const QPointF &Offset);
-  // void ExtendBoundingboxAndShape(QPointF Position);
-   ShapeClass EndShape();
+  // void DrawNormal(QPainter &painter, const QRect &dirtyRect);
+
+
+   // void ExtendBoundingboxAndShape(QPointF Position);
    void CutOut(QPainter &painter2, QPointF Offset);
+
    QImage &Image() {return CurrentImage;}
-   void BeginNewShape(const QPointF &Startpoint);
    bool IsInside(QPointF Point) {return CurrentShape.IsInside(Point);}
+
    private:
    double CalculatePenWidthLinear(double Pressure, int BaseWidth);
    double CalculatePenWidthQuadratic(double Pressure, int BaseWidth);
