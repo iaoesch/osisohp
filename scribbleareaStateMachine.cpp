@@ -226,7 +226,7 @@ void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF
         StateMachine.Context.MyDatas.setLastPoint(Position);
         StateMachine.Context.MyDatas.ClearStoredLineSegments();
         StateMachine.Context.MyDatas.setButtonDownPosition(Position);
-        StateMachine.Context.MyDatas.RestartCurrentPaintedObjectBoundingBox(Position);
+       // StateMachine.Context.MyDatas.RestartCurrentPaintedObjectBoundingBox(Position);
         StateMachine.Context.MyDatas.setSelectedCurrentPosition(Position);
 
         if ((StateMachine.Context.SelectPostitsDirectly == true) &&
@@ -746,7 +746,7 @@ void StateClass<State::MovingSelection>::HandleReleaseEventSM(Qt::MouseButton Bu
     //  MovedRectangle.Move(PositionClass(Offset.x(), Offset.y()));
     //  drawrectangle(MovedRectangle);
      // MoveSelected = false;
-       StateMachine.Context.MyDatas.ClearLastDrawingValid();
+      // StateMachine.Context.MyDatas.ClearLastDrawingValid();
       //        drawrectangle(BoundingBoxClass(LastPaintedObjectBoundingBox).Move(PositionClass(Offset.x(), Offset.y())));
       StateMachine.SetNewState(&StateMachine.Idle);
       StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
@@ -979,7 +979,7 @@ void StateClass<State::MovingPostit>::HandleReleaseEventSM(Qt::MouseButton Butto
          StateMachine.Context.MyDatas.FinishMovingSelectedPostits(Position);
 
          //  MoveSelected = false;
-         StateMachine.Context.MyDatas.ClearLastDrawingValid();
+         // StateMachine.Context.MyDatas.ClearLastDrawingValid();
          StateMachine.Context.MyDatas.ClearSelectedPostit();
          StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
          StateMachine.Interface.UpdateRequest();

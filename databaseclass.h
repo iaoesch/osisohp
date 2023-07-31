@@ -92,14 +92,11 @@ public:
       SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPointDrawn;
    }
 
-   void RestartCurrentPaintedObjectBoundingBox(QPointF const &StartPoint)
-   {
-      CurrentlyDrawnObject.RestartCurrentPaintedObjectBoundingBox(StartPoint);
-   }
 
    bool IsInsideLastPaintedObjectBoundingBox(QPointF const &Point)
    {
-      return LastPaintedObject.Box().IsInside(PositionClass(Point.x(), Point.y()));
+      //return LastPaintedObject.Box().IsInside(PositionClass(Point.x(), Point.y()));
+      return CurrentlyDrawnObject.IsInside(Point);
    }
    bool IsCutoutActive() {return CutMode;}
    void MoveOrigin(QPointF Offset) {
@@ -180,7 +177,7 @@ public:
 private:
    QString AutosaveName;
     QString GetAutoSaveName();
-    void DrawStoredSegments();
+    bool DrawStoredSegments();
 public slots:
    void AutoSaveDatabase();
 public:

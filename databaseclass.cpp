@@ -173,7 +173,7 @@ void DatabaseClass::StoreEraseLineTo(const QPointF &endPoint, float Pressure)
     StoredLineSegments.push_back({endPoint, Pressure, true});
 }
 
-void DatabaseClass::DrawStoredSegments()
+bool DatabaseClass::DrawStoredSegments()
 {
     for (auto &s: StoredLineSegments) {
       if (s.Erasing) {
@@ -182,6 +182,7 @@ void DatabaseClass::DrawStoredSegments()
           drawLineTo(s.endPoint, s.Pressure);
       }
     }
+    return !StoredLineSegments.empty();
 }
 
 #if 0
@@ -562,7 +563,7 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
     CurrentlyDrawnObject.DrawBackgroundPart(painter, dirtyRect);
 
     // Then draw our current image (Without the currently drawn object)
-    CurrentlyDrawnObject.DrawForegroundPart(painter, image, Origin, dirtyRect);
+    CurrentlyDrawnObject.DrawForegroundPartAndModifiedImage(painter, image, Origin, dirtyRect);
 
     // Now draw the currently drawn object, in marker mode it was already drawn earlier in background
     //CurrentlyDrawnObject.DrawNormal(painter, dirtyRect);
@@ -642,12 +643,15 @@ void DatabaseClass::ResizeAll(int width, int height)
 void DatabaseClass::DrawLastDrawnShapeAndStartNewShape()
 {
    QPainter painter(&image);
-   if (CurrentlyDrawnObject.DrawLastDrawnShapeAndStartNewShape(painter, Origin)) {
+   if (CurrentlyDrawnObject.TransferLastDrawnShape(painter, Origin)) {
       SetModified();
       update();
    }
-   DrawStoredSegments();
-
+   CurrentlyDrawnObject.BeginNewShape(ButtonDownPosition);
+   if (DrawStoredSegments()) {
+      SetModified();
+      update();
+   }
 }
 void DatabaseClass::ClearLastDrawnPicture()
 {
