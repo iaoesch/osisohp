@@ -266,10 +266,12 @@ public:
       return ButtonDownPosition;
    }
 
+#if 0
    int getMyPenWidth() const
    {
       return CurrentlyDrawnObject.getMyPenWidth();
    }
+#endif
 
   // void ExtendBoundingboxAndShape(QPointF Position);
 
@@ -285,10 +287,10 @@ public:
 
    static constexpr double JitterPressureLimit = 0.6;
    bool IsJitter(QPointF OldPoint, QPointF NewPoint, double Pressure) {
-      return ((Pressure < JitterPressureLimit) && ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()*3+2)));
+      return ((Pressure < JitterPressureLimit) && ((OldPoint-NewPoint).manhattanLength() < (CurrentlyDrawnObject.getMyPenWidth()*3+2)));
    }
    bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, float Pressure  [[maybe_unused]] ) {
-      return ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()+2));
+      return ((OldPoint-NewPoint).manhattanLength() < (CurrentlyDrawnObject.getMyPenWidth()+2));
    }
    bool IsSelectionJitter(QPointF OldPoint, float Pressure  [[maybe_unused]] ) {
       return IsSelectionJitter(OldPoint, lastPointDrawn, Pressure);

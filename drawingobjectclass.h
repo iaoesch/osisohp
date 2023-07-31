@@ -73,9 +73,11 @@ public:
    void FillLastDrawnShape(QPainter &&painter2, const QPointF &Offset);
 
    void setPenColor(const QColor &newColor);
-   void setPenWidth(int newWidth);
    QColor penColor() const { return myPenColor; }
+   void setPenWidth(int newWidth);
    int penWidth() const { return SelectedPenWidth; }
+   int getMyPenWidth() const { return myPenWidth;}
+
 
    void UseSpongeAsEraser(bool UseSponge) {if (UseSponge) {myEraserWidth = Settings.SpongeSize;} else {myEraserWidth = Settings.EraserSize;}}
    void RestorePenWidth() {myPenWidth = SelectedPenWidth;}
@@ -88,11 +90,6 @@ public:
       } else {
          RestorePenWidth();
       }
-   }
-
-   int getMyPenWidth() const
-   {
-      return myPenWidth;
    }
 
 
