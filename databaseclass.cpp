@@ -40,8 +40,6 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
    AdjustMarkercolor();
    ScrollHintColor = QColor(0, 30, 0, 50);
    ScrollHintBorderColor = QColor(90, 0, 0, 50);
-   SelectionHintColor = QColor(0, 30, 0, 50);
-   SelectionHintBorderColor = QColor(0, 30, 0, 50);
 
    DefaultBackGroundColor = BackGroundColor;
 
@@ -80,7 +78,7 @@ bool DatabaseClass::ImportImage(const QString &fileName)
 
 void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
 {
-   SelectedImagePart =  image.copy( §1LastPaintedObject.Box().QRectangle().translated(Origin.toPoint()));
+   SelectedImagePart =  image.copy(LastPaintedObject.Box().QRectangle().translated(Origin.toPoint()));
    SelectedImageBoundingBox = LastPaintedObject.Box();
 
    HintSelectedImagePart = SelectedImagePart;
