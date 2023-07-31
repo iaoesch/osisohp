@@ -230,11 +230,6 @@ public:
    void ResizeAll(int width, int height);
    void EndShape();
 
-   void ClearLastDrawingValid()
-   {
-      CurrentlyDrawnObject.ClearLastDrawingValid();
-   }
-
    void setLastPoint(QPointF newLastPoint)
    {
       CurrentlyDrawnObject.setLastPoint(newLastPoint);

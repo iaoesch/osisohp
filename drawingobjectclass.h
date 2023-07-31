@@ -83,11 +83,6 @@ public:
       }
    }
 
-   void ClearLastDrawingValid()
-   {
-      ShapeNeedsTransfer = false;
-   }
-
    int getMyPenWidth() const
    {
       return myPenWidth;
