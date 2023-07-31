@@ -16,6 +16,21 @@
 
 class ScribbleArea;
 
+class SelectionClass {
+    QColor SelectionHintColor;
+    QColor SelectionHintBorderColor;
+    QPointF SelectedOffset;
+    QPointF SelectedCurrentPosition;
+    bool DiscardSelection;
+    QImage SelectedImagePart;
+    QPainterPath SelectedImagePartPath;
+    QImage HintSelectedImagePart;
+    BoundingBoxClass SelectedImageBoundingBox;
+
+
+
+};
+
 class DatabaseClass : public QObject
 {
    Q_OBJECT
@@ -36,14 +51,11 @@ class DatabaseClass : public QObject
 
    bool modified;
    bool AutosaveNeeded;
-   bool DiscardSelection;
    bool ShowOverview;
 
    bool CutMode;
 
    QPointF lastPointDrawn;
-   QPointF SelectedOffset;
-   QPointF SelectedCurrentPosition;
    QPointF ButtonDownPosition;
 
 
@@ -55,13 +67,7 @@ class DatabaseClass : public QObject
    static constexpr int HintBorderPenWidth = 2;
    QColor ScrollHintColor;
    QColor ScrollHintBorderColor;
-   QColor SelectionHintColor;
-   QColor SelectionHintBorderColor;
 
-
-   QImage SelectedImagePart;
-   QPainterPath SelectedImagePartPath;
-   QImage HintSelectedImagePart;
 
    QImage ImageToPaste;
    double ScalingFactorOfImageToPaste;
@@ -72,8 +78,7 @@ class DatabaseClass : public QObject
    QImage RecentlyPastedObject;
    BoundingBoxClass RecentlyPastedObjectBoundingBox;
 
-   DrawingObjectClass::ShapeClass LastPaintedObject;
-   BoundingBoxClass SelectedImageBoundingBox;
+   //DrawingObjectClass::ShapeClass LastPaintedObject;
 
    struct LineSegments {
        QPointF endPoint;

@@ -80,7 +80,7 @@ bool DatabaseClass::ImportImage(const QString &fileName)
 
 void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
 {
-   SelectedImagePart =  image.copy(LastPaintedObject.Box().QRectangle().translated(Origin.toPoint()));
+   SelectedImagePart =  image.copy( §1LastPaintedObject.Box().QRectangle().translated(Origin.toPoint()));
    SelectedImageBoundingBox = LastPaintedObject.Box();
 
    HintSelectedImagePart = SelectedImagePart;
