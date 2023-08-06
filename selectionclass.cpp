@@ -4,20 +4,10 @@
 #include "drawingobjectclass.h"
 #include "databaseclass.h"
 
-
-
-
-
-
-
-
-
-
-
 void SelectionClass::MakeSelectionFromLastDrawnObject(QImage &image, QPointF Origin, DrawingObjectClass &DrawnObject,
                                                       bool Cutout)
 {
-    SelectedImagePart =  image.copy(DrawnObject.Shape().Box().QRectangle().translated(Origin.toPoint()));
+    SelectedImagePart = image.copy(DrawnObject.Shape().Box().QRectangle().translated(Origin.toPoint()));
     SelectedImageBoundingBox = DrawnObject.Shape().Box();
 
     HintSelectedImagePart = SelectedImagePart;

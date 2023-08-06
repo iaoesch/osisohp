@@ -50,7 +50,7 @@ void PostitManagerClass::CreatePostitAndSelect(SelectionClass &Selection, QPoint
    painter.setBrush(QBrush(PostItBackgroundColor));
    painter.drawRect(Selection.getSelectedImagePart().rect());
    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-   painter.drawImage(0,0,Selection.getHintSelectedImagePart());
+   painter.drawImage(0,0,Selection.getSelectedImagePart());
    BoundingBoxClass TranslatedBoundingBox (Selection.getBoundingBox());
    TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
    PostIts.push_back(PostIt(NewPostit, Origin + Selection.getSelectedCurrentPosition()+Selection.getSelectedOffset(), TranslatedBoundingBox, Selection.getSelectedImagePartPath()));
