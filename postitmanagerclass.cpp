@@ -1,4 +1,5 @@
 #include "postitmanagerclass.h"
+#include "selectionclass.h"
 
 #include <QPainter>
 
@@ -28,7 +29,32 @@ void PostitManagerClass::CreatePostitAndSelect(QImage BackgroundImage, QImage Im
    //TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
    PostIts.push_back(PostIt(NewPostit, Position, Box, Path));
    SelectedPostit.push_back({std::prev(PostIts.end()), PostIts.back().Position});
+}
+/*
+void DatabaseClass::CreeatePostitFromSelection()
+{
+   //std::cout << "new postit (" << PostIts.size() << ")" << std::flush;
 
+   BoundingBoxClass TranslatedBoundingBox (CurrentSeelection.getBoundingBox());
+   TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
+   Postits.CreatePostitAndSelect(CurrentSeelection.HintSelectedImagePart, SelectedImagePart, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox, SelectedImagePartPath);
+   SetModified();
+}
+*/
+void PostitManagerClass::CreatePostitAndSelect(SelectionClass &Selection, QPointF Origin)
+{
+   QImage NewPostit(Selection.getHintSelectedImagePart());
+   // Here we could add a different background for postits
+   QPainter painter(&NewPostit);
+   painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+   painter.setBrush(QBrush(PostItBackgroundColor));
+   painter.drawRect(Selection.getSelectedImagePart().rect());
+   painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+   painter.drawImage(0,0,Selection.getHintSelectedImagePart());
+   BoundingBoxClass TranslatedBoundingBox (Selection.getBoundingBox());
+   TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
+   PostIts.push_back(PostIt(NewPostit, Origin + Selection.getSelectedCurrentPosition()+Selection.getSelectedOffset(), TranslatedBoundingBox, Selection.getSelectedImagePartPath()));
+   SelectedPostit.push_back({std::prev(PostIts.end()), PostIts.back().Position});
 }
 
 void PostitManagerClass::MoveAllPostits(QPoint Offset)

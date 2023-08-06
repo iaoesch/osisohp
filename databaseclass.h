@@ -47,7 +47,7 @@ class DatabaseClass : public QObject
    QPointF ButtonDownPosition;
 
 
-   QColor TransparentColor;
+   static constexpr QColor TransparentColor = QColor(255, 255, 255, 0);
    QColor BackGroundColor;
 //   QColor Markercolor;
    QColor DefaultBackGroundColor;
@@ -55,6 +55,7 @@ class DatabaseClass : public QObject
    static constexpr int HintBorderPenWidth = 2;
    QColor ScrollHintColor;
    QColor ScrollHintBorderColor;
+
 
 
    QImage ImageToPaste;
@@ -80,6 +81,8 @@ class DatabaseClass : public QObject
 public:
    enum PasteEvent {PasteTopLayer, PasteBottomLayer, PasteDrawing, CancelPasting, MakeBigger, MakeSmaller, MakeOriginalSize};
 
+    static constexpr int getHintBorderPenWidth() {return HintBorderPenWidth;}
+    static constexpr QColor getTransparentColor() { return TransparentColor;}
 
    void SetSelectedOffset() {
        CurrentSeelection.SetSelectedOffset(lastPointDrawn);
@@ -293,10 +296,6 @@ public:
 
 private:
 public:
-   const QColor &getTransparentColor() const
-   {
-      return TransparentColor;
-   }
 
 private:
    void update();

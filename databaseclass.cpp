@@ -35,11 +35,13 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
    PasteStatus = None;
 
 
-   TransparentColor = QColor(255, 255, 255, 0);
+  // TransparentColor = QColor(255, 255, 255, 0);
    BackGroundColor = QColor(230,230, 200,255);
    AdjustMarkercolor();
    ScrollHintColor = QColor(0, 30, 0, 50);
    ScrollHintBorderColor = QColor(90, 0, 0, 50);
+
+   //SelectHintColor = qRgba(0, 0, 0, 40);
 
    DefaultBackGroundColor = BackGroundColor;
 
@@ -78,6 +80,9 @@ bool DatabaseClass::ImportImage(const QString &fileName)
 
 void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
 {
+#if 1
+    CurrentSeelection.MakeSelectionFromLastDrawnObject(image, Origin, CurrentlyDrawnObject, Cutout);
+#else
    SelectedImagePart =  image.copy(LastPaintedObject.Box().QRectangle().translated(Origin.toPoint()));
    SelectedImageBoundingBox = LastPaintedObject.Box();
 
@@ -104,8 +109,9 @@ void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
    painter3.drawImage(QPoint(0,0), SelectedImagePart);
    SelectedImagePart = MaskedSelectedImagePart;
    SelectedImagePartPath = Path;
+#endif
    CurrentlyDrawnObject.CancelShape();
-   LastPaintedObject.Clear();
+  // LastPaintedObject.Clear();
    //LastDrawnObject.fill(qRgba(0, 0, 0, 0));
 }
 
@@ -113,9 +119,10 @@ void DatabaseClass::CreeatePostitFromSelection()
 {
    //std::cout << "new postit (" << PostIts.size() << ")" << std::flush;
 
-   BoundingBoxClass TranslatedBoundingBox (SelectedImageBoundingBox);
-   TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
-   Postits.CreatePostitAndSelect(HintSelectedImagePart, SelectedImagePart, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox, SelectedImagePartPath);
+   //BoundingBoxClass TranslatedBoundingBox (CurrentSeelection.getBoundingBox());
+   //TranslatedBoundingBox.Move(PositionClass(Origin.x(), Origin.y()));
+   //Postits.CreatePostitAndSelect(CurrentSeelection.HintSelectedImagePart, SelectedImagePart, Origin + SelectedCurrentPosition+SelectedOffset, TranslatedBoundingBox, SelectedImagePartPath);
+   Postits.CreatePostitAndSelect(CurrentSeelection, Origin);
    SetModified();
 }
 
@@ -578,9 +585,10 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
     Postits.DrawAll(painter, Origin);
 
     // If we have something selected, draw it
-    if ((Parent.IsInSelectingState()) && (DiscardSelection == false)) {
-       painter.drawImage(SelectedCurrentPosition+SelectedOffset, HintSelectedImagePart);
-       painter.drawImage(SelectedCurrentPosition+SelectedOffset, SelectedImagePart);
+    if (Parent.IsInSelectingState()) {
+       CurrentSeelection.Draw(painter);
+      // painter.drawImage(SelectedCurrentPosition+SelectedOffset, HintSelectedImagePart);
+      // painter.drawImage(SelectedCurrentPosition+SelectedOffset, SelectedImagePart);
     }
 
     if (RecentlyPastedObjectValid == true) {
@@ -592,18 +600,22 @@ void DatabaseClass::DrawMovedSelection(const QPointF Offset)
 {
     QPainter painter(&image);
 
-    painter.drawImage(SelectedOffset+Offset+Origin, SelectedImagePart);
-    SetModified();
-    update();
+    if (CurrentSeelection.DrawMovedSelection(painter, Offset+Origin)) {
+        SetModified();
+        update();
+    }
 };
 
 
 void DatabaseClass::MakeSreenMoveHint()
 {
+    CurrentSeelection.MakeSreenMoveHint(image);
+#if 0
    SelectedImagePart =  image.copy();
    HintSelectedImagePart = SelectedImagePart;
  //  HintSelectedImagePart.fill(qRgba(200, 200, 200, 140));
-  HintSelectedImagePart.fill(qRgba(0, 0, 0, 40));
+  HintSelectedImagePart.fill(SelectHintColor);
+#endif
 }
 
 
@@ -782,7 +794,7 @@ void DatabaseClass::ExtendBoundingboxAndShape(QPointF Position)
 
 void DatabaseClass::EndShape()
 {
-   LastPaintedObject = CurrentlyDrawnObject.EndShape();
+   /*LastPaintedObject = */CurrentlyDrawnObject.EndShape();
 
 }
 

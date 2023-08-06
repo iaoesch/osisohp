@@ -739,9 +739,9 @@ void StateClass<State::MovingSelection>::HandleReleaseEventSM(Qt::MouseButton Bu
        //DEBUG_LOG << "LeavingSpeed " << (LastDistance + CurrentDistance) << " / " << (DeltaTLastDistance + DeltaTCurrentDistance) << " = " << ((LastDistance + CurrentDistance) / (float)(DeltaTLastDistance + DeltaTCurrentDistance)) << std::endl;
 
      // QPoint Offset =  - SelectedPoint;
-       if (StateMachine.Context.MyDatas.getDiscardSelection() == false) {
+      // if (StateMachine.Context.MyDatas.getDiscardSelection() == false) {
           StateMachine.Context.MyDatas.DrawMovedSelection(Position);
-       }
+     //  }
      // BoundingBoxClass MovedRectangle(LastPaintedObjectBoundingBox);
     //  MovedRectangle.Move(PositionClass(Offset.x(), Offset.y()));
     //  drawrectangle(MovedRectangle);

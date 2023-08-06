@@ -11,6 +11,8 @@
 #include "box.hpp"
 //#include "databaseclass.h"
 
+class SelectionClass;
+
 
 class PostitManagerClass
 {
@@ -21,7 +23,7 @@ class PostitManagerClass
       BoundingBoxClass Box;
       QPainterPath BorderPath;
       int Id;
-      PostIt(const QImage &NewImage, const QPointF &Pos, BoundingBoxClass NewBox, QPainterPath &Path) : Image(NewImage), Position(Pos), Box(NewBox), BorderPath(Path), Id(NextId++) {}
+      PostIt(const QImage &NewImage, const QPointF &Pos, BoundingBoxClass NewBox, const QPainterPath &Path) : Image(NewImage), Position(Pos), Box(NewBox), BorderPath(Path), Id(NextId++) {}
       PostIt(const PostIt &Src) : Image(Src.Image), Position(Src.Position), Box(Src.Box), BorderPath(Src.BorderPath), Id(NextId++) {}
    };
 
@@ -45,6 +47,7 @@ public:
    {
       ShowPostitsFrame = newShowPostitsFrame;
    }
+   void CreatePostitAndSelect(SelectionClass &Selection, QPointF Origin);
    void CreatePostitAndSelect(QImage BackgroundImage, QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path);
    void MoveAllPostits(QPoint Offset);
    void Save(QDataStream &out);

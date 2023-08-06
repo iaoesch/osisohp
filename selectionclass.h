@@ -14,8 +14,11 @@
 //#include "postitmanagerclass.h"
 //#include "drawingobjectclass.h"
 
+class DrawingObjectClass;
+
 
 class SelectionClass {
+    QColor SelectHintColor;
     QColor SelectionHintColor;
     QColor SelectionHintBorderColor;
     QPointF SelectedOffset;
@@ -30,6 +33,8 @@ public:
     SelectionClass() {
         SelectionHintColor = QColor(0, 30, 0, 50);
         SelectionHintBorderColor = QColor(0, 30, 0, 50);
+        SelectHintColor = qRgba(0, 0, 0, 40);
+
 
     }
     void SetSelectedOffset(QPointF lastPointDrawn) {
@@ -55,48 +60,34 @@ public:
     }
     void MoveSelectedCurrentPosition(QPointF delta) {SelectedCurrentPosition += delta;}
 
-    void MakeSelectionFromLastDrawnObject(bool Cutout)
+    void MakeSelectionFromLastDrawnObject(QImage &image, QPointF Origin, DrawingObjectClass &DrawnObject, bool Cutout);
+
+    void Draw(QPainter &painter);
+
+
+
+    bool DrawMovedSelection(QPainter &painter, const QPointF Offset);
+    void MakeSreenMoveHint(QImage &image);
+    const BoundingBoxClass &getBoundingBox() const
     {
-        SelectedImagePart =  image.copy(LastPaintedObject.Box().QRectangle().translated(Origin.toPoint()));
-        SelectedImageBoundingBox = LastPaintedObject.Box();
-
-        HintSelectedImagePart = SelectedImagePart;
-        HintSelectedImagePart.fill(TransparentColor);
-        DiscardSelection = false;
-
-        if (Cutout == true) {
-            QPainter painter2(&image);
-            CurrentlyDrawnObject.CutOut(painter2, Origin);
-        }
-        QPainter painter(&HintSelectedImagePart);
-        painter.setPen(QPen(SelectionHintBorderColor, HintBorderPenWidth, Qt::SolidLine, Qt::RoundCap,
-                            Qt::RoundJoin));
-        painter.setBrush(QBrush(SelectionHintColor));
-        LastPaintedObject.Points().translate(-SelectedImageBoundingBox.GetLeft(), -SelectedImageBoundingBox.GetTop());
-        painter.drawPolygon(LastPaintedObject.Points());
-        QPainterPath Path;
-        Path.addPolygon(LastPaintedObject.Points());
-        QImage MaskedSelectedImagePart = SelectedImagePart;
-        MaskedSelectedImagePart.fill(TransparentColor);
-        QPainter painter3(&MaskedSelectedImagePart);
-        painter3.setClipPath(Path);
-        painter3.drawImage(QPoint(0,0), SelectedImagePart);
-        SelectedImagePart = MaskedSelectedImagePart;
-        SelectedImagePartPath = Path;
-        CurrentlyDrawnObject.CancelShape();
-        LastPaintedObject.Clear();
-        //LastDrawnObject.fill(qRgba(0, 0, 0, 0));
+        return SelectedImageBoundingBox;
     }
-    void Draw(QPainter &painter)
+    const QImage &getHintSelectedImagePart() const
     {
-        if (DiscardSelection == false) {
-            painter.drawImage(SelectedCurrentPosition+SelectedOffset, HintSelectedImagePart);
-            painter.drawImage(SelectedCurrentPosition+SelectedOffset, SelectedImagePart);
-        }
+        return HintSelectedImagePart;
     }
-
-
-
+    const QImage &getSelectedImagePart() const
+    {
+        return SelectedImagePart;
+    }
+    QPointF getSelectedOffset() const
+    {
+        return SelectedOffset;
+    }
+    const QPainterPath &getSelectedImagePartPath() const
+    {
+        return SelectedImagePartPath;
+    }
 };
 
 

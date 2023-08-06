@@ -20,7 +20,7 @@ public:
       ShapeClass(const ShapeClass &src) : LastDrawnObjectPoints(src.LastDrawnObjectPoints) ,CurrentPaintedObjectBoundingBox(src.CurrentPaintedObjectBoundingBox) {}
       ShapeClass &operator = (const ShapeClass &src) = default; //: LastDrawnObjectPoints(src.LastDrawnObjectPoints) ,CurrentPaintedObjectBoundingBox(src.CurrentPaintedObjectBoundingBox) {}
 
-      const BoundingBoxClass &Box() { return CurrentPaintedObjectBoundingBox;}
+      const BoundingBoxClass &Box() const { return CurrentPaintedObjectBoundingBox;}
       const QPolygonF &Points() const { return LastDrawnObjectPoints;}
       QPolygonF &Points() { return LastDrawnObjectPoints;}
       bool IsInside(QPointF Point) {return CurrentPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));}
@@ -67,6 +67,7 @@ public:
     void CancelShape();
     bool TransferLastDrawnShape(QPainter &painter, const QPointF &Offset);
     // bool DrawLastDrawnShapeAndStartNewShape(QPainter &painter, const QPointF &Offset);
+    const ShapeClass &Shape() const {return CurrentShape;}
 
    QRect drawLineTo(const QPointF &endPoint, float Pressure);
    QRect EraseLineTo(const QPointF &endPoint, float Pressure, QColor &BackGroundColor);
