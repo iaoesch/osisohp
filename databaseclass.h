@@ -13,8 +13,10 @@
 #include "backgroundimagemanagerclass.h"
 #include "postitmanagerclass.h"
 #include "drawingobjectclass.h"
+#include "selectionclass.h"
 
 class ScribbleArea;
+
 
 class DatabaseClass : public QObject
 {
@@ -28,6 +30,7 @@ class DatabaseClass : public QObject
 
    PostitManagerClass Postits;
    DrawingObjectClass CurrentlyDrawnObject;
+   SelectionClass CurrentSeelection;
 
    QImage image;
 
@@ -36,18 +39,15 @@ class DatabaseClass : public QObject
 
    bool modified;
    bool AutosaveNeeded;
-   bool DiscardSelection;
    bool ShowOverview;
 
    bool CutMode;
 
    QPointF lastPointDrawn;
-   QPointF SelectedOffset;
-   QPointF SelectedCurrentPosition;
    QPointF ButtonDownPosition;
 
 
-   QColor TransparentColor;
+   static constexpr QColor TransparentColor = QColor(255, 255, 255, 0);
    QColor BackGroundColor;
 //   QColor Markercolor;
    QColor DefaultBackGroundColor;
@@ -55,13 +55,8 @@ class DatabaseClass : public QObject
    static constexpr int HintBorderPenWidth = 2;
    QColor ScrollHintColor;
    QColor ScrollHintBorderColor;
-   QColor SelectionHintColor;
-   QColor SelectionHintBorderColor;
 
 
-   QImage SelectedImagePart;
-   QPainterPath SelectedImagePartPath;
-   QImage HintSelectedImagePart;
 
    QImage ImageToPaste;
    double ScalingFactorOfImageToPaste;
@@ -72,8 +67,7 @@ class DatabaseClass : public QObject
    QImage RecentlyPastedObject;
    BoundingBoxClass RecentlyPastedObjectBoundingBox;
 
-   DrawingObjectClass::ShapeClass LastPaintedObject;
-   BoundingBoxClass SelectedImageBoundingBox;
+   //DrawingObjectClass::ShapeClass LastPaintedObject;
 
    struct LineSegments {
        QPointF endPoint;
@@ -87,9 +81,12 @@ class DatabaseClass : public QObject
 public:
    enum PasteEvent {PasteTopLayer, PasteBottomLayer, PasteDrawing, CancelPasting, MakeBigger, MakeSmaller, MakeOriginalSize};
 
+    static constexpr int getHintBorderPenWidth() {return HintBorderPenWidth;}
+    static constexpr QColor getTransparentColor() { return TransparentColor;}
 
    void SetSelectedOffset() {
-      SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPointDrawn;
+       CurrentSeelection.SetSelectedOffset(lastPointDrawn);
+      //SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPointDrawn;
    }
 
 
@@ -214,7 +211,7 @@ public:
 
    QColor GetBackGroundColor() const { return BackGroundColor; }
    void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; AdjustMarkercolor(); update();}
-   void setSelectionHintColor(const QColor &newColor) {SelectionHintColor = newColor;}
+   void setSelectionHintColor(const QColor &newColor) {CurrentSeelection.setSelectionHintColor(newColor);}
 
    void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundOffset);
    void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect) {PaintVisibleDrawing(painter, dirtyRect, Origin, {0,0});}
@@ -244,22 +241,22 @@ public:
 
    bool getDiscardSelection() const
    {
-      return DiscardSelection;
+      return CurrentSeelection.getDiscardSelection();
    }
    void setDiscardSelection(bool newDiscardSelection)
    {
-      DiscardSelection = newDiscardSelection;
+      CurrentSeelection.setDiscardSelection(newDiscardSelection);
    }
 
    QPointF getSelectedCurrentPosition() const
    {
-      return SelectedCurrentPosition;
+      return CurrentSeelection.getSelectedCurrentPosition();
    }
    void setSelectedCurrentPosition(QPointF newSelectedCurrentPosition)
    {
-      SelectedCurrentPosition = newSelectedCurrentPosition;
+      CurrentSeelection.setSelectedCurrentPosition(newSelectedCurrentPosition);
    }
-   void MoveSelectedCurrentPosition(QPointF delta) {SelectedCurrentPosition += delta;}
+   void MoveSelectedCurrentPosition(QPointF delta) {CurrentSeelection.MoveSelectedCurrentPosition(delta);}
 
    QPointF getButtonDownPosition() const
    {
@@ -299,10 +296,6 @@ public:
 
 private:
 public:
-   const QColor &getTransparentColor() const
-   {
-      return TransparentColor;
-   }
 
 private:
    void update();
