@@ -23,6 +23,7 @@
 /* imports */
 #include "gesturetracker.hpp"
 #include "Settings.hpp"
+#include "global.h"
 #include <QPainter>
 #include <QVector2D>
 #include <iostream>
@@ -36,6 +37,8 @@ using namespace std::chrono_literals;
 /* Class data declaration      */
 
 /* Class procedure declaration */
+static inline int ToInt(double d) {return static_cast<int>(d + 0.5);}
+
 
 /*****************************************************************************/
 /*  Method      : GestureTrackerClass                                        */
@@ -195,7 +198,7 @@ void GestureTrackerClass::Trackmovement(QPointF Position, std::chrono::milliseco
       CurrentGesture.AccumulatedSpeed += GestureSpeed;
 
       CurrentGesture.AccumulatedAbsoluteOfSpeed += sqrt(GestureSpeed.x() * GestureSpeed.x() + GestureSpeed.y()*GestureSpeed.y());
-      double Angle = atan2(GestureSpeed.x(), GestureSpeed.y());
+      MAY_BE_UNUSED double Angle = atan2(GestureSpeed.x(), GestureSpeed.y());
       CurrentGesture.AccumulatedSquaredSpeed += QPointF(GestureSpeed.x() * GestureSpeed.x(), GestureSpeed.y()*GestureSpeed.y() );
 
 
@@ -290,19 +293,19 @@ std::vector<int> GestureTrackerClass::GetDatasToDraw(GestureInfo &Gesture, doubl
 {
    std::vector<int> Datas;
 
-   Datas.push_back(Gesture.AccumulatedSpeed.x() * Scaling);
-   Datas.push_back(Gesture.AccumulatedSpeed.y() * Scaling);
-   Datas.push_back(Gesture.AccumulatedAbsoluteOfSpeed * Scaling);
-   Datas.push_back(Gesture.AccumulatedSquaredSpeed.x() * Scaling);
-   Datas.push_back(Gesture.AccumulatedSquaredSpeed.y() * Scaling);
-   Datas.push_back(Gesture.AccumulatedAcceleration.x() * Scaling * 100);
-   Datas.push_back(Gesture.AccumulatedAcceleration.y() * Scaling * 100);
-   Datas.push_back(Gesture.AccumulatedAbsolutesOfAccelerationComponents.x() * Scaling);
-   Datas.push_back(Gesture.AccumulatedAbsolutesOfAccelerationComponents.y() * Scaling);
-   Datas.push_back(Gesture.AccumulatedRuck.x() * Scaling * 100);
-   Datas.push_back(Gesture.AccumulatedRuck.y() * Scaling * 100);
-   Datas.push_back(Gesture.AccumulatedAbsolutesOfRuckComponents.x() * Scaling * 100);
-   Datas.push_back(Gesture.AccumulatedAbsolutesOfRuckComponents.y() * Scaling * 100);
+   Datas.push_back(ToInt(Gesture.AccumulatedSpeed.x() * Scaling));
+   Datas.push_back(ToInt(Gesture.AccumulatedSpeed.y() * Scaling));
+   Datas.push_back(ToInt(Gesture.AccumulatedAbsoluteOfSpeed * Scaling));
+   Datas.push_back(ToInt(Gesture.AccumulatedSquaredSpeed.x() * Scaling));
+   Datas.push_back(ToInt(Gesture.AccumulatedSquaredSpeed.y() * Scaling));
+   Datas.push_back(ToInt(Gesture.AccumulatedAcceleration.x() * Scaling * 100));
+   Datas.push_back(ToInt(Gesture.AccumulatedAcceleration.y() * Scaling * 100));
+   Datas.push_back(ToInt(Gesture.AccumulatedAbsolutesOfAccelerationComponents.x() * Scaling));
+   Datas.push_back(ToInt(Gesture.AccumulatedAbsolutesOfAccelerationComponents.y() * Scaling));
+   Datas.push_back(ToInt(Gesture.AccumulatedRuck.x() * Scaling * 100));
+   Datas.push_back(ToInt(Gesture.AccumulatedRuck.y() * Scaling * 100));
+   Datas.push_back(ToInt(Gesture.AccumulatedAbsolutesOfRuckComponents.x() * Scaling * 100));
+   Datas.push_back(ToInt(Gesture.AccumulatedAbsolutesOfRuckComponents.y() * Scaling * 100));
    return Datas;
 }
 
@@ -311,8 +314,8 @@ void GestureTrackerClass::DrawDebugInfo(QPainter &Painter, QPointF Offset)
    Painter.setPen(QPen(QColor(Qt::blue), 1, Qt::SolidLine, Qt::RoundCap,
                        Qt::RoundJoin));
    Painter.setBrush(QBrush(Qt::blue));
-   int x = Offset.x();
-   int y = Offset.y();
+   int x = ToInt(Offset.x());
+   int y = ToInt(Offset.y());
    constexpr int Width = 10;
    auto Datas = GetDatasToDraw(CurrentGesture, 1000.0/CurrentGesture.AccumulatedTime.count());
    for (auto l: Datas) {

@@ -1,4 +1,5 @@
 #include "animatedcursorclass.h"
+#include "global.h"
 
 #include <QPainter>
 #include <QWidget>
@@ -24,7 +25,7 @@ AnimatedCursorClass::AnimatedCursorClass(size_t Width, size_t Height, size_t Num
 }
 
 
-AnimatedCursorClass::AnimatedCursorClass(size_t Width, size_t Height, size_t NumberOfFramesToPlay, QPixmap IconPicture, int Hot_x, int Hot_y, QPixmap ImageInitialPointer, int Hot_x_initial, int Hot_y_initial)
+AnimatedCursorClass::AnimatedCursorClass(MAY_BE_UNUSED size_t Width, MAY_BE_UNUSED size_t Height, size_t NumberOfFramesToPlay, QPixmap IconPicture, int Hot_x, int Hot_y, QPixmap ImageInitialPointer, int Hot_x_initial, int Hot_y_initial)
    : HotSpotX(Hot_x), HotSpotY(Hot_y), HotSpotInitialX(Hot_x_initial), HotSpotInitialY(Hot_y_initial)
 {
    this->NumberOfFramesToPlay = NumberOfFramesToPlay;

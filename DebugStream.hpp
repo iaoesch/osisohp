@@ -6,11 +6,14 @@
 #  define DEBUG_LOG std::cerr
 
 #else
+
+#include "global.h"
+
 class log_disabled_output {};
-static log_disabled_output log_disabled_output_instance [[maybe_unused]];
+MAY_BE_UNUSED static log_disabled_output log_disabled_output_instance;
 
 template<typename T>
-inline log_disabled_output& operator << (log_disabled_output& any, T const& thing[[maybe_unused]]) { return any; }
+inline log_disabled_output& operator << (log_disabled_output& any, MAY_BE_UNUSED T const& thing) { return any; }
 
 // std::endl simple, quick and dirty
 inline log_disabled_output& operator << (log_disabled_output& any, std::ostream&(*)(std::ostream&)) { return any; }

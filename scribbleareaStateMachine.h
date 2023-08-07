@@ -54,7 +54,8 @@
 #include <QTouchEvent>
 #include <list>
 
-#include "box.hpp"
+#include "global.h"
+//#include "box.hpp"
 #include "Settings.hpp"
 #include "gesturetracker.hpp"
 #include "interface.hpp"
@@ -111,7 +112,7 @@ public:
        Pressure(event->pressure()),
        Erasing(event->pointerType() == QPointingDevice::PointerType::Eraser)
    {}
-   PenInfoClass(nullptr_t event) :
+   PenInfoClass(MAY_BE_UNUSED nullptr_t event) :
        tiltx(0),
        tilty(0),
        rotation(0),

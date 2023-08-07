@@ -76,7 +76,7 @@ MainWindow::MainWindow()
   //  toolBar->insertAction(0, new PushButtonAction(QIcon(":/Refresh.gif"), "Refresh"));
 
     QPixmap ToolIcon(15, 15);
-    int PenId = 0;
+    //int PenId = 0;
     for (auto &p: PenInfo) {
        ToolIcon.fill(p.PenColor);
        p.SetPenColorAct = toolBar->addAction(QIcon(ToolIcon), "PenColor");

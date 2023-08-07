@@ -8,6 +8,7 @@
 #include <vector>
 #include <deque>
 
+#include "global.h"
 #include "box.hpp"
 #include "Settings.hpp"
 #include "backgroundimagemanagerclass.h"
@@ -218,7 +219,11 @@ public:
   // void ClearLastDrawnObjectPoints() {LastDrawnObjectPoints.clear();}
 
    void ResizeAll(int width, int height);
-   void EndShape();
+   void EndShape()
+   {
+      /*LastPaintedObject = */CurrentlyDrawnObject.EndShape();
+
+   }
 
    void setLastPoint(QPointF newLastPoint)
    {
@@ -286,10 +291,10 @@ public:
    bool IsJitter(QPointF OldPoint, QPointF NewPoint, double Pressure) {
       return ((Pressure < JitterPressureLimit) && ((OldPoint-NewPoint).manhattanLength() < (CurrentlyDrawnObject.getMyPenWidth()*3+2)));
    }
-   bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, float Pressure  [[maybe_unused]] ) {
+   bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, MAY_BE_UNUSED float Pressure) {
       return ((OldPoint-NewPoint).manhattanLength() < (CurrentlyDrawnObject.getMyPenWidth()+2));
    }
-   bool IsSelectionJitter(QPointF OldPoint, float Pressure  [[maybe_unused]] ) {
+   bool IsSelectionJitter(QPointF OldPoint, MAY_BE_UNUSED float Pressure) {
       return IsSelectionJitter(OldPoint, lastPointDrawn, Pressure);
    }
 

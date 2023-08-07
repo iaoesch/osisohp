@@ -50,6 +50,7 @@ void DatabaseClass::update(const QRect &r)
    Parent.update(r);
 }
 
+
 bool DatabaseClass::ImportImage(const QString &fileName)
 {
    QImage loadedImage;
@@ -609,11 +610,7 @@ void DatabaseClass::ScaleImageToPaste(double ScalingFactor)
    update();
 }
 
-void DatabaseClass::EndShape()
-{
-   /*LastPaintedObject = */CurrentlyDrawnObject.EndShape();
 
-}
 
 
 //! [2]

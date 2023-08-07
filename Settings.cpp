@@ -1,5 +1,5 @@
 #include "Settings.hpp"
-#include "SettingsDialog.h"
+//#include "SettingsDialog.h"
 
 #include <QDir>
 

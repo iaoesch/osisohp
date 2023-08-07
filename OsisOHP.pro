@@ -11,6 +11,7 @@ HEADERS       = mainwindow.h \
    databaseclass.h \
    drawingobjectclass.h \
    gesturetracker.hpp \
+   global.h \
    interface.hpp \
    pastingobjectclass.h \
    postitmanagerclass.h \
