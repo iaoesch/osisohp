@@ -14,6 +14,7 @@
 #include "postitmanagerclass.h"
 #include "drawingobjectclass.h"
 #include "selectionclass.h"
+#include "pastingobjectclass.h"
 
 class ScribbleArea;
 
@@ -31,6 +32,7 @@ class DatabaseClass : public QObject
    PostitManagerClass Postits;
    DrawingObjectClass CurrentlyDrawnObject;
    SelectionClass CurrentSeelection;
+   PastingObjectClass PastingObject;
 
    QImage image;
 
@@ -57,15 +59,6 @@ class DatabaseClass : public QObject
    QColor ScrollHintBorderColor;
 
 
-
-   QImage ImageToPaste;
-   double ScalingFactorOfImageToPaste;
-   enum   PasteImage{None, Drawing, TopLayer, BottomLayer} PasteStatus;
-
-   bool RecentlyPastedObjectValid;
-   QPointF RecentlyPastedObjectPosition;
-   QImage RecentlyPastedObject;
-   BoundingBoxClass RecentlyPastedObjectBoundingBox;
 
    //DrawingObjectClass::ShapeClass LastPaintedObject;
 
@@ -262,6 +255,13 @@ public:
    {
       return ButtonDownPosition;
    }
+
+
+   BackgroundImageManagerClass &getBackgroundImages()
+   {
+      return BackgroundImages;
+   }
+
 
 #if 0
    int getMyPenWidth() const

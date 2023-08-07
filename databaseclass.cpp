@@ -17,7 +17,9 @@
 #include "DebugStream.hpp"
 
 
-int ToInt(double d) {return static_cast<int>(d + 0.5);}
+static inline int ToInt(double d) {return static_cast<int>(d + 0.5);}
+
+
 
 
 
@@ -32,7 +34,6 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
    ShowOverview = false;
    CutMode = true;
 
-   PasteStatus = None;
 
 
   // TransparentColor = QColor(255, 255, 255, 0);
@@ -45,7 +46,6 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
 
    DefaultBackGroundColor = BackGroundColor;
 
-   RecentlyPastedObjectValid = false;
 }
 
 void DatabaseClass::update()
@@ -574,12 +574,7 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
     //CurrentlyDrawnObject.DrawNormal(painter, dirtyRect);
 
     // Now draw pasted object, if availlable
-    if (PasteStatus != None) {
-       QSizeF DestSize = ImageToPaste.size();
-       DestSize *= ScalingFactorOfImageToPaste;
-       QRectF Destination(Origin, DestSize);
-       painter.drawImage(Destination, ImageToPaste);
-    }
+    PastingObject.Draw(painter, Origin);
 
     // Now draw all postits
     Postits.DrawAll(painter, Origin);
@@ -591,9 +586,7 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
       // painter.drawImage(SelectedCurrentPosition+SelectedOffset, SelectedImagePart);
     }
 
-    if (RecentlyPastedObjectValid == true) {
-        painter.drawImage(RecentlyPastedObjectPosition, RecentlyPastedObject);
-    }
+    PastingObject.DrawRecentlyPasted(painter);
 }
 
 void DatabaseClass::DrawMovedSelection(const QPointF Offset)
@@ -694,6 +687,8 @@ void DatabaseClass::DeleteSelectedPostits()
 void DatabaseClass::SetImageToPaste(QImage Image)
 {
    TransferLastDrawnShape();
+   PastingObject.SetImageToPaste(Image, Parent.size());
+#if 0
    PasteStatus = Drawing;
    ImageToPaste = Image;
    ScalingFactorOfImageToPaste = 1.0;
@@ -711,10 +706,46 @@ void DatabaseClass::SetImageToPaste(QImage Image)
          }
       }
    }
+#endif
 }
 
 void DatabaseClass::DoPasteImage(PasteEvent Event)
 {
+
+   switch(Event) {
+   case DatabaseClass::PasteTopLayer:
+   {
+      BackgroundImages.AddLayerTop(PastingObject.CreateImage(image, *this, Origin));
+      UpdateGUIElements();
+      SetModified();
+   }
+   break;
+   case DatabaseClass::PasteBottomLayer:
+   {
+      BackgroundImages.AddLayerBottom(PastingObject.CreateImage(image, *this, Origin));
+      UpdateGUIElements();
+      SetModified();
+   }
+   break;
+   case DatabaseClass::PasteDrawing:
+   {
+      PastingObject.DrawIntoImage(image, *this, Origin);
+      SetModified();
+   }
+
+   break;
+   case DatabaseClass::CancelPasting:
+   case DatabaseClass::MakeBigger:
+   case DatabaseClass::MakeSmaller:
+   case DatabaseClass::MakeOriginalSize:
+      // Ignore
+      //PasteStatus = None;
+
+      break;
+   }
+
+
+#if 0
    QSizeF DestSize = ImageToPaste.size();
    DestSize *= ScalingFactorOfImageToPaste;
    QRectF Destination(Origin, DestSize);
@@ -765,22 +796,21 @@ void DatabaseClass::DoPasteImage(PasteEvent Event)
    }
    PasteStatus = None;
 
+
+#endif
+
    update();
 }
 
 void DatabaseClass::CancelPasteImage()
 {
-   PasteStatus = None;
+   PastingObject.Cancel();
    update();
 }
 
 void DatabaseClass::ScaleImageToPaste(double ScalingFactor)
 {
-   if (ScalingFactor > 0.1) {
-      ScalingFactorOfImageToPaste *= ScalingFactor;
-   } else {
-      ScalingFactorOfImageToPaste = 1.0;
-   }
+   PastingObject.Scale(ScalingFactor);
    update();
 }
 
