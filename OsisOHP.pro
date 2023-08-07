@@ -12,6 +12,7 @@ HEADERS       = mainwindow.h \
    drawingobjectclass.h \
    gesturetracker.hpp \
    interface.hpp \
+   pastingobjectclass.h \
    postitmanagerclass.h \
                 scribblearea.h \
     box.hpp \
@@ -27,6 +28,7 @@ SOURCES       = main.cpp \
    drawingobjectclass.cpp \
    gesturetracker.cpp \
                 mainwindow.cpp \
+   pastingobjectclass.cpp \
    postitmanagerclass.cpp \
                 scribblearea.cpp \
     Box.cpp \
