@@ -80,21 +80,21 @@ bool BackgroundImageManagerClass::CollapseAllVisibleLayersToTop(QImage &Image, D
    return false;
 }
 
-void BackgroundImageManagerClass::Resize(int width, int height, DatabaseClass &UglyPatchNeedsFixing)
+void BackgroundImageManagerClass::Resize(int width, int height)
 {
    if (!BackgroundFrozen) {
       for (auto &p: BackgroundImages) {
-         UglyPatchNeedsFixing.resizeImage(&*p, QSize(width+ToInt(BackgroundImagesOrigin.x()), ToInt(height+BackgroundImagesOrigin.y())));
+         DatabaseClass::resizeImage(&*p, QSize(width+ToInt(BackgroundImagesOrigin.x()), ToInt(height+BackgroundImagesOrigin.y())));
       }
    }
 }
 
-void BackgroundImageManagerClass::Expand(QSize RequiredSize, DatabaseClass &UglyPatchNeedsFixing)
+void BackgroundImageManagerClass::Expand(QSize RequiredSize)
 {
 if (!BackgroundFrozen && !BackgroundImages.empty()) {
    for (auto &p: BackgroundImages) {
       // ToDo: required size is based on origin, should probably be based on BackgroundImagesOrigin
-      UglyPatchNeedsFixing.resizeImage(&*p, RequiredSize);
+         DatabaseClass::resizeImage(&*p, RequiredSize);
    }
 }
 }
@@ -148,14 +148,14 @@ void BackgroundImageManagerClass::Clear()
    BackgroundImages.clear();
 }
 
-void BackgroundImageManagerClass::resizeScrolledImage(QSize Size, QPoint Offset, DatabaseClass &UglyPatchNeedsFixing)
+void BackgroundImageManagerClass::resizeScrolledImage(QSize Size, QPoint Offset, DatabaseClass &UglyWorkaroundNeedsFixing)
 {
 
    if (!BackgroundFrozen && !BackgroundImages.empty()) {
-      UglyPatchNeedsFixing.GetOffsetAndAdjustOrigin(*BackgroundImages[0], BackgroundImagesOrigin, Offset, Size);
+      UglyWorkaroundNeedsFixing.GetOffsetAndAdjustOrigin(*BackgroundImages[0], BackgroundImagesOrigin, Offset, Size);
 
       for (auto &p: BackgroundImages) {
-         UglyPatchNeedsFixing.resizeImage(&*p, Size, Offset);
+         DatabaseClass::resizeImage(&*p, Size, Offset);
       }
    }
 

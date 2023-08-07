@@ -111,7 +111,7 @@ private:
    //void DrawLastDrawnPicture();
 public:
 
-   void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
+   static void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
    void resizeScrolledImage();
    void MakeSelectionFromLastDrawnObject(bool Cutout = false);
    void TransferLastDrawnShape();

@@ -1,4 +1,3 @@
-#include "databaseclass.h"
 #include <QWidget>
 #include <QPainter>
 #include <QColor>
@@ -13,6 +12,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include "scribblearea.h"
+#include "databaseclass.h"
 
 #include "DebugStream.hpp"
 
@@ -636,7 +636,7 @@ void DatabaseClass::ResizeAll(int width, int height)
       int newHeight = qMax(height + 128, image.height());
       resizeImage(&image, QSize(newWidth+ToInt(Origin.x()), newHeight+ToInt(Origin.y())));
       resizeImage(&CurrentlyDrawnObject.Image(), QSize(newWidth, newHeight));
-      BackgroundImages.Resize(newWidth, newHeight, *this);
+      BackgroundImages.Resize(newWidth, newHeight);
 
       update();
    }
@@ -688,6 +688,7 @@ void DatabaseClass::SetImageToPaste(QImage Image)
 {
    TransferLastDrawnShape();
    PastingObject.SetImageToPaste(Image, Parent.size());
+   update();
 #if 0
    PasteStatus = Drawing;
    ImageToPaste = Image;

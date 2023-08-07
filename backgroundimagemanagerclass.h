@@ -47,7 +47,7 @@ public:
 
    void Freeze(bool Mode) {BackgroundFrozen = Mode;}
 
-   void resizeScrolledImage(QSize Size, QPoint Offset, DatabaseClass &UglyPatchNeedsFixing);
+   void resizeScrolledImage(QSize Size, QPoint Offset, DatabaseClass &UglyWorkaroundNeedsFixing);
 
    std::vector<bool> GetLayervisibilities();
 
@@ -56,8 +56,8 @@ public:
    void DrawAllVisible(QPainter &painter, const QRect &dirtyRect, const QPointF Offset);
    void Save(QDataStream &out);
    std::vector<bool> Load(QDataStream &in);
-   void Resize(int width, int height, DatabaseClass &UglyPatchNeedsFixing);
-   void Expand(QSize RequiredSize, DatabaseClass &UglyPatchNeedsFixing);
+   void Resize(int width, int height);
+   void Expand(QSize RequiredSize);
    void AddLayerBottom(QImage NewImage);
 };
 

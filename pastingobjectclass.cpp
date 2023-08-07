@@ -18,7 +18,7 @@ void PastingObjectClass::Draw(QPainter &painter, QPointF Offset) {
     if (PasteStatus != None) {
         QSizeF DestSize = ImageToPaste.size();
         DestSize *= ScalingFactorOfImageToPaste;
-        QRectF Destination(Offset, DestSize);
+        QRectF Destination(Offset-Offset, DestSize);
         painter.drawImage(Destination, ImageToPaste);
     }
 
@@ -57,10 +57,10 @@ auto PastingObjectClass::PrepareToPasteImage(QImage &image, DatabaseClass &UglyW
     DestSize *= ScalingFactorOfImageToPaste;
     QRectF Destination(Origin, DestSize);
     QSize RequiredSize = image.size().expandedTo(DestSize.toSize() + QSize(ToInt(Origin.x()), ToInt(Origin.y())));
-    UglyWorkaroundForRefactoring.resizeImage(&image, RequiredSize);
+    DatabaseClass::resizeImage(&image, RequiredSize);
     // Should also resize all layers
     // ToDo: required size is based on origin, should probably be based on BackgroundImagesOrigin
-    UglyWorkaroundForRefactoring.getBackgroundImages().Expand(RequiredSize, UglyWorkaroundForRefactoring);
+    UglyWorkaroundForRefactoring.getBackgroundImages().Expand(RequiredSize);
     return std::make_tuple(RequiredSize, Destination);
 }
 
