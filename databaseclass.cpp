@@ -17,7 +17,7 @@
 #include "DebugStream.hpp"
 
 
-int ToInt(double d) {return static_cast<int>(d + 0.5);}
+static inline int ToInt(double d) {return static_cast<int>(d + 0.5);}
 
 
 
