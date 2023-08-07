@@ -10,8 +10,14 @@
 
 #include "box.hpp"
 #include "Settings.hpp"
+#include "backgroundimagemanagerclass.h"
+#include "postitmanagerclass.h"
+#include "drawingobjectclass.h"
+#include "selectionclass.h"
+#include "pastingobjectclass.h"
 
 class ScribbleArea;
+
 
 class DatabaseClass : public QObject
 {
@@ -20,229 +26,203 @@ class DatabaseClass : public QObject
 
    ScribbleArea &Parent;
    SettingClass &Settings;
-   struct PostIt {
-      static int NextId;
-      QImage Image;
-      QPointF Position;
-      BoundingBoxClass Box;
-      QPainterPath BorderPath;
-      int Id;
-      PostIt(const QImage &NewImage, const QPointF &Pos, BoundingBoxClass NewBox, QPainterPath &Path) : Image(NewImage), Position(Pos), Box(NewBox), BorderPath(Path), Id(NextId++) {}
-      PostIt(const PostIt &Src) : Image(Src.Image), Position(Src.Position), Box(Src.Box), BorderPath(Src.BorderPath), Id(NextId++) {}
-   };
 
-   std::list<PostIt> PostIts;
-   struct PostItDescriptor{
-      std::list<PostIt>::iterator postit;
-      QPointF StartPosition;
-   } ;
-   std::list<PostItDescriptor> SelectedPostit;
+   BackgroundImageManagerClass BackgroundImages;
 
-   int myPenWidth;
-   int myEraserWidth;
-   int SelectedPenWidth;
-   QColor myPenColor;
+   PostitManagerClass Postits;
+   DrawingObjectClass CurrentlyDrawnObject;
+   SelectionClass CurrentSeelection;
+   PastingObjectClass PastingObject;
+
    QImage image;
-   QImage LastDrawnObject;
-    class ImageDescriptor {
-      std::unique_ptr<QImage> Image;
-      bool Visible;
 
-      public:
-      ImageDescriptor(std::unique_ptr<QImage> TheImage) : Image(std::move(TheImage)), Visible(true) {}
-      ImageDescriptor(std::unique_ptr<QImage> TheImage, bool v) : Image(std::move(TheImage)), Visible(v) {}
-      QImage &operator * () {return *Image;}
-      QImage *operator -> () {return Image.operator ->();}
-      bool IsVisible() {return Visible;}
-      void SetVisible(bool v) {Visible = v;}
-
-   };
-
-   //std::vector<std::unique_ptr<QImage>> BackgroundImages;
-   std::deque<ImageDescriptor> BackgroundImages;
 
    QPointF Origin;
-   QPointF BackgroundImagesOrigin;
-   bool Frozen;
 
-
-   bool EraseLastDrawnObject;
    bool modified;
    bool AutosaveNeeded;
-   bool LastDrawingValid;
-   bool DiscardSelection;
-   bool MarkerActive;
-   bool ShowPostitsFrame;
    bool ShowOverview;
 
    bool CutMode;
 
-
-   QPointF SelectedOffset;
-   QPointF SelectedCurrentPosition;
    QPointF lastPointDrawn;
    QPointF ButtonDownPosition;
 
 
-   QColor TransparentColor;
+   static constexpr QColor TransparentColor = QColor(255, 255, 255, 0);
    QColor BackGroundColor;
-   QColor Markercolor;
+//   QColor Markercolor;
    QColor DefaultBackGroundColor;
+
+   static constexpr int HintBorderPenWidth = 2;
    QColor ScrollHintColor;
    QColor ScrollHintBorderColor;
-   QColor SelectionHintColor;
-   QColor SelectionHintBorderColor;
 
-   QColor PostItBackgroundColor;
 
-   QPolygonF LastDrawnObjectPoints;
-   QImage SelectedImagePart;
-   QPainterPath SelectedImagePartPath;
-   QImage HintSelectedImagePart;
 
-   QImage ImageToPaste;
-   double ScalingFactorOfImageToPaste;
-   enum   PasteImage{None, Drawing, TopLayer, BottomLayer} PasteStatus;
+   //DrawingObjectClass::ShapeClass LastPaintedObject;
 
-   bool RecentlyPastedObjectValid;
-   QPointF RecentlyPastedObjectPosition;
-   QImage RecentlyPastedObject;
-   BoundingBoxClass RecentlyPastedObjectBoundingBox;
+   struct LineSegments {
+       QPointF endPoint;
+       float Pressure;
+       bool  Erasing;
+   };
 
-   BoundingBoxClass LastPaintedObjectBoundingBox;
-   BoundingBoxClass SelectedImageBoundingBox;
-   BoundingBoxClass CurrentPaintedObjectBoundingBox;
+   std::list<LineSegments> StoredLineSegments;
 
 
 public:
    enum PasteEvent {PasteTopLayer, PasteBottomLayer, PasteDrawing, CancelPasting, MakeBigger, MakeSmaller, MakeOriginalSize};
 
+    static constexpr int getHintBorderPenWidth() {return HintBorderPenWidth;}
+    static constexpr QColor getTransparentColor() { return TransparentColor;}
 
    void SetSelectedOffset() {
-      SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPointDrawn;
+       CurrentSeelection.SetSelectedOffset(lastPointDrawn);
+      //SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPointDrawn;
    }
 
-   void RestartCurrentPaintedObjectBoundingBox(QPointF const &StartPoint)
-   {
-      CurrentPaintedObjectBoundingBox.Clear();
-      CurrentPaintedObjectBoundingBox.AddPoint(PositionClass(StartPoint.x(), StartPoint.y()));
-   }
 
    bool IsInsideLastPaintedObjectBoundingBox(QPointF const &Point)
    {
-      return LastPaintedObjectBoundingBox.IsInside(PositionClass(Point.x(), Point.y()));
+      //return LastPaintedObject.Box().IsInside(PositionClass(Point.x(), Point.y()));
+      return CurrentlyDrawnObject.IsInside(Point);
    }
    bool IsCutoutActive() {return CutMode;}
-   void ClearLastPaintedObjectBoundingBox() { LastPaintedObjectBoundingBox.Clear();}
    void MoveOrigin(QPointF Offset) {
       Origin -= Offset;
-      if (!Frozen) {
-         BackgroundImagesOrigin -= Offset;
-      }
+      BackgroundImages.MoveOrigin(Offset);
    }
    QPointF GetOrigin() {return Origin;}
 
    DatabaseClass(ScribbleArea &Parent, class SettingClass &MySettings);
    bool ImportImage(const QString &fileName);
 
-   void drawLineTo(const QPointF &endPoint, double Pressure);
-   void EraseLineTo(const QPointF &endPoint, double Pressure);
+   void drawLineTo(const QPointF &endPoint, float Pressure);
+   void EraseLineTo(const QPointF &endPoint, float Pressure);
+   void StoredrawLineTo(const QPointF &endPoint, float Pressure);
+   void StoreEraseLineTo(const QPointF &endPoint, float Pressure);
+   void ClearStoredLineSegments() {StoredLineSegments.clear();}
    void drawrectangle(const BoundingBoxClass &Region);
    void DrawMovedSelection(const QPointF Offset);
    void MakeSreenMoveHint();
 
-   void DrawLastDrawnPicture();
+private:
+   //void DrawLastDrawnPicture();
+public:
+
    void resizeImage(QImage *image, const QSize &newSize, QPoint Offset = {0,0});
    void resizeScrolledImage();
    void MakeSelectionFromLastDrawnObject(bool Cutout = false);
-   void CompleteImage();
+   void TransferLastDrawnShape();
    void FilllastDrawnShape();
+   void CancelShape();
 
-   bool IsAnySelectedPostit() {return !SelectedPostit.empty();}
-   void ClearSelectedPostit() {SelectedPostit.clear();}
+
+   // Postits
+   bool IsAnySelectedPostit() {return Postits.IsAnySelectedPostit();}
+   void ClearSelectedPostit() {Postits.ClearSelectedPostit();}
    void CreeatePostitFromSelection();
    void MoveSelectedPostits(QPointF Position);
    void FinishMovingSelectedPostits(QPointF Position);
+   void setPostItBackgroundColor(const QColor &newColor) {Postits.setPostItBackgroundColor(newColor); update();}
+   void AdjustMarkercolor() {Postits.setMarkercolor(QColor(BackGroundColor.red()^0xFF, BackGroundColor.green()^0xFF, BackGroundColor.blue()^0xFF));}
+   typedef PostitManagerClass::SelectMode SelectMode;
+   bool FindSelectedPostIts(QPointF Position, SelectMode Mode = SelectMode::First)
+   {
+      return Postits.FindSelectedPostIts(Position + Origin, Mode);
+   }
+   bool IsInsideAnyPostIt(QPointF Position)
+   {
+      return Postits.IsInsideAnyPostIt(Position + Origin);
+   }
+   void setShowPostitsFrame(bool newShowPostitsFrame)
+   {
+      Postits.setShowPostitsFrame(newShowPostitsFrame);
+   }
+   void DeleteSelectedPostits();
+   void DuplicateSelectedPostits();
+private:
+   //void CreatePostit_(QImage BackgroundImage, QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path);
+public:
 
+
+
+   // Copy / Paste
    void SetImageToPaste(QImage Image);
    void DoPasteImage(PasteEvent Event);
    void CancelPasteImage();
    void ScaleImageToPaste(double ScalingFactor);
-
-
-   void GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size);
-
-
-   bool SaveImage(const QString &fileName, const char *fileFormat);
-   bool SaveDatabase(const QString &fileName);
-   bool LoadDatabase(const QString &fileName);
-   void setPenColor(const QColor &newColor);
-   bool SetLayerVisibility(unsigned int SelectedLayer, bool Visibility);
-   void setPenWidth(int newWidth);
-   void UseSpongeAsEraser(bool UseSponge) {if (UseSponge) {myEraserWidth = Settings.SpongeSize;} else {myEraserWidth = Settings.EraserSize;}}
-   void CutSelection(bool DoCut) {CutMode = DoCut;}
-   void RestorePenWidth() {myPenWidth = SelectedPenWidth;}
-   void ExtendPenWidthForMarker() {myPenWidth = SelectedPenWidth * 5 + 2;}
    void PasteImage(QImage ImageToPaste);
    void CopyImageToClipboard();
 
 
+
+   void GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size);
+
+   // Persistence
+   bool SaveImage(const QString &fileName, const char *fileFormat);
+   bool SaveDatabase(const QString &fileName);
+   bool LoadDatabase(const QString &fileName);
+private:
+   QString AutosaveName;
+    QString GetAutoSaveName();
+    bool DrawStoredSegments();
+public slots:
+   void AutoSaveDatabase();
+public:
+   void SetAutosaveName(const QString &Name) {AutosaveName = Name;}
+
+
+   void setPenColor(const QColor &newColor);
+   void setPenWidth(int newWidth);
+   void UseSpongeAsEraser(bool UseSponge) {CurrentlyDrawnObject.UseSpongeAsEraser(UseSponge);}
+   void CutSelection(bool DoCut) {CutMode = DoCut;}
+   void RestorePenWidth() {CurrentlyDrawnObject.RestorePenWidth();}
+
+   // Planes
    void MoveImageToBackgroundLayer();
    void MoveTopBackgroundLayerToImage();
    void CollapseBackgroundLayers();
    void CollapseAllVisibleLayersToTop();
+   bool SetLayerVisibility(unsigned int SelectedLayer, bool Visibility);
+   void Freeze(bool Mode) {BackgroundImages.Freeze(Mode);}
+   bool ImportImageToBackgroundLayer(const QString &fileName);
+
+
    void clearImage();
 
    bool isModified() const { return modified; }
    void SetModified() {modified =  true; AutosaveNeeded = true;}
-   QColor penColor() const { return myPenColor; }
-   int penWidth() const { return SelectedPenWidth; }
-   void Freeze(bool Mode) {Frozen = Mode;}
+   QColor penColor() const {return CurrentlyDrawnObject.penColor(); }
+   int penWidth() const { return CurrentlyDrawnObject.penWidth(); }
+
    bool GetShowOverview() {return ShowOverview;}
    void ToggleShowOverview(bool Mode);
+   void PaintOverview(QPainter &p, const QSize &OutputSize);
+
 
    QColor GetBackGroundColor() const { return BackGroundColor; }
    void setBackGroundColor(const QColor &newColor) {BackGroundColor = newColor; AdjustMarkercolor(); update();}
-   void AdjustMarkercolor() {Markercolor = QColor(BackGroundColor.red()^0xFF, BackGroundColor.green()^0xFF, BackGroundColor.blue()^0xFF);}
-   void setPostItBackgroundColor(const QColor &newColor) {PostItBackgroundColor = newColor; update();}
-   void setSelectionHintColor(const QColor &newColor) {SelectionHintColor = newColor;}
+   void setSelectionHintColor(const QColor &newColor) {CurrentSeelection.setSelectionHintColor(newColor);}
 
-   enum SelectMode {All, First, Last};
-   bool FindSelectedPostIts(QPointF Position, SelectMode Mode = First);
-   bool IsInsideAnyPostIt(QPointF Position);
-
-   void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundImagesOrigin);
-   void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect) {PaintVisibleDrawing(painter, dirtyRect, Origin, BackgroundImagesOrigin);}
-
-
+   void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundOffset);
+   void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect) {PaintVisibleDrawing(painter, dirtyRect, Origin, {0,0});}
 
    void setMarkerActive(bool newMarkerActive)
    {
-      MarkerActive = newMarkerActive;
-      if (MarkerActive) {
-         ExtendPenWidthForMarker();
-      } else {
-         RestorePenWidth();
-      }
+      CurrentlyDrawnObject.setMarkerActive(newMarkerActive);
    }
 
-   void FlushLastDrawnPicture();
-   void ClearLastDrawnObjectPoints() {LastDrawnObjectPoints.clear();}
+   void DrawLastDrawnShapeAndStartNewShape();
+  // void ClearLastDrawnObjectPoints() {LastDrawnObjectPoints.clear();}
 
    void ResizeAll(int width, int height);
-   void UpdateBoundingboxesForFinishedShape(QPointF Position);
-   void PaintOverview(QPainter &p, const QSize &OutputSize);
-   bool getLastDrawingValid() const
-   {
-      return LastDrawingValid;
-   }
-   void setLastDrawingValid(bool newLastDrawingValid)
-   {
-      LastDrawingValid = newLastDrawingValid;
-   }
+   void EndShape();
 
    void setLastPoint(QPointF newLastPoint)
    {
+      //CurrentlyDrawnObject.setLastPoint(newLastPoint);
       lastPointDrawn = newLastPoint;
    }
    QPointF getLastPointDrawn() {return lastPointDrawn;}
@@ -254,38 +234,43 @@ public:
 
    bool getDiscardSelection() const
    {
-      return DiscardSelection;
+      return CurrentSeelection.getDiscardSelection();
    }
    void setDiscardSelection(bool newDiscardSelection)
    {
-      DiscardSelection = newDiscardSelection;
+      CurrentSeelection.setDiscardSelection(newDiscardSelection);
    }
 
    QPointF getSelectedCurrentPosition() const
    {
-      return SelectedCurrentPosition;
+      return CurrentSeelection.getSelectedCurrentPosition();
    }
    void setSelectedCurrentPosition(QPointF newSelectedCurrentPosition)
    {
-      SelectedCurrentPosition = newSelectedCurrentPosition;
+      CurrentSeelection.setSelectedCurrentPosition(newSelectedCurrentPosition);
    }
-   void MoveSelectedCurrentPosition(QPointF delta) {SelectedCurrentPosition += delta;}
+   void MoveSelectedCurrentPosition(QPointF delta) {CurrentSeelection.MoveSelectedCurrentPosition(delta);}
 
    QPointF getButtonDownPosition() const
    {
       return ButtonDownPosition;
    }
 
-   int getMyPenWidth() const
+
+   BackgroundImageManagerClass &getBackgroundImages()
    {
-      return myPenWidth;
+      return BackgroundImages;
    }
 
-   void ExtendBoundingboxAndShape(QPointF Position);
-   void setShowPostitsFrame(bool newShowPostitsFrame)
+
+#if 0
+   int getMyPenWidth() const
    {
-      ShowPostitsFrame = newShowPostitsFrame;
+      return CurrentlyDrawnObject.getMyPenWidth();
    }
+#endif
+
+  // void ExtendBoundingboxAndShape(QPointF Position);
 
    QPointF TranslateCoordinateOffsetFromOverview(QPointF Coordinates);
    const QColor &getScrollHintColor() const
@@ -299,34 +284,23 @@ public:
 
    static constexpr double JitterPressureLimit = 0.6;
    bool IsJitter(QPointF OldPoint, QPointF NewPoint, double Pressure) {
-      return ((Pressure < JitterPressureLimit) && ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()*3+2)));
+      return ((Pressure < JitterPressureLimit) && ((OldPoint-NewPoint).manhattanLength() < (CurrentlyDrawnObject.getMyPenWidth()*3+2)));
    }
-   bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, double Pressure /* [[maybe_unused]] */) {
-      return ((OldPoint-NewPoint).manhattanLength() < (getMyPenWidth()+2));
+   bool IsSelectionJitter(QPointF OldPoint, QPointF NewPoint, float Pressure  [[maybe_unused]] ) {
+      return ((OldPoint-NewPoint).manhattanLength() < (CurrentlyDrawnObject.getMyPenWidth()+2));
+   }
+   bool IsSelectionJitter(QPointF OldPoint, float Pressure  [[maybe_unused]] ) {
+      return IsSelectionJitter(OldPoint, lastPointDrawn, Pressure);
    }
 
-   bool ImportImageToBackgroundLayer(const QString &fileName);
-   void ClearLastDrawnPicture();
 
-   void DeleteSelectedPostits();
-   void DuplicateSelectedPostits();
 private:
 public:
-   void SetAutosaveName(const QString &Name) {AutosaveName = Name;}
-private:
-   QString AutosaveName;
-   QString GetAutoSaveName();
-public slots:
-   void AutoSaveDatabase();
-
 
 private:
-   double CalculatePenWidthLinear(double Pressure, int BaseWidth);
-   double CalculatePenWidthQuadratic(double Pressure, int BaseWidth);
    void update();
    void update(const QRect &r);
-   void UpdateGUIElements(unsigned long NumberOfLayers);
-   void CreatePostit(QImage BackgroundImage, QImage Image, QPointF Position, BoundingBoxClass Box, QPainterPath Path);
+   void UpdateGUIElements();
 };
 
 #endif // DATABASECLASS_H

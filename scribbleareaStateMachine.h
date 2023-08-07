@@ -125,6 +125,43 @@ public:
        Pressure(0),
        Erasing(Eraser)
    {}
+#if 0
+   /*
+# [tiltXrad, tiltYrad] => [azimuthRad, altitudeRad]
+# tiltX and tiltY should be in the range [0, pi/2]
+def tilt2spherical(inVec):
+    tiltXrad, tiltYrad = inVec[0], inVec[1]
+
+    if tiltXrad == 0 and tiltYrad == 0:
+        # pen perpendicular to the pad
+        return [0, math.pi/2]
+
+    # X and Y of a vector created by the intersection of tilt planes
+    # first normal vectors of tiltX and tiltY planes are defined
+    # from that cross product is done to find this vector perpendicular to both plane's normal vector
+    # in this unit vector Z is ignored to get x y coords projected on the pad
+    y = math.cos(tiltXrad) * math.sin(tiltYrad)
+    x = -math.sin(tiltXrad) * -math.cos(tiltYrad)
+    z = -math.cos(tiltXrad)*-math.cos(tiltYrad)
+    # compute angle of the projected 2D vector to get azimuth in the proper direction
+    azimuthRad = -math.atan2(y, x) + math.pi/2
+    if azimuthRad < 0:
+        # make always positive in range from 0 to 2*pi
+        azimuthRad += 2*math.pi
+
+    vecLenOn2DPad = math.sqrt(x*x+y*y)
+    altitudeRad = math.atan(z / vecLenOn2DPad)
+
+    # other possible, simpler way to get altitudeRad which is not 100% correct:
+    # deviation: max(7.96°) / avg(2.00°) / median(0.91°)
+    # not derived from anything, just two 2D situations combined by a multiplication
+    # altitudeRad = math.pi/2-math.acos(math.cos(tiltXrad) * math.cos(tiltYrad))
+
+    return [azimuthRad, altitudeRad]
+
+
+*/
+#endif
 };
 
 class StateBaseClass {
