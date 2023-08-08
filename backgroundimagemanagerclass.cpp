@@ -15,7 +15,7 @@ bool BackgroundImageManagerClass::MoveTopBackgroundLayerToImage(QImage &Image, D
    if (!BackgroundImages.empty()) {
       // create empty image
       QImage newImage(Image.size(), QImage::Format_ARGB32);
-      newImage.fill(UglyPatchNeedsFixing.getTransparentColor());
+      newImage.fill(DatabaseClass::getTransparentColor());
       QPainter painter(&newImage);
 
       // draw top bg layer onto it
