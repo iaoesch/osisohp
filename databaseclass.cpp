@@ -149,7 +149,7 @@ void DatabaseClass::resizeScrolledImage()
     GetOffsetAndAdjustOrigin(image, Origin, Offset, Size);
 
     resizeImage(&image, Size, Offset);
-    BackgroundImages.resizeScrolledImage(Size, Offset, *this);
+   // BackgroundImages.resizeScrolledImage(Size, Offset, *this);
 
     // Now adjust all postits
     Postits.MoveAllPostits(Offset);
@@ -195,7 +195,7 @@ bool DatabaseClass::ImportImageToBackgroundLayer(const QString &fileName)
        return false;
    }
 
-   BackgroundImages.AddLayerTop(loadedImage);
+   BackgroundImages.AddLayerTop(loadedImage, QPointF(0,0));
    UpdateGUIElements();
    return true;
 }
@@ -203,7 +203,7 @@ bool DatabaseClass::ImportImageToBackgroundLayer(const QString &fileName)
 void DatabaseClass::MoveImageToBackgroundLayer()
 {
    TransferLastDrawnShape();
-   BackgroundImages.AddLayerTop(image);
+   BackgroundImages.AddLayerTop(image, QPointF(0,0));
    clearImage();
    UpdateGUIElements();
 }
@@ -226,7 +226,7 @@ void DatabaseClass::CollapseBackgroundLayers()
 
 void DatabaseClass::CollapseAllVisibleLayersToTop()
 {
-   if (!BackgroundImages.CollapseAllVisibleLayersToTop(image, *this)) {
+   if (!BackgroundImages.CollapseAllVisibleLayersToTop(image)) {
       SetModified();
    }
    UpdateGUIElements();
@@ -512,7 +512,7 @@ void DatabaseClass::ResizeAll(int width, int height)
       int newHeight = qMax(height + 128, image.height());
       resizeImage(&image, QSize(newWidth+ToInt(Origin.x()), newHeight+ToInt(Origin.y())));
       resizeImage(&CurrentlyDrawnObject.Image(), QSize(newWidth, newHeight));
-      BackgroundImages.Resize(newWidth, newHeight);
+      //BackgroundImages.Resize(newWidth, newHeight);
 
       update();
    }
@@ -572,13 +572,13 @@ void DatabaseClass::DoPasteImage(PasteEvent Event)
 
    switch(Event) {
    case DatabaseClass::PasteTopLayer:
-      BackgroundImages.AddLayerTop(PastingObject.CreateImage(image, *this, Origin));
+      BackgroundImages.AddLayerTop(PastingObject.CreateImage(image, *this, Origin), Origin);
       UpdateGUIElements();
       SetModified();
       break;
 
    case DatabaseClass::PasteBottomLayer:
-      BackgroundImages.AddLayerBottom(PastingObject.CreateImage(image, *this, Origin));
+      BackgroundImages.AddLayerBottom(PastingObject.CreateImage(image, *this, Origin), Origin);
       UpdateGUIElements();
       SetModified();
       break;

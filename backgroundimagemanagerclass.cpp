@@ -19,7 +19,8 @@ bool BackgroundImageManagerClass::MoveTopBackgroundLayerToImage(QImage &Image, D
       QPainter painter(&newImage);
 
       // draw top bg layer onto it
-      painter.drawImage((BackgroundImagesOrigin-UglyPatchNeedsFixing.GetOrigin()).toPoint(), *BackgroundImages.back());
+      //painter.drawImage((BackgroundImagesOrigin-UglyPatchNeedsFixing.GetOrigin()).toPoint(), *BackgroundImages.back());
+      BackgroundImages.back().Draw(painter);
       BackgroundImages.pop_back();
 
       // Then draw our current image (Without the currently drawn object)
@@ -36,38 +37,47 @@ bool BackgroundImageManagerClass::MoveTopBackgroundLayerToImage(QImage &Image, D
 bool BackgroundImageManagerClass::CollapseBackgroundLayers()
 {
    if (!BackgroundImages.empty()) {
-      QImage newImage;
-      QPainter painter;
-      auto it = BackgroundImages.begin();
-      while (it != BackgroundImages.end()) {
-         if (it->IsVisible()) {
-            if (newImage.isNull()) {
-               newImage = **it;
-               painter.begin(&newImage);
-            } else {
-               painter.drawImage(QPoint(0,0), **it);
-            }
-            it = BackgroundImages.erase(it);
-         } else {
-            it++;
-         }
+      BoundingBoxClass NewImageSize;
+
+      // Determine combined ImageSize
+      for (auto &Image: BackgroundImages) {
+          if (Image.IsVisible()) {
+              NewImageSize.AddBox(Image.Box());
+          }
       }
-      BackgroundImages.push_back(std::make_unique<QImage>(newImage));
-      return true;
+
+      if (NewImageSize.IsValid()) {
+          QImage newImage(NewImageSize.QRectangle().size(), QImage::Format_ARGB32);
+          QPainter painter(&newImage);
+          QPoint Offset(NewImageSize.GetLeft(), NewImageSize.GetBottom());
+
+          auto it = BackgroundImages.begin();
+          while (it != BackgroundImages.end()) {
+              if (it->IsVisible()) {
+                  it->Draw(painter, Offset);
+                  it = BackgroundImages.erase(it);
+              } else {
+                  it++;
+              }
+          }
+          BackgroundImages.push_back(ImageDescriptor(std::make_unique<QImage>(newImage), Offset));
+          return true;
+      }
    }
    return false;
 }
 
-bool BackgroundImageManagerClass::CollapseAllVisibleLayersToTop(QImage &Image, DatabaseClass &UglyPatchNeedsFixing)
+bool BackgroundImageManagerClass::CollapseAllVisibleLayersToTop(QImage &Image /*, DatabaseClass &UglyPatchNeedsFixing*/)
 {
    if (!BackgroundImages.empty()) {
       QImage newImage(Image.size(), QImage::Format_ARGB32);
-      newImage.fill(UglyPatchNeedsFixing.getTransparentColor());
+      newImage.fill(DatabaseClass::getTransparentColor());
       QPainter painter(&newImage);
       auto it = BackgroundImages.begin();
       while (it != BackgroundImages.end()) {
          if (it->IsVisible()) {
-            painter.drawImage(BackgroundImagesOrigin-UglyPatchNeedsFixing.GetOrigin(), **it);
+              it->Draw(painter);
+            //painter.drawImage(BackgroundImagesOrigin-UglyPatchNeedsFixing.GetOrigin(), **it);
             it = BackgroundImages.erase(it);
          } else {
             it++;
@@ -80,6 +90,7 @@ bool BackgroundImageManagerClass::CollapseAllVisibleLayersToTop(QImage &Image, D
    return false;
 }
 
+#if 0
 void BackgroundImageManagerClass::Resize(int width, int height)
 {
    if (!BackgroundFrozen) {
@@ -98,12 +109,14 @@ if (!BackgroundFrozen && !BackgroundImages.empty()) {
    }
 }
 }
+#endif
 
 void BackgroundImageManagerClass::DrawAllVisible(QPainter &painter, QRect const &dirtyRect, QPointF const Offset)
 {
    for (auto &p: BackgroundImages) {
       if (p.IsVisible()) {
-         painter.drawImage(dirtyRect, *p, dirtyRect.translated((BackgroundImagesOrigin + Offset).toPoint()));
+         p.Draw(painter, dirtyRect);
+         //painter.drawImage(dirtyRect, *p, dirtyRect.translated((BackgroundImagesOrigin + Offset).toPoint()));
       }
    }
 }
@@ -114,8 +127,7 @@ void BackgroundImageManagerClass::Save(QDataStream &out)
       out << BackgroundImagesOrigin;
       out << static_cast<quint32>(BackgroundImages.size());
       for (auto &Picture: BackgroundImages) {
-         out << Picture.IsVisible();
-         out << *Picture;
+         out << Picture;
       }
 }
 
@@ -128,14 +140,16 @@ std::vector<bool> BackgroundImageManagerClass::Load(QDataStream &in)
    in >> NumberOfBackgroundLayers;
    BackgroundImages.clear();
    bool Visible;
+   QPointF Offset;
    QImage NewImage;
 
    std::vector<bool> Visibilities;
    //emit(NumberOfLayerChanged(NumberOfBackgroundLayers));
    for (int i = 0; i < NumberOfBackgroundLayers; i++) {
       in >> Visible;
+      in >> Offset;
       in >> NewImage;
-      BackgroundImages.push_back(ImageDescriptor(std::make_unique<QImage>(NewImage), Visible));
+      BackgroundImages.push_back(ImageDescriptor(std::make_unique<QImage>(NewImage), Offset, Visible));
       Visibilities.push_back(Visible);
       //emit(SetVisibilityIndicatorOfLayer(i, Visible));
    }
@@ -148,6 +162,7 @@ void BackgroundImageManagerClass::Clear()
    BackgroundImages.clear();
 }
 
+#if 0
 void BackgroundImageManagerClass::resizeScrolledImage(QSize Size, QPoint Offset, DatabaseClass &UglyWorkaroundNeedsFixing)
 {
 
@@ -160,6 +175,7 @@ void BackgroundImageManagerClass::resizeScrolledImage(QSize Size, QPoint Offset,
    }
 
 }
+#endif
 
 std::vector<bool> BackgroundImageManagerClass::GetLayervisibilities()
 {
@@ -181,12 +197,36 @@ bool BackgroundImageManagerClass::SetLayerVisibility(unsigned int SelectedLayer,
    return false;
 }
 
-void BackgroundImageManagerClass::AddLayerTop(QImage NewImage)
+void BackgroundImageManagerClass::AddLayerTop(QImage NewImage, QPointF Offset)
 {
-   BackgroundImages.push_back(std::make_unique<QImage>(NewImage));
+   BackgroundImages.push_back({std::make_unique<QImage>(NewImage), Offset, true});
 }
 
-void BackgroundImageManagerClass::AddLayerBottom(QImage NewImage)
+void BackgroundImageManagerClass::AddLayerBottom(QImage NewImage, QPointF Offset)
 {
-   BackgroundImages.push_front(std::make_unique<QImage>(NewImage));
+   //BackgroundImages.push_front(ImageDescriptor(std::make_unique<QImage>(NewImage), Offset, true));
+   BackgroundImages.push_front({std::make_unique<QImage>(NewImage), Offset, true});
+}
+
+void BackgroundImageManagerClass::ImageDescriptor::Draw(QPainter &painter) const
+{
+   painter.drawImage(Offset.toPoint(), *Image);
+}
+
+void BackgroundImageManagerClass::ImageDescriptor::Draw(QPainter &painter, QPointF Shift) const
+{
+   painter.drawImage((Offset - Shift).toPoint(), *Image);
+}
+
+void BackgroundImageManagerClass::ImageDescriptor::Draw(QPainter &painter, QRect DirtyRect) const
+{
+   painter.drawImage(DirtyRect, *Image, DirtyRect.translated((-Offset).toPoint()));
+}
+
+QDataStream &operator << (QDataStream &Out, const BackgroundImageManagerClass::ImageDescriptor &Data)
+{
+   Out << Data.Visible;
+   Out << Data.Offset;
+   Out << *(Data.Image);
+   return Out;
 }
