@@ -113,6 +113,9 @@ if (!BackgroundFrozen && !BackgroundImages.empty()) {
 
 void BackgroundImageManagerClass::DrawAllVisible(QPainter &painter, QRect const &dirtyRect, QPointF Offset)
 {
+   if (BackgroundFrozen) {
+      Offset = FrozenBackgroundImagesOffset;
+   }
    for (auto &p: BackgroundImages) {
       if (p.IsVisible()) {
          p.Draw(painter, dirtyRect, Offset);

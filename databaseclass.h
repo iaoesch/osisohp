@@ -92,8 +92,8 @@ public:
    bool IsCutoutActive() {return CutMode;}
    void ScrollImages(QPointF Offset) {
       DisplayOffset -= Offset;
-      BackgroundImages.MoveOrigin(Offset);
-      Postits.MoveAllPostits(Offset.toPoint());
+   //   BackgroundImages.MoveOrigin(Offset);
+   //   Postits.MoveAllPostits(Offset.toPoint());
    }
 
    QPointF GetOrigin() {return DisplayOffset;}
@@ -187,7 +187,8 @@ public:
    void CollapseBackgroundLayers();
    void CollapseAllVisibleLayersToTop();
    bool SetLayerVisibility(unsigned int SelectedLayer, bool Visibility);
-   void Freeze(bool Mode) {BackgroundImages.Freeze(Mode);}
+   void Freeze() {BackgroundImages.Freeze(DisplayOffset);}
+   void UnFreeze() {BackgroundImages.UnFreeze(DisplayOffset);}
    bool ImportImageToBackgroundLayer(const QString &fileName);
 
 

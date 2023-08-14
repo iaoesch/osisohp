@@ -106,7 +106,12 @@ public:
     QColor penColor() const { return MyDatas.penColor();}
     int penWidth() const { return MyDatas.penWidth();}
 
-    void Freeze(bool Mode) {MyDatas.Freeze(Mode);}
+    void Freeze(bool Mode) {if (Mode) {
+            MyDatas.Freeze();
+        } else {
+            MyDatas.UnFreeze();
+        }
+        }
     //void ToggleShowOverview(bool Mode) {MyDatas.ToggleShowOverview(Mode);}
     void MoveImageToBackgroundLayer() {MyDatas.MoveImageToBackgroundLayer();}
     void MoveTopBackgroundLayerToImage() {MyDatas.MoveTopBackgroundLayerToImage();}

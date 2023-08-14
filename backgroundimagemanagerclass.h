@@ -24,7 +24,7 @@ class BackgroundImageManagerClass
      void SetVisible(bool v) {Visible = v;}
 
      void Move(QPointF DeltaOffset)  {
-         Position -= DeltaOffset;
+         Position += DeltaOffset;
      }
 
      void Draw(QPainter &painter) const;
@@ -46,6 +46,7 @@ class BackgroundImageManagerClass
 
   QPointF BackgroundImagesOrigin;
   bool BackgroundFrozen;
+  QPointF FrozenBackgroundImagesOffset;
 
 
 
@@ -59,7 +60,7 @@ public:
 
    void MoveOrigin(QPointF Offset)  {
       if (!BackgroundFrozen) {
-         BackgroundImagesOrigin -= Offset;
+         BackgroundImagesOrigin += Offset;
           for (auto &p: BackgroundImages) {
               p.Move(Offset);
           }
@@ -67,7 +68,8 @@ public:
    }
    void Clear();
 
-   void Freeze(bool Mode) {BackgroundFrozen = Mode;}
+   void Freeze(QPointF Offset) {BackgroundFrozen = true; FrozenBackgroundImagesOffset = Offset;}
+   void UnFreeze(QPointF Offset) {BackgroundFrozen = false; MoveOrigin(Offset - FrozenBackgroundImagesOffset);}
 
    //void resizeScrolledImage(QSize Size, QPoint Offset, DatabaseClass &UglyWorkaroundNeedsFixing);
 
