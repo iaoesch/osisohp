@@ -12,26 +12,26 @@ class BackgroundImageManagerClass
 {
    class ImageDescriptor {
      std::unique_ptr<QImage> Image;
-     QPointF Offset;
+       QPointF Position;
      bool Visible;
 
      public:
-     ImageDescriptor(std::unique_ptr<QImage> TheImage, QPointF TheOffset) : Image(std::move(TheImage)), Offset(TheOffset), Visible(true) {}
-     ImageDescriptor(std::unique_ptr<QImage> TheImage, QPointF TheOffset, bool v) : Image(std::move(TheImage)), Offset(TheOffset), Visible(v) {}
+     ImageDescriptor(std::unique_ptr<QImage> TheImage, QPointF TheOffset) : Image(std::move(TheImage)), Position(TheOffset), Visible(true) {}
+     ImageDescriptor(std::unique_ptr<QImage> TheImage, QPointF TheOffset, bool v) : Image(std::move(TheImage)), Position(TheOffset), Visible(v) {}
    //  QImage &operator * () {return *Image;}
    //  QImage *operator -> () {return Image.operator ->();}
      bool IsVisible() const {return Visible;}
      void SetVisible(bool v) {Visible = v;}
 
      void Move(QPointF DeltaOffset)  {
-         Offset -= DeltaOffset;
+         Position -= DeltaOffset;
      }
 
      void Draw(QPainter &painter) const;
-     BoundingBoxClass Box() const {return BoundingBoxClass(Offset.x(), Offset.y(), Offset.x() + Image->width(), Offset.y() + Image->height());}
+     BoundingBoxClass Box() const {return BoundingBoxClass(Position.x(), Position.y(), Position.x() + Image->width(), Position.y() + Image->height());}
 
      void Draw(QPainter &painter, QPointF Shift) const;
-     void Draw(QPainter &painter, QRect DirtyRect) const;
+     void Draw(QPainter &painter, QRect DirtyRect, QPointF Shift) const;
 
      friend QDataStream &operator << (QDataStream &, const ImageDescriptor &Data);
      friend QDataStream &operator >> (QDataStream &, ImageDescriptor &Data);
@@ -75,7 +75,7 @@ public:
 
    bool SetLayerVisibility(unsigned int SelectedLayer, bool Visibility);
    void AddLayerTop(QImage NewImage, QPointF Offset);
-   void DrawAllVisible(QPainter &painter, const QRect &dirtyRect, const QPointF Offset);
+   void DrawAllVisible(QPainter &painter, const QRect &dirtyRect, QPointF Offset);
    void Save(QDataStream &out);
    std::vector<bool> Load(QDataStream &in);
    //void Resize(int width, int height);

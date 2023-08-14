@@ -111,11 +111,11 @@ if (!BackgroundFrozen && !BackgroundImages.empty()) {
 }
 #endif
 
-void BackgroundImageManagerClass::DrawAllVisible(QPainter &painter, QRect const &dirtyRect, QPointF const Offset)
+void BackgroundImageManagerClass::DrawAllVisible(QPainter &painter, QRect const &dirtyRect, QPointF Offset)
 {
    for (auto &p: BackgroundImages) {
       if (p.IsVisible()) {
-         p.Draw(painter, dirtyRect);
+         p.Draw(painter, dirtyRect, Offset);
          //painter.drawImage(dirtyRect, *p, dirtyRect.translated((BackgroundImagesOrigin + Offset).toPoint()));
       }
    }
@@ -210,23 +210,24 @@ void BackgroundImageManagerClass::AddLayerBottom(QImage NewImage, QPointF Offset
 
 void BackgroundImageManagerClass::ImageDescriptor::Draw(QPainter &painter) const
 {
-   painter.drawImage(Offset.toPoint(), *Image);
+   painter.drawImage(Position.toPoint(), *Image);
 }
 
 void BackgroundImageManagerClass::ImageDescriptor::Draw(QPainter &painter, QPointF Shift) const
 {
-   painter.drawImage((Offset - Shift).toPoint(), *Image);
+   painter.drawImage((Position - Shift).toPoint(), *Image);
 }
 
-void BackgroundImageManagerClass::ImageDescriptor::Draw(QPainter &painter, QRect DirtyRect) const
+void BackgroundImageManagerClass::ImageDescriptor::Draw(QPainter &painter, QRect DirtyRect, QPointF Shift) const
 {
-   painter.drawImage(DirtyRect, *Image, DirtyRect.translated((-Offset).toPoint()));
+   painter.drawImage(DirtyRect, *Image, DirtyRect.translated((-(Position-Shift)).toPoint()));
+ //painter.drawImage(dirtyRect, *p, dirtyRect.translated((BackgroundImagesOrigin + Offset).toPoint()));
 }
 
 QDataStream &operator << (QDataStream &Out, const BackgroundImageManagerClass::ImageDescriptor &Data)
 {
    Out << Data.Visible;
-   Out << Data.Offset;
+   Out << Data.Position;
    Out << *(Data.Image);
    return Out;
 }

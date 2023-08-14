@@ -38,7 +38,7 @@ class DatabaseClass : public QObject
    QImage image;
 
 
-   QPointF Origin;
+   QPointF DisplayOffset;
 
    bool modified;
    bool AutosaveNeeded;
@@ -90,11 +90,13 @@ public:
       return CurrentlyDrawnObject.IsInside(Point);
    }
    bool IsCutoutActive() {return CutMode;}
-   void MoveOrigin(QPointF Offset) {
-      Origin -= Offset;
+   void ScrollImages(QPointF Offset) {
+      DisplayOffset -= Offset;
       BackgroundImages.MoveOrigin(Offset);
+      Postits.MoveAllPostits(Offset.toPoint());
    }
-   QPointF GetOrigin() {return Origin;}
+
+   QPointF GetOrigin() {return DisplayOffset;}
 
    DatabaseClass(ScribbleArea &Parent, class SettingClass &MySettings);
    bool ImportImage(const QString &fileName);
@@ -131,11 +133,11 @@ public:
    typedef PostitManagerClass::SelectMode SelectMode;
    bool FindSelectedPostIts(QPointF Position, SelectMode Mode = SelectMode::First)
    {
-      return Postits.FindSelectedPostIts(Position + Origin, Mode);
+      return Postits.FindSelectedPostIts(Position + DisplayOffset, Mode);
    }
    bool IsInsideAnyPostIt(QPointF Position)
    {
-      return Postits.IsInsideAnyPostIt(Position + Origin);
+      return Postits.IsInsideAnyPostIt(Position + DisplayOffset);
    }
    void setShowPostitsFrame(bool newShowPostitsFrame)
    {
@@ -158,14 +160,12 @@ public:
    void CopyImageToClipboard();
 
 
-
-   void GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size);
-
    // Persistence
    bool SaveImage(const QString &fileName, const char *fileFormat);
    bool SaveDatabase(const QString &fileName);
    bool LoadDatabase(const QString &fileName);
 private:
+    void GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size);
    QString AutosaveName;
     QString GetAutoSaveName();
     bool DrawStoredSegments();
@@ -208,7 +208,7 @@ public:
    void setSelectionHintColor(const QColor &newColor) {CurrentSeelection.setSelectionHintColor(newColor);}
 
    void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect, const QPointF &Origin, const QPointF &BackgroundOffset);
-   void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect) {PaintVisibleDrawing(painter, dirtyRect, Origin, {0,0});}
+   void PaintVisibleDrawing(QPainter &painter, const QRect &dirtyRect) {PaintVisibleDrawing(painter, dirtyRect, DisplayOffset, {0,0});}
 
    void setMarkerActive(bool newMarkerActive)
    {

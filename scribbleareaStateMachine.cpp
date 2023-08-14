@@ -1097,7 +1097,7 @@ void StateClass<State::ScrollingDrawingArea>::HandleMoveEventSM(Qt::MouseButtons
            return; // ignore small movements (probably use penwidth*2)
        }
        StateMachine.Context.MyDatas.TransferLastDrawnShape();
-      StateMachine.Context.MyDatas.MoveOrigin(Position- StateMachine.Context.ScrollingLastPosition);
+       StateMachine.Context.MyDatas.ScrollImages(Position- StateMachine.Context.ScrollingLastPosition);
 
 
       StateMachine.Context.ScrollingLastPosition = Position;
@@ -1113,7 +1113,7 @@ template<>
 void StateClass<State::ScrollingDrawingArea>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, MAY_BE_UNUSED const PenInfoClass &PenInfo)
 {
    if (Button == Qt::LeftButton) {
-      StateMachine.Context.MyDatas.MoveOrigin(Position - StateMachine.Context.ScrollingLastPosition);
+      StateMachine.Context.MyDatas.ScrollImages(Position - StateMachine.Context.ScrollingLastPosition);
 
       StateMachine.Context.MyDatas.resizeScrolledImage();
       StateMachine.Interface.UpdateRequest();
@@ -1135,7 +1135,7 @@ void StateClass<State::TouchScrollingDrawingArea>::HandleTouchMoveEventSM(int Nu
    DEBUG_LOG << "TM(" << MeanPosition.x() <<":" << MeanPosition.y() << ")";
 
          StateMachine.Context.MyDatas.TransferLastDrawnShape();
-         StateMachine.Context.MyDatas.MoveOrigin(MeanPosition- StateMachine.Context.ScrollingLastPosition);
+   StateMachine.Context.MyDatas.ScrollImages(MeanPosition- StateMachine.Context.ScrollingLastPosition);
 
          StateMachine.Context.ScrollingLastPosition = MeanPosition;
          StateMachine.Interface.UpdateRequest();
@@ -1158,7 +1158,7 @@ template<>
 void StateClass<State::TouchScrollingDrawingArea>::HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition)
 {
    if(NumberOfTouchpoints >= 2) {
-      StateMachine.Context.MyDatas.MoveOrigin(MeanPosition - StateMachine.Context.ScrollingLastPosition);
+   StateMachine.Context.MyDatas.ScrollImages(MeanPosition - StateMachine.Context.ScrollingLastPosition);
 
       StateMachine.Context.MyDatas.resizeScrolledImage();
       StateMachine.Interface.UpdateRequest();
@@ -1200,7 +1200,7 @@ template<>
 void StateClass<State::WaitingToSelectRegionFromOverview>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, MAY_BE_UNUSED Milliseconds Timestamp)
 {
    if (Button == Qt::LeftButton) {
-      StateMachine.Context.MyDatas.MoveOrigin(-(StateMachine.Context.MyDatas.TranslateCoordinateOffsetFromOverview(Position)-StateMachine.Context.MyDatas.GetOrigin()));
+      StateMachine.Context.MyDatas.ScrollImages(-(StateMachine.Context.MyDatas.TranslateCoordinateOffsetFromOverview(Position)-StateMachine.Context.MyDatas.GetOrigin()));
       StateMachine.SetNewState(&StateMachine.Idle);
       StateMachine.Context.MyDatas.ToggleShowOverview(false);
    }
