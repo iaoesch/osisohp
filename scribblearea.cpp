@@ -281,7 +281,7 @@ void ScribbleArea::tabletEvent(QTabletEvent * event)
           std::cout << "Tilt: (" << event->xTilt() << "; " << event->yTilt() << "), Rotation: " << event->rotation() << ", Pressure: " << event->pressure() << ", TngentPressure: " << event->tangentialPressure() << ", z: " << event->z() << std::endl;
           if (LastTablettMovePosition != event->position()) {
              DEBUG_LOG << "Tablett move " << event->type() << "/"<< event->buttons() << " <" << event->position().x() << ";" << event->position().y() << ">:" << event->pressure() << std::endl;
-             StateMachine.HandleMoveEventSM(event->buttons(), event->position(), ControllingStateMachine::Milliseconds(event->timestamp()), PenInfoClass(event));
+              StateMachine.HandleMoveEventSM(event->buttons(), event->position().toPoint(), ControllingStateMachine::Milliseconds(event->timestamp()), PenInfoClass(event));
              LastTablettMovePosition = event->position();
           }
           event->accept();
