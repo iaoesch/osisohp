@@ -89,7 +89,7 @@ void SettingClass::SetDefaultValues()
    GoingToFillTimeout = 800*DebugFactor;
    CancelFillTimeout = 800*DebugFactor;
    GoingToKillTimeout = 1000*DebugFactor;
-   SelectTimeout = 500 * DebugFactor;
+   SelectTimeout = 1000 * DebugFactor;
    PostItTimeout = 1000 * DebugFactor;
    MovePostitPauseTimeout = 500 * DebugFactor;
    PostitCopyTimeout = 1000 * DebugFactor;
