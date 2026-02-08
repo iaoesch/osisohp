@@ -81,6 +81,7 @@ private slots:
     void Save();
     void ProtectImage();
     void DirectSelect();
+    void SimpleInterface();
     void ShowPostitsFrame();
     void ShowCursors();
     void createLayerActions(int Number);
@@ -147,6 +148,7 @@ private:
     QAction *BlackBoardColorAct;
     QAction *penWidthAct;
     QAction *DirectPostitSelectAct;
+    QAction *SimpleInterfaceAct;
     QAction *ShowPostitsFrameAct;
     QAction *ShowGestureInfosAct;
     QAction *ShowCursorsAct;

@@ -256,6 +256,7 @@ private:
 #endif
       bool    SelectPostitsDirectly;
       bool    DownInsideObject;
+      bool    SimpleInterface;
 
       QPointF LastPointerPosition;
       bool    ShowPointer;
@@ -305,6 +306,7 @@ public:
    void UseSpongeAsEraser(bool SpongeMode) {Context.SpongeAsEraser = SpongeMode;}
 
    void setDirectSelect(bool Mode) {Context.SelectPostitsDirectly = Mode;}
+   void setSimpleInterface(bool Mode) {Context.SimpleInterface = Mode;}
    void SetNewState(StateBaseClass *NewState);
    enum PointerType {NONE, DRAWER, ERASER, WIPER};
    PointerType  PointerTypeToShow();

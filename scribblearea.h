@@ -88,6 +88,7 @@ public:
     void setPenColor(const QColor &newColor);
     void setPenWidth(int newWidth);
     void setDirectSelect(bool Mode) {StateMachine.setDirectSelect(Mode);}
+    void setSimpleInterface(bool Mode) {StateMachine.setSimpleInterface(Mode);}
     void setShowPostitsFrame(bool Mode) {MyDatas.setShowPostitsFrame(Mode); update();}
     void setShowGestureInfos(bool Mode) {ShowGestureInfos = Mode;}
 
