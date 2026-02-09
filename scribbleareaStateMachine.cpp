@@ -75,18 +75,22 @@ void StateBaseClass::HandleReleaseEventSM(MAY_BE_UNUSED Qt::MouseButton Button, 
 
 void StateBaseClass::HandleMoveNoLeftButtonEvent(Qt::MouseButtons Buttons, QPointF Position)
 {
-   if (Buttons == Qt::NoButton) {
-      if (StateMachine.Context.MyDatas.IsInsideLastPaintedObjectBoundingBox(Position)) {
-         if (StateMachine.Context.MyDatas.IsCutoutActive()) {
-            StateMachine.Interface.SetCursor(CursorManager::CutPossiblePointer );
-         } else {
-            StateMachine.Interface.SetCursor(CursorManager::CopySelectionPossiblePointer );
-         }
-      }  else if (StateMachine.Context.MyDatas.IsInsideAnyPostIt(Position)) {
-         StateMachine.Interface.SetCursor(CursorManager::SelectPossiblePointer);
-      }  else {
-         StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
-      }
+    if (Buttons == Qt::NoButton) {
+        if (StateMachine.Context.SimpleInterface == false) {
+            if (StateMachine.Context.MyDatas.IsInsideLastPaintedObjectBoundingBox(Position)) {
+                if (StateMachine.Context.MyDatas.IsCutoutActive()) {
+                    StateMachine.Interface.SetCursor(CursorManager::CutPossiblePointer );
+                } else {
+                    StateMachine.Interface.SetCursor(CursorManager::CopySelectionPossiblePointer );
+                }
+            }  else if (StateMachine.Context.MyDatas.IsInsideAnyPostIt(Position)) {
+                StateMachine.Interface.SetCursor(CursorManager::SelectPossiblePointer);
+            }  else {
+                StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
+            }
+        } else {
+            StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
+        }
    } else {
       StateMachine.Interface.SetCursor(CursorManager::StandardPointer);
    }
