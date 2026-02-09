@@ -2,6 +2,7 @@
 #ifndef VALUEGROUPDESCRIPTOR_H
 #define VALUEGROUPDESCRIPTOR_H
 
+#include <functional>
 #include <variant>
 #include <string>
 #include <vector>
