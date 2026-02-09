@@ -60,7 +60,7 @@ auto PastingObjectClass::PrepareToPasteImage(QImage &image, DatabaseClass &UglyW
     DatabaseClass::resizeImage(&image, RequiredSize);
     // Should also resize all layers
     // ToDo: required size is based on origin, should probably be based on BackgroundImagesOrigin
-    UglyWorkaroundForRefactoring.getBackgroundImages().Expand(RequiredSize);
+    //UglyWorkaroundForRefactoring.getBackgroundImages().Expand(RequiredSize);
     return std::make_tuple(RequiredSize, Destination);
 }
 

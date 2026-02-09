@@ -85,17 +85,17 @@ void SettingClass::SetDefaultValues()
    DirectSelectTimeout = 10.0;
    CopyTimeout = 500 * DebugFactor;
    DeletePostItTimeout = 2000 * DebugFactor;
-   GestureTimeout = 800 * DebugFactor;
+   GestureTimeout = 2000 * DebugFactor;
    GoingToFillTimeout = 800*DebugFactor;
    CancelFillTimeout = 800*DebugFactor;
    GoingToKillTimeout = 1000*DebugFactor;
-   SelectTimeout = 500 * DebugFactor;
+   SelectTimeout = 2000 * DebugFactor;
    PostItTimeout = 1000 * DebugFactor;
    MovePostitPauseTimeout = 500 * DebugFactor;
    PostitCopyTimeout = 1000 * DebugFactor;
    PointerHoldon = 250;
    EraserSize = 2;
-   SpongeSize = 15;
+   SpongeSize = 50;
 
    DefaultAutoSaveIntervall = 1;
    AutoSavePath = QDir::homePath().toStdString();

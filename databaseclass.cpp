@@ -62,7 +62,7 @@ bool DatabaseClass::ImportImage(const QString &fileName)
     image = loadedImage;
     modified = false;
     AutosaveNeeded = false;
-    Origin = {0,0};
+    DisplayOffset = {0,0};
     BackgroundImages.Clear();
     CurrentlyDrawnObject.CancelShape();
     update();
@@ -71,14 +71,14 @@ bool DatabaseClass::ImportImage(const QString &fileName)
 
 void DatabaseClass::MakeSelectionFromLastDrawnObject(bool Cutout)
 {
-    CurrentSeelection.MakeSelectionFromLastDrawnObject(image, Origin, CurrentlyDrawnObject, Cutout);
+    CurrentSeelection.MakeSelectionFromLastDrawnObject(image, DisplayOffset, CurrentlyDrawnObject, Cutout);
    CurrentlyDrawnObject.CancelShape();
 }
 
 void DatabaseClass::CreeatePostitFromSelection()
 {
    //std::cout << "new postit (" << PostIts.size() << ")" << std::flush;
-   Postits.CreatePostitAndSelect(CurrentSeelection, Origin);
+   Postits.CreatePostitAndSelect(CurrentSeelection, DisplayOffset);
    SetModified();
 }
 
@@ -119,11 +119,11 @@ bool DatabaseClass::DrawStoredSegments()
     return !StoredLineSegments.empty();
 }
 
-void DatabaseClass::GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &Offset, QSize &Size)
+void DatabaseClass::GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPoint &OriginAdjustement, QSize &Size)
 {
    if (Origin.x() < 0) {
        Size.setWidth(ToInt(Image.size().width() - Origin.x()));
-       Offset.setX(ToInt(- Origin.x()));
+       OriginAdjustement.setX(ToInt(- Origin.x()));
        Origin.setX(0);
    } else if (Origin.x()+Parent.width() > Image.size().width()){
        Size.setWidth(ToInt(Origin.x()+Parent.width()));
@@ -132,7 +132,7 @@ void DatabaseClass::GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPo
    }
    if (Origin.y() < 0) {
        Size.setHeight(ToInt(Image.size().height() - Origin.y()));
-       Offset.setY(ToInt(- Origin.y()));
+       OriginAdjustement.setY(ToInt(- Origin.y()));
        Origin.setY(0);
    } else if (Origin.y()+Parent.height() > Image.size().height()){
        Size.setHeight(ToInt(Origin.y()+Parent.height()));
@@ -143,16 +143,17 @@ void DatabaseClass::GetOffsetAndAdjustOrigin(QImage &Image, QPointF &Origin, QPo
 
 void DatabaseClass::resizeScrolledImage()
 {
-    QPoint Offset;
+    QPoint OffsetAdjustment;
     QSize Size;
 
-    GetOffsetAndAdjustOrigin(image, Origin, Offset, Size);
+    GetOffsetAndAdjustOrigin(image, DisplayOffset, OffsetAdjustment, Size);
 
-    resizeImage(&image, Size, Offset);
-    BackgroundImages.resizeScrolledImage(Size, Offset, *this);
+    resizeImage(&image, Size, OffsetAdjustment);
+   // BackgroundImages.resizeScrolledImage(Size, Offset, *this);
+    BackgroundImages.MoveOrigin(OffsetAdjustment);
 
     // Now adjust all postits
-    Postits.MoveAllPostits(Offset);
+    Postits.MoveAllPostits(OffsetAdjustment);
 }
 
 
@@ -195,7 +196,7 @@ bool DatabaseClass::ImportImageToBackgroundLayer(const QString &fileName)
        return false;
    }
 
-   BackgroundImages.AddLayerTop(loadedImage);
+   BackgroundImages.AddLayerTop(loadedImage, QPointF(0,0));
    UpdateGUIElements();
    return true;
 }
@@ -203,7 +204,7 @@ bool DatabaseClass::ImportImageToBackgroundLayer(const QString &fileName)
 void DatabaseClass::MoveImageToBackgroundLayer()
 {
    TransferLastDrawnShape();
-   BackgroundImages.AddLayerTop(image);
+   BackgroundImages.AddLayerTop(image, QPointF(0,0));
    clearImage();
    UpdateGUIElements();
 }
@@ -226,7 +227,7 @@ void DatabaseClass::CollapseBackgroundLayers()
 
 void DatabaseClass::CollapseAllVisibleLayersToTop()
 {
-   if (!BackgroundImages.CollapseAllVisibleLayersToTop(image, *this)) {
+   if (!BackgroundImages.CollapseAllVisibleLayersToTop(image)) {
       SetModified();
    }
    UpdateGUIElements();
@@ -266,8 +267,8 @@ void DatabaseClass::PasteImage(QImage ImageToPaste)
    }
 
 
-   QRectF Destination(Origin, DestSize);
-   QSize RequiredSize = image.size().expandedTo(DestSize.toSize() + QSize(ToInt(Origin.x()), ToInt(Origin.y())));
+   QRectF Destination(DisplayOffset, DestSize);
+   QSize RequiredSize = image.size().expandedTo(DestSize.toSize() + QSize(ToInt(DisplayOffset.x()), ToInt(DisplayOffset.y())));
    resizeImage(&image, RequiredSize);
    QPainter painter(&image);
    painter.drawImage(Destination, ImageToPaste);
@@ -279,7 +280,7 @@ void DatabaseClass::CopyImageToClipboard()
 {
    QImage ImageToSave(image.size(), QImage::Format_ARGB32);
    QPainter painter(&ImageToSave);
-   PaintVisibleDrawing(painter, image.rect(), {0,0}, -Origin);
+   PaintVisibleDrawing(painter, image.rect(), {0,0}, -DisplayOffset);
 
    QApplication::clipboard()->setImage(ImageToSave);
 }
@@ -288,7 +289,7 @@ bool DatabaseClass::SaveImage(const QString &fileName, const char *fileFormat)
 {
    QImage ImageToSave(image.size(), QImage::Format_ARGB32);
    QPainter painter(&ImageToSave);
-   PaintVisibleDrawing(painter, image.rect(), {0,0}, -Origin);
+   PaintVisibleDrawing(painter, image.rect(), {0,0}, -DisplayOffset);
 
    return ImageToSave.save(fileName, fileFormat);
 }
@@ -331,7 +332,7 @@ bool DatabaseClass::SaveDatabase(const QString &fileName)
 
       // Write the data
       out << image;
-      out << Origin;
+      out << DisplayOffset;
 
       // Now save all postits
       Postits.Save(out);
@@ -379,7 +380,7 @@ bool DatabaseClass::LoadDatabase(const QString &fileName)
 
    // Write the data
    in >> image;
-   in >> Origin;
+   in >> DisplayOffset;
 
    // Now read all postits
    Postits.Load(in);
@@ -404,12 +405,12 @@ void DatabaseClass::PaintOverview(QPainter &p, QSize const &OutputSize)
 {
    QImage Overview(image.size(), QImage::Format_ARGB32);
    QPainter painter(&Overview);
-   PaintVisibleDrawing(painter, Overview.rect(), {0,0}, -Origin);
+   PaintVisibleDrawing(painter, Overview.rect(), {0,0}, -DisplayOffset);
    painter.setPen(QPen(ScrollHintBorderColor, HintBorderPenWidth, Qt::SolidLine, Qt::RoundCap,
                        Qt::RoundJoin));
    painter.setBrush(QBrush(ScrollHintColor));
 
-   painter.drawRect(ToInt(Origin.x()), ToInt(Origin.y()), OutputSize.width(), OutputSize.height());
+   painter.drawRect(ToInt(DisplayOffset.x()), ToInt(DisplayOffset.y()), OutputSize.width(), OutputSize.height());
    p.drawImage(QPointF(0,0), Overview.scaled(OutputSize, Qt::KeepAspectRatio));
 }
 
@@ -438,7 +439,7 @@ QPointF DatabaseClass::TranslateCoordinateOffsetFromOverview(QPointF Coordinates
     return UpScaledCoordinates;
 }
 
-void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRect, QPointF const &Origin, QPointF const &BackgroundOffset)
+void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRect, QPointF const &Offset, QPointF const &BackgroundOffset_unused)
 {
     // First draw the background
     painter.setPen(QPen(QColor(0,0,0,0), 1, Qt::SolidLine, Qt::RoundCap,
@@ -447,21 +448,22 @@ void DatabaseClass::PaintVisibleDrawing(QPainter &painter, QRect const &dirtyRec
 
     painter.drawRect(dirtyRect);
 
-    BackgroundImages.DrawAllVisible(painter, dirtyRect, BackgroundOffset);
+   // BackgroundImages.DrawAllVisible(painter, dirtyRect, BackgroundOffset);
+    BackgroundImages.DrawAllVisible(painter, dirtyRect, Offset);
 
     // In marker mode, last drawn objec belongs into background
     CurrentlyDrawnObject.DrawBackgroundPart(painter, dirtyRect);
 
     // Then draw our current image (Without the currently drawn object)
-    CurrentlyDrawnObject.DrawForegroundPartAndModifiedImage(painter, image, Origin, dirtyRect);
+    CurrentlyDrawnObject.DrawForegroundPartAndModifiedImage(painter, image, Offset, dirtyRect);
 
     // Now draw the currently drawn object, in marker mode it was already drawn earlier in background
 
     // Now draw pasted object, if availlable
-    PastingObject.Draw(painter, Origin);
+    PastingObject.Draw(painter, Offset);
 
     // Now draw all postits
-    Postits.DrawAll(painter, Origin);
+    Postits.DrawAll(painter, Offset);
 
     // If we have something selected, draw it
     if (Parent.IsInSelectingState()) {
@@ -475,7 +477,7 @@ void DatabaseClass::DrawMovedSelection(const QPointF Offset)
 {
     QPainter painter(&image);
 
-    if (CurrentSeelection.DrawMovedSelection(painter, Offset+Origin)) {
+    if (CurrentSeelection.DrawMovedSelection(painter, Offset+DisplayOffset)) {
         SetModified();
         update();
     }
@@ -490,7 +492,7 @@ void DatabaseClass::MakeSreenMoveHint()
 
 void DatabaseClass::FilllastDrawnShape()
 {
-   CurrentlyDrawnObject.FillLastDrawnShape(QPainter(&image), Origin);
+    CurrentlyDrawnObject.FillLastDrawnShape(QPainter(&image), DisplayOffset);
    SetModified();
 }
 
@@ -498,7 +500,7 @@ void DatabaseClass::TransferLastDrawnShape()
 {
    QPainter painter(&image);
 
-   if (CurrentlyDrawnObject.TransferLastDrawnShape(painter, Origin)) {
+   if (CurrentlyDrawnObject.TransferLastDrawnShape(painter, DisplayOffset)) {
       SetModified();
       update();
    }
@@ -510,9 +512,9 @@ void DatabaseClass::ResizeAll(int width, int height)
    if (width > CurrentlyDrawnObject.Image().width() || height > CurrentlyDrawnObject.Image().height()) {
       int newWidth = qMax(width + 128, image.width());
       int newHeight = qMax(height + 128, image.height());
-      resizeImage(&image, QSize(newWidth+ToInt(Origin.x()), newHeight+ToInt(Origin.y())));
+      resizeImage(&image, QSize(newWidth+ToInt(DisplayOffset.x()), newHeight+ToInt(DisplayOffset.y())));
       resizeImage(&CurrentlyDrawnObject.Image(), QSize(newWidth, newHeight));
-      BackgroundImages.Resize(newWidth, newHeight);
+      //BackgroundImages.Resize(newWidth, newHeight);
 
       update();
    }
@@ -522,7 +524,7 @@ void DatabaseClass::ResizeAll(int width, int height)
 void DatabaseClass::DrawLastDrawnShapeAndStartNewShape()
 {
    QPainter painter(&image);
-   if (CurrentlyDrawnObject.TransferLastDrawnShape(painter, Origin)) {
+   if (CurrentlyDrawnObject.TransferLastDrawnShape(painter, DisplayOffset)) {
       SetModified();
       update();
    }
@@ -572,18 +574,18 @@ void DatabaseClass::DoPasteImage(PasteEvent Event)
 
    switch(Event) {
    case DatabaseClass::PasteTopLayer:
-      BackgroundImages.AddLayerTop(PastingObject.CreateImage(image, *this, Origin));
+      BackgroundImages.AddLayerTop(PastingObject.CreateImage(image, *this, DisplayOffset), DisplayOffset);
       UpdateGUIElements();
       SetModified();
       break;
 
    case DatabaseClass::PasteBottomLayer:
-      BackgroundImages.AddLayerBottom(PastingObject.CreateImage(image, *this, Origin));
+      BackgroundImages.AddLayerBottom(PastingObject.CreateImage(image, *this, DisplayOffset), DisplayOffset);
       UpdateGUIElements();
       SetModified();
       break;
    case DatabaseClass::PasteDrawing:
-      PastingObject.DrawIntoImage(image, *this, Origin);
+      PastingObject.DrawIntoImage(image, *this, DisplayOffset);
       SetModified();
       break;
 

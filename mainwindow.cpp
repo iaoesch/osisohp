@@ -379,6 +379,13 @@ void MainWindow::DirectSelect()
     scribbleArea->setDirectSelect(DirectPostitSelectAct->isChecked());
 }
 
+void MainWindow::SimpleInterface()
+//! [9] //! [10]
+{
+    scribbleArea->setSimpleInterface(SimpleInterfaceAct->isChecked());
+}
+
+
 void MainWindow::ShowPostitsFrame()
 //! [9] //! [10]
 {
@@ -491,6 +498,11 @@ void MainWindow::createActions()
     DirectPostitSelectAct->setCheckable(true);
     connect(DirectPostitSelectAct, SIGNAL(triggered()), this, SLOT(DirectSelect()));
 
+    SimpleInterfaceAct = new QAction(tr("&Simple interface"), this);
+    SimpleInterfaceAct->setCheckable(true);
+    connect(SimpleInterfaceAct, SIGNAL(triggered()), this, SLOT(SimpleInterface()));
+
+
     ShowPostitsFrameAct = new QAction(tr("&Postit Frame"), this);
     ShowPostitsFrameAct->setCheckable(true);
     connect(ShowPostitsFrameAct, SIGNAL(triggered()), this, SLOT(ShowPostitsFrame()));
@@ -601,7 +613,8 @@ void MainWindow::createMenus()
     optionMenu->addAction(WhiteBoardColorAct);
     optionMenu->addAction(OHPColorAct);
     optionMenu->addAction(BlackBoardColorAct);
-    optionMenu->addAction(DirectPostitSelectAct);
+    optionMenu->addAction(SimpleInterfaceAct);
+
     optionMenu->addAction(SettingsAct);
     optionMenu->addSeparator();
     optionMenu->addAction(clearScreenAct);
