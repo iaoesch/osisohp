@@ -22,6 +22,7 @@
 
 /* imports */
 #include <map>
+#include <set>
 #include <string>
 #include "SettingsDialog.h"
 
@@ -38,11 +39,20 @@ class SettingClass {
       std::string Name;
       std::string Helptext;
       EntityDescriptor::VariantType DefaultValue;
+      EntityDescriptor *Descriptor;
    };
 
    std::map<void *, SettingInfo> Infos;
+   std::vector<GroupDescriptor> Groups;
+   std::map<std::string, int> GroupMapping;
+   GroupDescriptor *CurrentGroup;
 public:
+
+   double GestureTrackerTimeout = 4.0;
+
+   double ThrowingSpeedLimit = 0.25;
    double Touchscaling = 4.0;
+   double ScrollScaling = 5.0;
    double DirectSelectTimeout = 10.0;
    double CopyTimeout = 500*4;
    double GestureTimeout = 800*4;
@@ -57,20 +67,31 @@ public:
    double PointerHoldon = 250;
    int    EraserSize = 2;
    int    SpongeSize = 15;
+   std::string AutoSavePath;
+   int    DefaultAutoSaveIntervall;
 
-   void getSettings(GroupDescriptor &Descriptor);
+   std::vector<GroupDescriptor> &getSettings() {return Groups;}
+#ifdef UseFlatSettings
+#error "Old variant, just for reference, throw away soon"
+      void getSettings(GroupDescriptor &Descriptor);
+#endif
    SettingClass();
    void SetDefaultValues();
+   GroupDescriptor::CallbackType RegisterCallback(void *Value, GroupDescriptor::CallbackType Callback);
 private:
    template<class U>
-   void AddSettingsEntry(GroupDescriptor &Descriptor, U &Value) {
-      Descriptor.AddEntry(Infos[&Value].Name, Infos[&Value].Helptext, Value, std::get<U>(Infos[&Value].DefaultValue));
+   EntityDescriptor &AddSettingsEntry(GroupDescriptor &Descriptor, U &Value) {
+      return Descriptor.AddEntry(Infos[&Value].Name, Infos[&Value].Helptext, Value, std::get<U>(Infos[&Value].DefaultValue));
    }
 
    template<class U>
    void InitInfoEntry(U *Value, std::string Name, std::string HelpText) {
-      Infos[Value] = {Name, HelpText, *Value};
+      Infos[Value] = {Name, HelpText, *Value, nullptr};
+      EntityDescriptor &Descriptor = AddSettingsEntry(*CurrentGroup, *Value);
+      Infos[Value].Descriptor = &Descriptor;
    }
+
+   void SetCurrentGroup(std::string Group);
 
 };
 /*****************************************************************************/

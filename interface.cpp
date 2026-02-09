@@ -171,10 +171,5 @@ void GuiInterface::CreeatePostitFromSelection()
 #endif
 
 
-void GuiInterface::setSpeciallCursor()
-{
-   Scribler->SetSpecialCursor();
-}
-
 GuiInterface::GuiInterface(ScribbleArea *Scribler, CursorManager *TheCursorManager) : Scribler(Scribler), MyCursorManager(TheCursorManager)
 {}

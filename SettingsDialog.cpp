@@ -278,11 +278,29 @@ void TabDescriptor::AddEntry(const std::string &Name, const std::string &Help, E
 
 
 
+bool TabDialogDescriptor::Update()
+{
+   bool AnyValueChanged = false;
 
-void TabDialogDescriptor::Update()
+   for(auto &t: Tabs) {
+      if (t.Update()) {
+         AnyValueChanged = true;
+      }
+   }
+   return AnyValueChanged;
+}
+
+void TabDialogDescriptor::Fetch()
 {
    for(auto &t: Tabs) {
-      t.Update();
+      t.Fetch();
+   }
+}
+
+void TabDialogDescriptor::AddTab(std::vector<GroupDescriptor> &Descriptors)
+{
+   for (auto &e: Descriptors) {
+      Tabs.push_back(e);
    }
 }
 
@@ -290,6 +308,11 @@ GroupDescriptor &TabDialogDescriptor::AddTab(std::string Title)
 {
    Tabs.push_back(GroupDescriptor(Title));
    return Tabs.back();
+}
+
+void TabDialogDescriptor::AddTab(GroupDescriptor &Descriptor)
+{
+   Tabs.push_back(Descriptor);
 }
 
 

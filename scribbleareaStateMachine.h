@@ -54,7 +54,8 @@
 #include <QTouchEvent>
 #include <list>
 
-#include "box.hpp"
+#include "global.h"
+//#include "box.hpp"
 #include "Settings.hpp"
 #include "gesturetracker.hpp"
 #include "interface.hpp"
@@ -96,6 +97,73 @@ enum ScribblingState {
    WaitingToPasteClippboardImage
 };
 }
+class PenInfoClass {
+public:
+   float tiltx;
+   float tilty;
+   float rotation;
+   float Pressure;
+   bool  Erasing;
+
+   PenInfoClass(QTabletEvent * event) :
+       tiltx(event->xTilt()),
+       tilty(event->yTilt()),
+       rotation(event->rotation()),
+       Pressure(event->pressure()),
+       Erasing(event->pointerType() == QPointingDevice::PointerType::Eraser)
+   {}
+   PenInfoClass(MAY_BE_UNUSED nullptr_t event) :
+       tiltx(0),
+       tilty(0),
+       rotation(0),
+       Pressure(0),
+       Erasing(false)
+   {}
+   PenInfoClass(bool Eraser) :
+       tiltx(0),
+       tilty(0),
+       rotation(0),
+       Pressure(0),
+       Erasing(Eraser)
+   {}
+#if 0
+   /*
+# [tiltXrad, tiltYrad] => [azimuthRad, altitudeRad]
+# tiltX and tiltY should be in the range [0, pi/2]
+def tilt2spherical(inVec):
+    tiltXrad, tiltYrad = inVec[0], inVec[1]
+
+    if tiltXrad == 0 and tiltYrad == 0:
+        # pen perpendicular to the pad
+        return [0, math.pi/2]
+
+    # X and Y of a vector created by the intersection of tilt planes
+    # first normal vectors of tiltX and tiltY planes are defined
+    # from that cross product is done to find this vector perpendicular to both plane's normal vector
+    # in this unit vector Z is ignored to get x y coords projected on the pad
+    y = math.cos(tiltXrad) * math.sin(tiltYrad)
+    x = -math.sin(tiltXrad) * -math.cos(tiltYrad)
+    z = -math.cos(tiltXrad)*-math.cos(tiltYrad)
+    # compute angle of the projected 2D vector to get azimuth in the proper direction
+    azimuthRad = -math.atan2(y, x) + math.pi/2
+    if azimuthRad < 0:
+        # make always positive in range from 0 to 2*pi
+        azimuthRad += 2*math.pi
+
+    vecLenOn2DPad = math.sqrt(x*x+y*y)
+    altitudeRad = math.atan(z / vecLenOn2DPad)
+
+    # other possible, simpler way to get altitudeRad which is not 100% correct:
+    # deviation: max(7.96°) / avg(2.00°) / median(0.91°)
+    # not derived from anything, just two 2D situations combined by a multiplication
+    # altitudeRad = math.pi/2-math.acos(math.cos(tiltXrad) * math.cos(tiltYrad))
+
+    return [azimuthRad, altitudeRad]
+
+
+*/
+#endif
+};
 
 class StateBaseClass {
 protected:
@@ -105,10 +173,12 @@ protected:
 
 public:
    typedef DatabaseClass::PasteEvent PasteEvent;
+   typedef std::chrono::milliseconds Milliseconds;
+
    StateBaseClass(ControllingStateMachine &sm) : StateMachine(sm) {}
-   virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
-   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
-   virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
+   virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp);
+   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
+   virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo);
    virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    virtual void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
@@ -128,9 +198,9 @@ class StateClass : public StateBaseClass {
    static constexpr State::ScribblingState TheState = State;
 public:
    StateClass(ControllingStateMachine &sm) : StateBaseClass(sm) {}
-   virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp) override;
-   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure) override;
-   virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure) override;
+   virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp) override;
+   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo) override;
+   virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo) override;
    virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
@@ -227,12 +297,14 @@ private:
    MakeStateObject(WaitingToPasteClippboardImage);
 
 public:
+   typedef std::chrono::milliseconds Milliseconds;
 
    void ShowBigPointer();
+   void DrawGestureTrackerDebugInfo(QPainter &Painter, QPointF Offset) {Tracker.DrawDebugInfo(Painter, Offset);}
 
    void UseSpongeAsEraser(bool SpongeMode) {Context.SpongeAsEraser = SpongeMode;}
 
-
+   void setDirectSelect(bool Mode) {Context.SelectPostitsDirectly = Mode;}
    void SetNewState(StateBaseClass *NewState);
    enum PointerType {NONE, DRAWER, ERASER, WIPER};
    PointerType  PointerTypeToShow();
@@ -242,9 +314,9 @@ public:
 
    bool IsInSelectingState() {return ((CurrentState == &MovingSelection)||(CurrentState == &WaitingToLeaveJitterProtectionWithSelectedAreaForMoving)||(CurrentState == &MovingSelectionPaused));}
 
-   void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, ulong Timestamp);
-   void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, ulong Timestamp, bool Erasing, double Pressure);
-   void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, bool Erasing, double Pressure);
+   void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp);
+   void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
+   void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo);
    void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchReleaseEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
@@ -253,12 +325,19 @@ public:
    void HandleKeyEventSM(DatabaseClass::PasteEvent Event);
 
    ControllingStateMachine(DatabaseClass &Database, GuiInterface &Interface, class SettingClass &MySettings);
+
+
 public slots:
    void timeoutSM();
 
 private slots:
    void PointerTimeout();
    void Timeout();
+   void HandleGesture();
+
+signals:
+   void GestureDetected();
+
 };
 
 inline void StateBaseClass::StartTimer(double TimeInms) {StateMachine.MyTimer.start(static_cast<int>(TimeInms));}

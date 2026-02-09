@@ -44,6 +44,9 @@
 #include <QList>
 #include <QMainWindow>
 #include "Settings.hpp"
+#include <QTimer>
+#include <QFileInfo>
+#include <QDir>
 
 class ScribbleArea;
 class QActionGroup;
@@ -56,12 +59,17 @@ class MainWindow : public QMainWindow
 public:
     MainWindow();
 
+signals:
+    void ValueChanged();
+
+
 protected:
     void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
 private slots:
     void open();
     void Export();
+    void ImportToLayer();
     void penColor();
     void BackGroundColorColor();
     void BackGroundColorWhiteBoard();
@@ -92,6 +100,13 @@ private:
     bool maybeSave();
     bool ExportFile(const QByteArray &fileFormat);
 
+    //QString DefaultFileName;
+    static constexpr auto DefaultExtension = "ohp";
+    static constexpr auto AutosaveExtension = ".autosave";
+
+    QFileInfo CurrentFile;
+    QFileInfo CurrentAutosaveFile;
+
     ScribbleArea *scribbleArea;
     class SettingClass Settings;
 
@@ -121,6 +136,7 @@ private:
     QAction *openAct;
     QAction *saveAct;
     QList<QAction *> saveAsActs;
+    QAction *ImportAsLayerAct;
     QAction *PasteAct;
     QAction *CopyAct;
     QAction *exitAct;
@@ -132,6 +148,7 @@ private:
     QAction *penWidthAct;
     QAction *DirectPostitSelectAct;
     QAction *ShowPostitsFrameAct;
+    QAction *ShowGestureInfosAct;
     QAction *ShowCursorsAct;
     QAction *ShowOverviewAct;
     QAction *printAct;
@@ -139,6 +156,7 @@ private:
     QAction *SettingsAct;
     QAction *aboutAct;
     QAction *aboutQtAct;
+
 
     bool SaveFile(const QByteArray &fileFormat);
     void SetWhiteBoardColors();
@@ -152,6 +170,7 @@ private:
 
 
     // QWidget interface
+    void ShowGestureInfos();
 };
 //! [0]
 

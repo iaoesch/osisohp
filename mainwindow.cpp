@@ -49,8 +49,22 @@
 MainWindow::MainWindow()
 {
     SetOHPColors();
+
+   // DefaultFileName = QDir::homePath() + "/untitled." + DefaultExtension;
+
+    CurrentFile.setFile(QDir::homePath() + "/untitled." + DefaultExtension);
     readSettings();
+    CurrentFile.setFile(CurrentFile.absolutePath() + "/untitled." + DefaultExtension);
+
+    if (Settings.AutoSavePath.length() == 0) {
+
+       CurrentAutosaveFile.setFile(QDir::homePath() + "/untitled."  + DefaultExtension + AutosaveExtension);
+    } else {
+       CurrentAutosaveFile.setFile(QString::fromStdString(Settings.AutoSavePath + "/untitled."  + DefaultExtension + AutosaveExtension));
+    }
+
     scribbleArea = new ScribbleArea(Settings);
+    scribbleArea->SetAutosaveFileName(CurrentAutosaveFile.absoluteFilePath());
     setCentralWidget(scribbleArea);
     QWidget::setAttribute(Qt::WA_AcceptTouchEvents);
     //QWidget::setAttribute(Qt::WA_TouchPadAcceptSingleTouchEvents);
@@ -62,8 +76,7 @@ MainWindow::MainWindow()
   //  toolBar->insertAction(0, new PushButtonAction(QIcon(":/Refresh.gif"), "Refresh"));
 
     QPixmap ToolIcon(15, 15);
-#if 1
-    int PenId = 0;
+    //int PenId = 0;
     for (auto &p: PenInfo) {
        ToolIcon.fill(p.PenColor);
        p.SetPenColorAct = toolBar->addAction(QIcon(ToolIcon), "PenColor");
@@ -71,32 +84,6 @@ MainWindow::MainWindow()
        p.SetPenColorAct->setData(QVariant(p.PenColor));
     }
     PenInfo[NumberOfPens-1].SetPenColorAct->setText("MarkerYellow");
-#else
-    ToolIcon.fill(Qt::blue);
-    toolBar->addAction(QIcon(ToolIcon), "Blue")->setChecked(true);
-
-    ToolIcon.fill(Qt::darkGreen);
-    Group->addAction(toolBar->addAction(ToolIcon, "Green"))->setCheckable(true);
-
-
-    ToolIcon.fill(Qt::darkYellow);
-    Group->addAction(toolBar->addAction(ToolIcon, "Yellow"))->setCheckable(true);
-
-    ToolIcon.fill(QColor(255, 128, 0));
-    Group->addAction(toolBar->addAction(ToolIcon, "Orange"))->setCheckable(true);
-
-    ToolIcon.fill(Qt::red);
-    Group->addAction(toolBar->addAction(ToolIcon, "Red"));
-
-    ToolIcon.fill(Qt::magenta);
-    Group->addAction(toolBar->addAction(ToolIcon, "Magenta"));
-
-    ToolIcon.fill(Qt::black);
-    Group->addAction(toolBar->addAction(ToolIcon, "Black"));
-
-    ToolIcon.fill(Qt::yellow);
-    toolBar->addAction(ToolIcon, "MarkerYellow");
-#endif
     PenColorGroup->setExclusive(true);
     PenInfo[0].SetPenColorAct->setChecked(true);
     scribbleArea->setPenColor(PenInfo[0].PenColor);
@@ -153,7 +140,7 @@ MainWindow::MainWindow()
               this, &MainWindow::SwitchToNextPenColor);
 
 
-  //
+
 
     setWindowTitle(tr("Osis OHP"));
     setWindowState(Qt::WindowMaximized);
@@ -256,12 +243,27 @@ void MainWindow::open()
 {
     if (maybeSave()) {
         QString fileName = QFileDialog::getOpenFileName(this,
-                                   tr("Open File"), QDir::currentPath());
-        if (!fileName.isEmpty())
+                                   tr("Open File"), CurrentFile.absoluteFilePath());
+        if (!fileName.isEmpty()) {
             scribbleArea->LoadImage(fileName);
+            CurrentFile.setFile(fileName);
+        }
+
     }
 }
 //! [4]
+void MainWindow::ImportToLayer()
+//! [3] //! [4]
+{
+
+        QString fileName = QFileDialog::getOpenFileName(this,
+                                   tr("Import File"), CurrentFile.absoluteFilePath());
+        if (!fileName.isEmpty()) {
+            scribbleArea->ImportImageToBackgroundLayer(fileName);
+        }
+
+
+}
 
 //! [5]
 void MainWindow::Export()
@@ -275,7 +277,7 @@ void MainWindow::Export()
 void MainWindow::Save()
 //! [5] //! [6]
 {
-   SaveFile("ohp");
+   SaveFile(DefaultExtension);
 }
 
 void MainWindow::ProtectImage()
@@ -374,7 +376,6 @@ void MainWindow::penWidth()
 void MainWindow::DirectSelect()
 //! [9] //! [10]
 {
-
     scribbleArea->setDirectSelect(DirectPostitSelectAct->isChecked());
 }
 
@@ -384,6 +385,14 @@ void MainWindow::ShowPostitsFrame()
 
     scribbleArea->setShowPostitsFrame(ShowPostitsFrameAct->isChecked());
 }
+
+void MainWindow::ShowGestureInfos()
+//! [9] //! [10]
+{
+
+    scribbleArea->setShowGestureInfos(ShowGestureInfosAct->isChecked());
+}
+
 
 void MainWindow::ShowCursors()
 //! [9] //! [10]
@@ -424,6 +433,11 @@ void MainWindow::createActions()
     openAct = new QAction(tr("&Open..."), this);
     openAct->setShortcuts(QKeySequence::Open);
     connect(openAct, SIGNAL(triggered()), this, SLOT(open()));
+
+    ImportAsLayerAct = new QAction(tr("&Import Layer"), this);
+    //ImportAsLayerAct->setShortcuts(QKeySequence::Open);
+    connect(ImportAsLayerAct, &QAction::triggered, this, &MainWindow::ImportToLayer);
+
 
     saveAct = new QAction(tr("&Save..."), this);
     saveAct->setShortcuts(QKeySequence::Save);
@@ -485,6 +499,11 @@ void MainWindow::createActions()
     ShowCursorsAct->setCheckable(true);
     connect(ShowCursorsAct, &QAction::triggered, this, &MainWindow::ShowCursors);
 
+
+    ShowGestureInfosAct = new QAction(tr("&Gesture Infos"), this);
+    ShowGestureInfosAct->setCheckable(true);
+    connect(ShowGestureInfosAct, &QAction::triggered, this, &MainWindow::ShowGestureInfos);
+
     clearScreenAct = new QAction(tr("&Clear Screen"), this);
     clearScreenAct->setShortcut(tr("Ctrl+L"));
     connect(clearScreenAct, SIGNAL(triggered()),
@@ -531,28 +550,15 @@ void MainWindow::ShowOverviewChanged(bool OverviewEnabled)
 
 void MainWindow::ShowSettings()
 {
-   static struct Settings {
-    bool Value1 = true;
-    int Value2 = 128;
-    double Value3 = 3.14;
-    std::string Value4 = "Fritz";
-    std::string Value5 = "guess";
-   } MyLocalSettings;
-    TabDialogDescriptor Descriptor("Test");
-    Descriptor.AddTab("Tab1");
-    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value1, false);
-    Descriptor.GetTab().AddEntry("Val 2", "Help for Val 2", MyLocalSettings.Value2, 0);
-    Descriptor.GetTab().AddEntry("Val 3", "Help for Val 3", MyLocalSettings.Value3, 0.0);
-    Descriptor.GetTab().AddEntry("Val 4", "Help for Val 4", MyLocalSettings.Value4, std::string(""));
-    Descriptor.AddTab("Tab2");
-    Descriptor.GetTab().AddEntry("Val 1", "Help for Val 1", MyLocalSettings.Value5, std::string(""));
-    Descriptor.AddTab("Timings");
-    this->Settings.getSettings(Descriptor.GetTab());
-
+   TabDialogDescriptor Descriptor("Preferences");
+   Descriptor.AddTab( Settings.getSettings());
+   Descriptor.Fetch();
     SettingsDialog MySettings(Descriptor);
     auto Result  = MySettings.exec();
     if (Result == QDialog::Accepted) {
-       Descriptor.Update();
+       if (Descriptor.Update()) {
+          emit(ValueChanged());
+       }
     }
 
 }
@@ -579,6 +585,7 @@ void MainWindow::createMenus()
     fileMenu->addAction(openAct);
     fileMenu->addAction(saveAct);
     fileMenu->addMenu(saveAsMenu);
+    fileMenu->addAction(ImportAsLayerAct);
     fileMenu->addAction(printAct);
     fileMenu->addAction(CopyAct);
     fileMenu->addAction(PasteAct);
@@ -604,6 +611,7 @@ void MainWindow::createMenus()
     DebugMenu = new QMenu(tr("&Debug"), this);
     DebugMenu->addAction(ShowPostitsFrameAct);
     DebugMenu->addAction(ShowCursorsAct);
+    DebugMenu->addAction(ShowGestureInfosAct);
     DebugMenu->addAction(SettingsAct);
 
 
@@ -631,7 +639,7 @@ bool MainWindow::maybeSave()
                           QMessageBox::Save | QMessageBox::Discard
                           | QMessageBox::Cancel);
         if (ret == QMessageBox::Save) {
-            return SaveFile("ohp");
+            return SaveFile(DefaultExtension);
         } else if (ret == QMessageBox::Cancel) {
             return false;
         }
@@ -647,7 +655,7 @@ bool MainWindow::ExportFile(const QByteArray &fileFormat)
     QString initialPath = QDir::currentPath() + "/untitled." + fileFormat;
 
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),
-                               initialPath,
+                               CurrentFile.absolutePath(),
                                tr("%1 Files (*.%2);;All Files (*)")
                                .arg(QString::fromLatin1(fileFormat.toUpper()))
                                .arg(QString::fromLatin1(fileFormat)));
@@ -660,16 +668,19 @@ bool MainWindow::ExportFile(const QByteArray &fileFormat)
 bool MainWindow::SaveFile(const QByteArray &fileFormat)
 //! [19] //! [20]
 {
-    QString initialPath = QDir::currentPath() + "/untitled." + fileFormat;
 
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),
-                               initialPath,
+                               CurrentFile.absoluteFilePath(),
                                tr("%1 Files (*.%2);;All Files (*)")
                                .arg(QString::fromLatin1(fileFormat.toUpper()))
                                .arg(QString::fromLatin1(fileFormat)));
     if (fileName.isEmpty()) {
         return false;
     } else {
+        CurrentFile.setFile(fileName);
+        CurrentAutosaveFile.setFile(fileName + AutosaveExtension);
+        scribbleArea->SetAutosaveFileName(CurrentAutosaveFile.absoluteFilePath());
+
         return scribbleArea->SaveImage(fileName);
     }
 }
@@ -677,9 +688,17 @@ bool MainWindow::SaveFile(const QByteArray &fileFormat)
 void MainWindow::writeSettings()
 {
     QSettings SettingsManager("OESCH", "OverheadProjector");
+#ifdef UseFlatSettings
+#error "Old variant, just for reference, throw away soon"
     GroupDescriptor MySettings("timings");
     Settings.getSettings(MySettings);
     SettingsManager.beginGroup("timings");
+#else
+    auto GroupedSettings = Settings.getSettings();
+    for (auto MySettings: GroupedSettings) {
+       MySettings.Fetch();
+    SettingsManager.beginGroup(QString::fromStdString(MySettings.GetGroupName()));
+#endif
 
     for (auto &d: MySettings.getEntries()) {
        // Switch on type in variant
@@ -698,7 +717,12 @@ void MainWindow::writeSettings()
         }
     }
 
+#ifdef UseFlatSettings
     SettingsManager.endGroup();
+#else
+    SettingsManager.endGroup();
+    }
+#endif
 
     SettingsManager.beginGroup("Drawing");
     SettingsManager.beginWriteArray("Pens");
@@ -711,6 +735,8 @@ void MainWindow::writeSettings()
     SettingsManager.setValue("ScrollHintColor", ScrollHintColor);
     SettingsManager.setValue("SelectionHintColor", SelectionHintColor);
     SettingsManager.setValue("PostItBackgroundColor", PostItBackgroundColor);
+   // SettingsManager.setValue("DefaultFileName", DefaultFileName);
+    SettingsManager.setValue("CurrentFile", CurrentFile.absolutePath());
 
     SettingsManager.beginGroup("SensorNames");
     SettingsManager.endGroup();
@@ -721,9 +747,19 @@ void MainWindow::writeSettings()
 void MainWindow::readSettings()
 {
    QSettings SettingsManager("OESCH", "OverheadProjector");
+#ifdef UseFlatSettings
+#error "Old variant, just for reference, throw away soon"
+
    GroupDescriptor MySettings("timings");
    Settings.getSettings(MySettings);
    SettingsManager.beginGroup("timings");
+#else
+    auto GroupedSettings = Settings.getSettings();
+    for (auto MySettings: GroupedSettings) {
+
+    SettingsManager.beginGroup(QString::fromStdString(MySettings.GetGroupName()));
+#endif
+
 
    for (auto &d: MySettings.getEntries()) {
       // Switch on type in variant
@@ -741,9 +777,14 @@ void MainWindow::readSettings()
             d.SetValue<std::string>(SettingsManager.value(QString::fromStdString(d.Title), QVariant(QString::fromStdString(d.GetDefaultValue<std::string>()))).value<std::string>());
        }
    }
-   MySettings.Update();
-
-   SettingsManager.endGroup();
+#ifdef UseFlatSettings
+    SettingsManager.endGroup();
+    MySettings.Update();
+#else
+    SettingsManager.endGroup();
+    MySettings.Update();
+    }
+#endif
 
     SettingsManager.beginGroup("Drawing");
     int size = SettingsManager.beginReadArray("Pens");
@@ -759,6 +800,8 @@ void MainWindow::readSettings()
     SelectionHintColor = SettingsManager.value("SelectionHintColor").value<QColor>();
     PostItBackgroundColor = SettingsManager.value("PostItBackgroundColor").value<QColor>();
 
+ //   DefaultFileName = SettingsManager.value("DefaultFileName", QVariant(DefaultFileName)).value<QString>();
+    CurrentFile = QFileInfo(SettingsManager.value("CurrentFile", QVariant(CurrentFile.absolutePath())).value<QString>());
     SettingsManager.beginGroup("SensorNames");
     SettingsManager.endGroup();
     SettingsManager.endGroup();

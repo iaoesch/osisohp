@@ -7,25 +7,36 @@ HEADERS       = mainwindow.h \
    SettingsDialog.h \
    ValueGroupDescriptor.h \
    animatedcursorclass.h \
+   backgroundimagemanagerclass.h \
    databaseclass.h \
+   drawingobjectclass.h \
    gesturetracker.hpp \
+   global.h \
    interface.hpp \
+   pastingobjectclass.h \
+   postitmanagerclass.h \
                 scribblearea.h \
     box.hpp \
     position.hpp \
-   scribbleareaStateMachine.h
+   scribbleareaStateMachine.h \
+   selectionclass.h
 SOURCES       = main.cpp \
    Settings.cpp \
    SettingsDialog.cpp \
    animatedcursorclass.cpp \
+   backgroundimagemanagerclass.cpp \
    databaseclass.cpp \
+   drawingobjectclass.cpp \
    gesturetracker.cpp \
                 mainwindow.cpp \
+   pastingobjectclass.cpp \
+   postitmanagerclass.cpp \
                 scribblearea.cpp \
     Box.cpp \
     position.cpp \
    scribbleareaStateMachine.cpp\
-   interface.cpp
+   interface.cpp \
+   selectionclass.cpp
 
 resources.files = \
     images/HandWithPen.png \

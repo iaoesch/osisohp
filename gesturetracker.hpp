@@ -23,41 +23,87 @@
 /*****************************************************************************/
 
 /* imports */
+#include <QObject>
 #include <QPoint>
 #include <QPointF>
+#include <QTimer>
 
 
 /* Class constant declaration  */
 
 /* Class Type declaration      */
+class SettingClass;
+class QPainter;
 
 /* Class data declaration      */
 
 /* Class definition            */
-class GestureTrackerClass {
+class GestureTrackerClass : public QObject {
+
+   Q_OBJECT
 
    // Data
-   private:
+   public:
 
-   QPointF  StartPosition;
-   ulong   StartPositionTimeStamp;
-   QPointF  LastPosition;
-   ulong   LastPositionTimeStamp;
-   QPointF AccumulatedSpeed;
-   QPointF AccumulatedSquaredSpeed;
+   struct GestureInfo {
+      double  AccumulatedLength;
+      std::chrono::milliseconds  AccumulatedTime;
+
+      QPointF AccumulatedSpeed;
+      QPointF AccumulatedSquaredSpeed;
+      double AccumulatedAbsoluteOfSpeed;
+
+      QPointF AccumulatedAcceleration;
+      QPointF AccumulatedAbsolutesOfAccelerationComponents;
+
+      QPointF AccumulatedRuck;
+      QPointF AccumulatedAbsolutesOfRuckComponents;
+
+      QPointF StartPosition;
+      std::chrono::milliseconds   StartPositionTimeStamp;
+      QPointF EndPosition;
+      std::chrono::milliseconds   EndPositionTimeStamp;
+
+      void Clear();
+      bool IsValid() {return AccumulatedTime.count() > 0;}
+   };
+
+   private:
+   QTimer   MyTimer;
+
+   SettingClass &Settings;
+
+   bool GestureFinished;
+   GestureInfo CurrentGesture;
+   GestureInfo LastGesture;
+
+   QPointF LastPosition;
+   QPointF LastSpeed;
+   QPointF LastAcceleration;
+   std::chrono::milliseconds   LastPositionTimeStamp;
 
    ulong CurrentDistance;
    ulong LastDistance;
-   ulong DeltaTimeLastDistance;
-   ulong DeltaTimeCurrentDistance;
+   std::chrono::milliseconds DeltaTimeLastDistance;
+   std::chrono::milliseconds DeltaTimeCurrentDistance;
 
    // Methods
-   public:
-   void StartTracking(QPointF Position, ulong Timestamp);
-   void Trackmovement(QPointF Position, ulong Timestamp);
+   void StartNewGesture(QPointF Position, std::chrono::milliseconds Timestamp);
+   std::vector<int> GetDatasToDraw(GestureInfo &Gesture, double Scaling);
+public:
+   void StartTracking(QPointF Position, std::chrono::milliseconds Timestamp);
+   void Trackmovement(QPointF Position, std::chrono::milliseconds Timestamp);
    float GetCurrentSpeed();
    bool IsFastShaking();
-   GestureTrackerClass();
+   GestureTrackerClass(SettingClass &TheSettings);
+
+   bool IsThrowing();
+
+   void DrawDebugInfo(QPainter &Painter, QPointF Offset);
+signals:
+   void GestureDetected();
+private slots:
+   void Timeout();
 };
 
 /*****************************************************************************/
