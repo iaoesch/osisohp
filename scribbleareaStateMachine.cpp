@@ -51,15 +51,15 @@
 #include "DebugStream.hpp"
 
 template<>
-void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp);
+void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp);
 
-void StateBaseClass::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp)
+void StateBaseClass::HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp)
 {
    DEBUG_LOG << "HandlePressEventSM: unexpected State: (Baseclass)" << StateId()  << std::endl;
-   StateMachine.Idle.HandlePressEventSM(Button, Position, Timestamp);
+   StateMachine.Idle.HandlePressEventSM(Button, Modifiers, Position, Timestamp);
 }
 
-void StateBaseClass::HandleMoveEventSM(MAY_BE_UNUSED Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, MAY_BE_UNUSED const PenInfoClass &PenInfo)
+void StateBaseClass::HandleMoveEventSM(MAY_BE_UNUSED Qt::MouseButtons Buttons, MAY_BE_UNUSED Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, MAY_BE_UNUSED const PenInfoClass &PenInfo)
 {
 
    StateMachine.Tracker.Trackmovement(Position, Timestamp);
@@ -68,7 +68,7 @@ void StateBaseClass::HandleMoveEventSM(MAY_BE_UNUSED Qt::MouseButtons Buttons, Q
    StateMachine.Context.LastPointerPosition = Position;
 }
 
-void StateBaseClass::HandleMoveEventSM(MAY_BE_UNUSED Qt::MouseButtons Buttons, QPointF Position, QPointF ScaledPosition, Milliseconds Timestamp, MAY_BE_UNUSED const PenInfoClass &PenInfo)
+void StateBaseClass::HandleMoveEventSM(MAY_BE_UNUSED Qt::MouseButtons Buttons, MAY_BE_UNUSED Qt::KeyboardModifiers Modifiers, QPointF Position, QPointF ScaledPosition, Milliseconds Timestamp, MAY_BE_UNUSED const PenInfoClass &PenInfo)
 {
 
     StateMachine.Tracker.Trackmovement(Position, Timestamp);
@@ -159,13 +159,13 @@ State::ScribblingState StateClass<State>::StateId() {return TheState;}
 
 
 template<State::ScribblingState State>
-void StateClass<State>::HandlePressEventSM(MAY_BE_UNUSED Qt::MouseButton Button, MAY_BE_UNUSED QPointF Position, MAY_BE_UNUSED Milliseconds Timestamp)
+void StateClass<State>::HandlePressEventSM(MAY_BE_UNUSED Qt::MouseButton Button, MAY_BE_UNUSED Qt::KeyboardModifiers Modifiers, MAY_BE_UNUSED QPointF Position, MAY_BE_UNUSED Milliseconds Timestamp)
 {
    DEBUG_LOG << "Unexpected event HandlePressEventSM() in default<> State " << StateId() << std::endl;
 }
 
 template<State::ScribblingState State>
-void StateClass<State>::HandleMoveEventSM(MAY_BE_UNUSED Qt::MouseButtons Buttons , MAY_BE_UNUSED QPointF Position, MAY_BE_UNUSED Milliseconds Timestamp, MAY_BE_UNUSED const PenInfoClass &PenInfo)
+void StateClass<State>::HandleMoveEventSM(MAY_BE_UNUSED Qt::MouseButtons Buttons, MAY_BE_UNUSED Qt::KeyboardModifiers Modifiers, MAY_BE_UNUSED QPointF Position, MAY_BE_UNUSED Milliseconds Timestamp, MAY_BE_UNUSED const PenInfoClass &PenInfo)
 {
    DEBUG_LOG << "Unexpected event HandleMoveEventSM() in default<> State " << StateId() << std::endl;
 }
@@ -227,7 +227,7 @@ void StateClass<State>::HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF
 /***************  IDLE  *****************/
 //! [0]
 template<>
-void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp)
+void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp)
 {
     DEBUG_LOG << "Button Down: " << Button  << std::endl;
     if (Button == Qt::LeftButton) {
@@ -243,6 +243,16 @@ void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF
         StateMachine.Context.MyDatas.setButtonDownPosition(Position);
         // StateMachine.Context.MyDatas.RestartCurrentPaintedObjectBoundingBox(Position);
         StateMachine.Context.MyDatas.setSelectedCurrentPosition(Position);
+        if ((Modifiers & Qt::KeyboardModifier::ShiftModifier) != 0) {
+           StateMachine.Context.MyDatas.MakeSreenMoveHint();
+           //Scrolling = true;
+           StateMachine.Context.ScrollingLastPosition = StateMachine.Context.MyDatas.getSelectedCurrentPosition();
+           StateMachine.Context.ScrollingOldOrigin = StateMachine.Context.MyDatas.GetOrigin();
+           StateMachine.Interface.SetCursor(CursorManager::ScrollingPointer);
+           //scribbling = false;
+           StateMachine.Interface.UpdateRequest();
+           StateMachine.SetNewState(&StateMachine.WaitingToLeaveJitterProtectionForScrolling);
+        } else {
         if(StateMachine.Context.SimpleInterface) {
             StartTimer(StateMachine.Settings.SelectTimeout);
             StateMachine.Interface.SetCursor(CursorManager::TimedPointerForScrolling, StateMachine.Settings.SelectTimeout);
@@ -274,14 +284,15 @@ void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, QPointF
                 }
             }
         }
+        }
     }
 }
 
 
 template<>
-void StateClass<State::Idle>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void StateClass<State::Idle>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+    StateBaseClass::HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
     StateMachine.ShowBigPointer();
     if ((Buttons & Qt::LeftButton)) {
         // Should never get here, as Buttondown in idle changees state
@@ -326,15 +337,15 @@ void StateClass<State::Idle>::HandlePasteEventSM(QImage Image)
 
 /***************  WaitingToLeaveJitterProtectionForDrawing  *****************/
 template <>
-void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
+void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
 template<>
 void StateClass<State::Drawing>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo);
 
 template<>
 void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
-    ::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+    ::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-    StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+    StateBaseClass::HandleMoveEventSM(Buttons, Modifiers,  Position, Timestamp, PenInfo);
     StateMachine.ShowBigPointer();
 
     if ((Buttons & Qt::LeftButton)) {
@@ -361,7 +372,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
         }
         //  StateMachine.Context.MyDatas.ExtendBoundingboxAndShape(Position);
 
-        //StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+        //StateMachine.Drawing.HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
     }  else {
         HandleMoveNoLeftButtonEvent(Buttons, Position);
@@ -436,10 +447,10 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
 /***************  Drawing  *****************/
 
 template<>
-void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
    QPointF ScaledPosition = StateMachine.Context.MyDatas.ScaleMovement(Position);
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, ScaledPosition, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers,  Position, ScaledPosition, Timestamp, PenInfo);
    StateMachine.ShowBigPointer();
 
    if ((Buttons & Qt::LeftButton)) {
@@ -505,9 +516,9 @@ void StateClass<State::Drawing>::timeoutSM()
 
 #if 0
 template<>
-void StateClass<State::DrawingPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void StateClass<State::DrawingPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
    StateMachine.ShowBigPointer();
 
    if ((Buttons & Qt::LeftButton)) {
@@ -516,7 +527,7 @@ void StateClass<State::DrawingPaused>::HandleMoveEventSM(Qt::MouseButtons Button
        }
 
        StateMachine.SetNewState(&StateMachine.DrawingFillRequested);
-       StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+       StateMachine.Drawing.HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
    }  else {
       HandleMoveNoLeftButtonEvent(Buttons, Position);
@@ -554,9 +565,9 @@ void StateClass<State::DrawingPaused>::timeoutSM()
 /***************  DrawingFillRequested  *****************/
 
 template<>
-void StateClass<State::DrawingFillRequested>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void StateClass<State::DrawingFillRequested>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers,  Position, Timestamp, PenInfo);
    StateMachine.ShowBigPointer();
 
    if ((Buttons & Qt::LeftButton)) {
@@ -569,7 +580,7 @@ void StateClass<State::DrawingFillRequested>::HandleMoveEventSM(Qt::MouseButtons
           StateMachine.Interface.SetCursor(CursorManager::DrawingPinter);
 
        }
-       StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+       StateMachine.Drawing.HandleMoveEventSM(Buttons, Modifiers,  Position, Timestamp, PenInfo);
 
    }  else {
       HandleMoveNoLeftButtonEvent(Buttons, Position);
@@ -607,9 +618,9 @@ void StateClass<State::DrawingFillRequested>::timeoutSM()
 /***************  DrawingKillRequested  *****************/
 
 template<>
-void StateClass<State::DrawingKillRequested>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void StateClass<State::DrawingKillRequested>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers,  Position, Timestamp, PenInfo);
    StateMachine.ShowBigPointer();
 
    if ((Buttons & Qt::LeftButton)) {
@@ -622,7 +633,7 @@ void StateClass<State::DrawingKillRequested>::HandleMoveEventSM(Qt::MouseButtons
           StateMachine.Interface.SetCursor(CursorManager::DrawingPinter);
 
        }
-       StateMachine.Drawing.HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+       StateMachine.Drawing.HandleMoveEventSM(Buttons, Modifiers,  Position, Timestamp, PenInfo);
 
    }  else {
       HandleMoveNoLeftButtonEvent(Buttons, Position);
@@ -667,13 +678,13 @@ void StateClass<State::DrawingKillRequested>::timeoutSM()
 /***************  WaitingToLeaveJitterProtectionWithSelectedAreaForMoving  *****************/
 
 template<>
-void StateClass<State::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
+void StateClass<State::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
 
 template<>
 void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>
-::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers,  Position, Timestamp, PenInfo);
 
    if ((Buttons & Qt::LeftButton)) {
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position,  PenInfo.Pressure)) {
@@ -682,7 +693,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>
        StateMachine.Interface.SetCursor(CursorManager::MovingCutoutPointer);
 
        StateMachine.SetNewState(&StateMachine.MovingSelection);
-       StateMachine.MovingSelection.HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+       StateMachine.MovingSelection.HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
 
    }  else {
@@ -721,9 +732,9 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedAreaForMoving>
 /***************  MovingSelection  *****************/
 
 template<>
-void StateClass<State::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void StateClass<State::MovingSelection>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
    if ((Buttons & Qt::LeftButton)) {
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position,  PenInfo.Pressure)) {
@@ -802,9 +813,9 @@ void StateClass<State::MovingSelection>::timeoutSM()
 /***************  MovingSelectionPaused  *****************/
 #if 0 // Not required, stay just in movingselection
 template<>
-void StateClass<State::MovingSelectionPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void StateClass<State::MovingSelectionPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
    if ((Buttons & Qt::LeftButton)) {
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position,  PenInfo.Pressure)) {
@@ -812,7 +823,7 @@ void StateClass<State::MovingSelectionPaused>::HandleMoveEventSM(Qt::MouseButton
        }
 
        StateMachine.SetNewState(&StateMachine.MovingSelection);
-       StateMachine.MovingSelection.HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+       StateMachine.MovingSelection.HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
 
    }  else {
@@ -832,19 +843,19 @@ void StateClass<State::MovingSelectionPaused>::HandleReleaseEventSM(Qt::MouseBut
 #endif
 /***************  WaitingToLeaveJitterProtectionWithCreatedPostitForMoving  *****************/
 template<>
-void StateClass<State::MovingPostit>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
+void StateClass<State::MovingPostit>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
 
 template<>
-void StateClass<State::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void StateClass<State::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
    if ((Buttons & Qt::LeftButton)) {
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position,  PenInfo.Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
        StateMachine.SetNewState(&StateMachine.MovingPostit);
-       StateMachine.MovingPostit.HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+       StateMachine.MovingPostit.HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
 
    }  else {
@@ -864,9 +875,9 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithCreatedPostitForMoving>
 
 /***************  WaitingToLeaveJitterProtectionWithSelectedPostitForMoving  *****************/
 template<>
-void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
    if ((Buttons & Qt::LeftButton)) {
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position,  PenInfo.Pressure)) {
@@ -874,7 +885,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving
        }
 
        StateMachine.SetNewState(&StateMachine.MovingPostit);
-       StateMachine.MovingPostit.HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+       StateMachine.MovingPostit.HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
 
    }  else {
@@ -915,9 +926,9 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForMoving
 /***************  WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving  *****************/
 template<>
 void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForDeletingOrMoving>
-::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
    if ((Buttons & Qt::LeftButton)) {
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position,  PenInfo.Pressure)) {
@@ -925,7 +936,7 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForDeleti
        }
 
        StateMachine.SetNewState(&StateMachine.MovingPostit);
-       StateMachine.MovingPostit.HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+       StateMachine.MovingPostit.HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
 
    }  else {
@@ -968,9 +979,9 @@ void StateClass<State::WaitingToLeaveJitterProtectionWithSelectedPostitForDeleti
 /***************  MovingPostit  *****************/
 
 template<>
-void StateClass<State::MovingPostit>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void StateClass<State::MovingPostit>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
    if ((Buttons & Qt::LeftButton)) {
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position,  PenInfo.Pressure)) {
@@ -1025,9 +1036,9 @@ void StateClass<State::MovingPostit>::timeoutSM()
 /***************  MovingPostitPaused  *****************/
 
 template<>
-void StateClass<State::MovingPostitPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void StateClass<State::MovingPostitPaused>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
    if ((Buttons & Qt::LeftButton)) {
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position,  PenInfo.Pressure)) {
@@ -1035,7 +1046,7 @@ void StateClass<State::MovingPostitPaused>::HandleMoveEventSM(Qt::MouseButtons B
        }
        StateMachine.Interface.SetCursor(CursorManager::MovingPostitPointer);
        StateMachine.SetNewState(&StateMachine.MovingPostit);
-       StateMachine.MovingPostit.HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+       StateMachine.MovingPostit.HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
    }  else {
       HandleMoveNoLeftButtonEvent(Buttons, Position);
@@ -1072,19 +1083,19 @@ void StateClass<State::MovingPostitPaused>::timeoutSM()
 
 /***************  WaitingToLeaveJitterProtectionForScrolling  *****************/
 template<>
-void StateClass<State::ScrollingDrawingArea>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
+void StateClass<State::ScrollingDrawingArea>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
 
 template<>
-void StateClass<State::WaitingToLeaveJitterProtectionForScrolling>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void StateClass<State::WaitingToLeaveJitterProtectionForScrolling>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
    if ((Buttons & Qt::LeftButton)) {
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position,  PenInfo.Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
        StateMachine.SetNewState(&StateMachine.ScrollingDrawingArea);
-       StateMachine.ScrollingDrawingArea.HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+       StateMachine.ScrollingDrawingArea.HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
 
    }  else {
@@ -1109,16 +1120,20 @@ void StateClass<State::WaitingToLeaveJitterProtectionForScrolling>::HandleReleas
 /***************  ScrollingDrawingArea  *****************/
 
 template<>
-void StateClass<State::ScrollingDrawingArea>::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void StateClass<State::ScrollingDrawingArea>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   StateBaseClass::HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 
    if ((Buttons & Qt::LeftButton)) {
        if (StateMachine.Context.MyDatas.IsSelectionJitter(Position,  PenInfo.Pressure)) {
            return; // ignore small movements (probably use penwidth*2)
        }
        StateMachine.Context.MyDatas.TransferLastDrawnShape();
-       StateMachine.Context.MyDatas.ScrollImages(Position- StateMachine.Context.ScrollingLastPosition);
+       if ((Modifiers & Qt::KeyboardModifier::ShiftModifier) == 0) {
+          StateMachine.Context.MyDatas.ScrollImages(Position - StateMachine.Context.ScrollingLastPosition);
+       } else {
+          StateMachine.Context.MyDatas.ScrollImages((Position - StateMachine.Context.ScrollingLastPosition) * 4);
+       }
 
 
       StateMachine.Context.ScrollingLastPosition = Position;
@@ -1218,7 +1233,7 @@ void StateClass<State::WaitingForTouchScrolling>::HandleTouchPressEventSM(int Nu
 /*********** Overviev *******************************/
 
 template<>
-void StateClass<State::WaitingToSelectRegionFromOverview>::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, MAY_BE_UNUSED Milliseconds Timestamp)
+void StateClass<State::WaitingToSelectRegionFromOverview>::HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, MAY_BE_UNUSED Milliseconds Timestamp)
 {
    if (Button == Qt::LeftButton) {
       StateMachine.Context.MyDatas.ScrollImages(-(StateMachine.Context.MyDatas.TranslateCoordinateOffsetFromOverview(Position)-StateMachine.Context.MyDatas.GetOrigin()));
@@ -1280,7 +1295,7 @@ void StateClass<State::WaitingToPasteClippboardImage>::HandleKeyEventSM(PasteEve
 
 
 template<>
-void StateClass<State::WaitingToPasteClippboardImage>::HandlePressEventSM(Qt::MouseButton Button, MAY_BE_UNUSED QPointF Position, MAY_BE_UNUSED Milliseconds Timestamp)
+void StateClass<State::WaitingToPasteClippboardImage>::HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, MAY_BE_UNUSED QPointF Position, MAY_BE_UNUSED Milliseconds Timestamp)
 {
    if (Button == Qt::LeftButton) {
       StateMachine.Context.MyDatas.DoPasteImage(DatabaseClass::PasteDrawing);
@@ -1339,14 +1354,14 @@ void ControllingStateMachine::SetNewState(StateBaseClass *NewState)
    CurrentState = NewState;
 }
 
-void ControllingStateMachine::HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp)
+void ControllingStateMachine::HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp)
 {
-    CurrentState->HandlePressEventSM(Button, Position, Timestamp);
+    CurrentState->HandlePressEventSM(Button, Modifiers, Position, Timestamp);
 }
 
-void ControllingStateMachine::HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
+void ControllingStateMachine::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-    CurrentState->HandleMoveEventSM(Buttons, Position, Timestamp, PenInfo);
+    CurrentState->HandleMoveEventSM(Buttons, Modifiers, Position, Timestamp, PenInfo);
 }
 
 void ControllingStateMachine::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo)

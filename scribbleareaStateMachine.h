@@ -176,9 +176,9 @@ public:
    typedef std::chrono::milliseconds Milliseconds;
 
    StateBaseClass(ControllingStateMachine &sm) : StateMachine(sm) {}
-   virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp);
-   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
-   void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, QPointF ScaledPosition, Milliseconds Timestamp, const PenInfoClass &PenInfo);
+   virtual void HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp);
+   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
+   void HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, QPointF ScaledPosition, Milliseconds Timestamp, const PenInfoClass &PenInfo);
    virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo);
    virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
@@ -199,8 +199,8 @@ class StateClass : public StateBaseClass {
    static constexpr State::ScribblingState TheState = State;
 public:
    StateClass(ControllingStateMachine &sm) : StateBaseClass(sm) {}
-   virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp) override;
-   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo) override;
+   virtual void HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp) override;
+   virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo) override;
    virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo) override;
    virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition) override;
@@ -317,8 +317,8 @@ public:
 
    bool IsInSelectingState() {return ((CurrentState == &MovingSelection)||(CurrentState == &WaitingToLeaveJitterProtectionWithSelectedAreaForMoving)||(CurrentState == &MovingSelectionPaused));}
 
-   void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp);
-   void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
+   void HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp);
+   void HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
    void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo);
    void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
