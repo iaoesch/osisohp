@@ -172,6 +172,7 @@ private:
 public:
     void UpdateGUI(const std::vector<bool> &Visibilities);
     bool IsInSelectingState() {return StateMachine.IsInSelectingState();}
+    void SetDrawScaling(double Scale);
 };
 //! [0]
 

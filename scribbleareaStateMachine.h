@@ -178,6 +178,7 @@ public:
    StateBaseClass(ControllingStateMachine &sm) : StateMachine(sm) {}
    virtual void HandlePressEventSM(Qt::MouseButton Button, QPointF Position, Milliseconds Timestamp);
    virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
+   void HandleMoveEventSM(Qt::MouseButtons Buttons, QPointF Position, QPointF ScaledPosition, Milliseconds Timestamp, const PenInfoClass &PenInfo);
    virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo);
    virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);

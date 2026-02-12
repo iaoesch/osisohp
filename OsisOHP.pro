@@ -63,7 +63,8 @@ resources.files = \
     images/MousPointers/left_ptr.png
 
 
-
+ICON = icnsFile_dfd931c57c53dafbefd597a232474a4e_1713891152940.icns
+# QMAKE_INFO_PLIST = myapp.plist
 
 resources.prefix = /
 

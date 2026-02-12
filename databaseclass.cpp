@@ -30,6 +30,8 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
    ShowOverview = false;
    CutMode = true;
 
+   ScalingFactor = 1.0;
+
    BackGroundColor = QColor(230,230, 200,255);
    AdjustMarkercolor();
    ScrollHintColor = QColor(0, 30, 0, 50);

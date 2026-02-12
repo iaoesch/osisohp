@@ -46,6 +46,8 @@ class DatabaseClass : public QObject
 
    bool CutMode;
 
+   double ScalingFactor;
+
    QPointF lastPointDrawn;
    QPointF ButtonDownPosition;
 
@@ -78,11 +80,15 @@ public:
     static constexpr int getHintBorderPenWidth() {return HintBorderPenWidth;}
     static constexpr QColor getTransparentColor() { return TransparentColor;}
 
+
    void SetSelectedOffset() {
        CurrentSeelection.SetSelectedOffset(lastPointDrawn);
       //SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPointDrawn;
    }
 
+   QPointF ScaleMovement(QPointF Position) {
+       return  (Position - ButtonDownPosition) * Settings.DrawScaling + ButtonDownPosition;
+   }
 
    bool IsInsideLastPaintedObjectBoundingBox(QPointF const &Point)
    {
@@ -180,6 +186,8 @@ public:
    void UseSpongeAsEraser(bool UseSponge) {CurrentlyDrawnObject.UseSpongeAsEraser(UseSponge);}
    void CutSelection(bool DoCut) {CutMode = DoCut;}
    void RestorePenWidth() {CurrentlyDrawnObject.RestorePenWidth();}
+
+   void SetDrawScaling(double Scale) {ScalingFactor = Scale;}
 
    // Planes
    void MoveImageToBackgroundLayer();

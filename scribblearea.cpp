@@ -196,6 +196,11 @@ void ScribbleArea::setPenWidth(int newWidth)
     MyDatas.setPenWidth(newWidth);
 }
 
+void ScribbleArea::SetDrawScaling(double Scale)
+//! [7] //! [8]
+{
+    MyDatas.SetDrawScaling(Scale);
+}
 
 
 void ScribbleArea::PasteImage(QImage ImageToPaste)
