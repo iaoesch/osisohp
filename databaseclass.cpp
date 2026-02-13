@@ -30,6 +30,7 @@ DatabaseClass::DatabaseClass(ScribbleArea &Parent, class SettingClass &MySetting
    ShowOverview = false;
    CutMode = true;
 
+   InScalingMode = false;
    ScalingFactor = 1.0;
 
    BackGroundColor = QColor(230,230, 200,255);

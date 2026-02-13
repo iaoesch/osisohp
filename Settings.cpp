@@ -50,6 +50,7 @@ SettingClass::SettingClass()
    InitInfoEntry(&Touchscaling, "Touchscaling", "Lausanne: Mobilis 2 Zonen Badi Fleurie Wandern Uferweg");
    InitInfoEntry(&ScrollScaling, "ScrollScaling", "ScrollScaling");
    InitInfoEntry(&DrawScaling, "DrawScaling", "DrawScaling");
+   InitInfoEntry(&MaxPenForceScaling, "MaxPenForceScaling", "MaxPenForceScaling");
 
    SetCurrentGroup("Gestures");
    InitInfoEntry(&GestureTrackerTimeout, "GestureTrackerTimeout", "GestureTrackerTimeout");
@@ -83,6 +84,7 @@ void SettingClass::SetDefaultValues()
    Touchscaling = 4.0;
    ScrollScaling = 5.0;
    DrawScaling = 1.0;
+   MaxPenForceScaling = 11.0;
    ThrowingSpeedLimit = 0.25;
    GestureTrackerTimeout = 500;
    DirectSelectTimeout = 10.0;

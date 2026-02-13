@@ -26,7 +26,6 @@ QRect DrawingObjectClass::drawLineTo(const QPointF &endPoint, float Pressure)
 
     double ModifiedPenWidth = CalculatePenWidthLinear(Pressure, myPenWidth);
 //    double ModifiedPenWidth = CalculatePenWidthQuadratic(Pressure, myPenWidth);
-//   int ModifiedPenWidth = myPenWidth * qMax(1.0, Pressure*Pressure*4);
     QPainter painter(&CurrentImage);
     painter.setCompositionMode(QPainter::CompositionMode_Source);
     painter.setPen(QPen(myPenColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
@@ -70,24 +69,23 @@ QRect DrawingObjectClass::EraseLineTo(const QPointF &endPoint, float Pressure, Q
 
 double DrawingObjectClass::CalculatePenWidthQuadratic(double Pressure, int BaseWidth)
 {
-   constexpr double MaxPenScaling = 11.0;
+   double MaxPenScaling = Settings.MaxPenForceScaling;
    constexpr double MinPenScaling = 1.0;
    constexpr double MaxPenForce = 0.9;
    constexpr double MinPenForce = DatabaseClass::JitterPressureLimit;
    constexpr double dx = MaxPenForce*MaxPenForce - MinPenForce*MinPenForce;
-   constexpr double dy = MaxPenScaling - MinPenScaling;
+   double dy = MaxPenScaling - MinPenScaling;
 
    return (BaseWidth * qMax(MinPenScaling, Pressure*Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*MinPenForce*dy/dx))) + 0.5);
 }
 
 double DrawingObjectClass::CalculatePenWidthLinear(double Pressure, int BaseWidth)
 {
-   constexpr double MaxPenScaling = 11.0;
    constexpr double MinPenScaling = 1.0;
    constexpr double MaxPenForce = 0.9;
    constexpr double MinPenForce = DatabaseClass::JitterPressureLimit;
    constexpr double dx = MaxPenForce - MinPenForce;
-   constexpr double dy = MaxPenScaling - MinPenScaling;
+   double dy = Settings.MaxPenForceScaling - MinPenScaling;
 
    return (BaseWidth * qMax(MinPenScaling, Pressure*(dy/dx)+(MinPenScaling-(MinPenForce*dy/dx))) + 0.5);
 }
