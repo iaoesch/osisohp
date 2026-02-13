@@ -89,7 +89,7 @@ void DatabaseClass::drawLineTo(const QPointF &endPoint, float Pressure)
    DEBUG_LOG << "Drawing Pressure: " << Pressure << std::endl;
 
     SetModified();
-    update(CurrentlyDrawnObject.drawLineTo(endPoint, Pressure));
+    update(CurrentlyDrawnObject.drawLineTo(TransformGlyphPosition(endPoint), Pressure));
 }
 
 void DatabaseClass::EraseLineTo(const QPointF &endPoint, float Pressure)
@@ -530,7 +530,7 @@ void DatabaseClass::DrawLastDrawnShapeAndStartNewShape()
       SetModified();
       update();
    }
-   CurrentlyDrawnObject.BeginNewShape(ButtonDownPosition);
+   CurrentlyDrawnObject.BeginNewShape(TransformGlyphPosition(ButtonDownPosition));
    if (DrawStoredSegments()) {
       SetModified();
       update();

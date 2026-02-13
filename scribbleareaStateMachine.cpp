@@ -65,9 +65,9 @@ void StateBaseClass::HandleMoveEventSM(MAY_BE_UNUSED Qt::MouseButtons Buttons, M
    StateMachine.Tracker.Trackmovement(Position, Timestamp);
    //WaitForPostIt = false;
    StateMachine.Context.Showeraser = PenInfo.Erasing;
-   StateMachine.Context.LastPointerPosition = Position;
+   StateMachine.Context.MyDatas.setLastPointerPosition(Position);
 }
-
+#if 0
 void StateBaseClass::HandleMoveEventSM(MAY_BE_UNUSED Qt::MouseButtons Buttons, MAY_BE_UNUSED Qt::KeyboardModifiers Modifiers, QPointF Position, QPointF ScaledPosition, Milliseconds Timestamp, MAY_BE_UNUSED const PenInfoClass &PenInfo)
 {
 
@@ -76,7 +76,7 @@ void StateBaseClass::HandleMoveEventSM(MAY_BE_UNUSED Qt::MouseButtons Buttons, M
     StateMachine.Context.Showeraser = PenInfo.Erasing;
     StateMachine.Context.LastPointerPosition = ScaledPosition;
 }
-
+#endif
 
 void StateBaseClass::HandleReleaseEventSM(MAY_BE_UNUSED Qt::MouseButton Button, MAY_BE_UNUSED QPointF Position, MAY_BE_UNUSED const PenInfoClass &PenInfo)
 {
@@ -241,6 +241,10 @@ void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, Qt::Key
         StateMachine.Context.MyDatas.setLastPoint(Position);
         StateMachine.Context.MyDatas.ClearStoredLineSegments();
         StateMachine.Context.MyDatas.setButtonDownPosition(Position);
+        if (StateMachine.Context.MyDatas.InScalingMode == false) {
+            StateMachine.Context.MyDatas.setGlyphButtonDownPosition(Position);
+        }
+
         // StateMachine.Context.MyDatas.RestartCurrentPaintedObjectBoundingBox(Position);
         StateMachine.Context.MyDatas.setSelectedCurrentPosition(Position);
         if ((Modifiers & Qt::KeyboardModifier::ShiftModifier) != 0) {
@@ -332,6 +336,11 @@ void StateClass<State::Idle>::HandlePasteEventSM(QImage Image)
     StateMachine.SetNewState(&StateMachine.WaitingToPasteClippboardImage);
 }
 
+template<>
+void StateClass<State::Idle>::timeoutSM()
+{
+    StateMachine.Context.MyDatas.InScalingMode = false;
+}
 
 
 
@@ -363,6 +372,10 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
         StoppTimer();
         StartTimer(StateMachine.Settings.GestureTimeout);
         StateMachine.Interface.RestartAnimatedCursor();
+        if (! PenInfo.Erasing) {
+           StateMachine.Context.MyDatas.InScalingMode = true;
+        }
+
         StateMachine.Context.MyDatas.DrawLastDrawnShapeAndStartNewShape();
         //LastDrawnObject.fill(BackgroundColor);
         if (PenInfo.Erasing) {
@@ -385,6 +398,9 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
     ::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo)
 {
     if (Button == Qt::LeftButton) {
+        if (! PenInfo.Erasing) {
+           StateMachine.Context.MyDatas.InScalingMode = true;
+        }
         StateMachine.Context.MyDatas.DrawLastDrawnShapeAndStartNewShape();
         // Add small delta, as lines of length 0 are not drawn, probably
         // add only if Position == Butttondownposition
@@ -449,8 +465,8 @@ void StateClass<State::WaitingToLeaveJitterProtectionForDrawing>
 template<>
 void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo)
 {
-   QPointF ScaledPosition = StateMachine.Context.MyDatas.ScaleMovement(Position);
-   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers,  Position, ScaledPosition, Timestamp, PenInfo);
+ //  QPointF ScaledPosition = StateMachine.Context.MyDatas.ScaleMovement(Position);
+   StateBaseClass::HandleMoveEventSM(Buttons, Modifiers,  Position, Timestamp, PenInfo);
    StateMachine.ShowBigPointer();
 
    if ((Buttons & Qt::LeftButton)) {
@@ -470,7 +486,7 @@ void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt:
       if (PenInfo.Erasing) {
          StateMachine.Context.MyDatas.EraseLineTo(Position, PenInfo.Pressure);
       } else {
-         StateMachine.Context.MyDatas.drawLineTo(ScaledPosition, PenInfo.Pressure);
+         StateMachine.Context.MyDatas.drawLineTo(Position, PenInfo.Pressure);
       }
    //   StateMachine.Context.MyDatas.ExtendBoundingboxAndShape(Position);
 
@@ -483,13 +499,15 @@ void StateClass<State::Drawing>::HandleMoveEventSM(Qt::MouseButtons Buttons, Qt:
 template<>
 void StateClass<State::Drawing>::HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo)
 {
-   QPointF ScaledPosition = StateMachine.Context.MyDatas.ScaleMovement(Position);
+ //  QPointF ScaledPosition = StateMachine.Context.MyDatas.ScaleMovement(Position);
    if (Button == Qt::LeftButton) {
       StoppTimer();
       if (PenInfo.Erasing) {
          StateMachine.Context.MyDatas.EraseLineTo(Position, PenInfo.Pressure);
       } else {
-         StateMachine.Context.MyDatas.drawLineTo(ScaledPosition, PenInfo.Pressure);
+         StateMachine.Context.MyDatas.InScalingMode = true;
+         StateMachine.Context.MyDatas.drawLineTo(Position, PenInfo.Pressure);
+         StartTimer(StateMachine.Settings.GlyphContinuationTimeout);
       }
       StateMachine.Context.MyDatas.EndShape();
       StateMachine.SetNewState(&StateMachine.Idle);
@@ -1075,8 +1093,8 @@ void StateClass<State::MovingPostitPaused>::timeoutSM()
       StartTimer(StateMachine.Settings.PostitCopyTimeout);
       StateMachine.SetNewState(&StateMachine.MovingPostitPaused);
       StateMachine.Context.MyDatas.DuplicateSelectedPostits();
-      StateMachine.Context.MyDatas.MoveSelectedPostits(StateMachine.Context.LastPointerPosition + QPointF(4,4));
-      StateMachine.Context.LastPointerPosition += QPointF(4,4);
+      StateMachine.Context.MyDatas.MoveSelectedPostits(StateMachine.Context.MyDatas.getLastPointerPosition() + QPointF(4,4));
+      StateMachine.Context.MyDatas.setLastPointerPosition(StateMachine.Context.MyDatas.getLastPointerPosition() + QPointF(4,4));
       StateMachine.Interface.UpdateRequest();
 }
 

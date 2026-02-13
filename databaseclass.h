@@ -46,10 +46,17 @@ class DatabaseClass : public QObject
 
    bool CutMode;
 
+   public:
+   bool InScalingMode;
+
+   private:
    double ScalingFactor;
 
    QPointF lastPointDrawn;
    QPointF ButtonDownPosition;
+   QPointF GlyphButtonDownPosition;
+   QPointF LastPointerPosition;
+
 
 
    static constexpr QColor TransparentColor = QColor(255, 255, 255, 0);
@@ -86,9 +93,18 @@ public:
       //SelectedOffset = QPoint(SelectedImageBoundingBox.GetLeft(), SelectedImageBoundingBox.GetTop()) - lastPointDrawn;
    }
 
+   private:
    QPointF ScaleMovement(QPointF Position) {
-       return  (Position - ButtonDownPosition) * Settings.DrawScaling + ButtonDownPosition;
+       return  (Position - GlyphButtonDownPosition) * Settings.DrawScaling + GlyphButtonDownPosition;
    }
+   QPointF TransformGlyphPosition(QPointF Position) {
+       return InScalingMode==true?ScaleMovement(Position):Position;
+   }
+
+   public:
+
+   QPointF getLastPointerPosition() {return TransformGlyphPosition(LastPointerPosition);}
+   void setLastPointerPosition(QPointF Pos) {LastPointerPosition = Pos;}
 
    bool IsInsideLastPaintedObjectBoundingBox(QPointF const &Point)
    {
@@ -244,6 +260,10 @@ public:
    void setButtonDownPosition(QPointF newButtonDownPosition)
    {
       ButtonDownPosition = newButtonDownPosition;
+   }
+   void setGlyphButtonDownPosition(QPointF newButtonDownPosition)
+   {
+       GlyphButtonDownPosition = newButtonDownPosition;
    }
 
    bool getDiscardSelection() const

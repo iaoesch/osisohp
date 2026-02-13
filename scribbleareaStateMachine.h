@@ -178,7 +178,7 @@ public:
    StateBaseClass(ControllingStateMachine &sm) : StateMachine(sm) {}
    virtual void HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp);
    virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
-   void HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, QPointF ScaledPosition, Milliseconds Timestamp, const PenInfoClass &PenInfo);
+  // void HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, QPointF ScaledPosition, Milliseconds Timestamp, const PenInfoClass &PenInfo);
    virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo);
    virtual void HandleTouchPressEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
    virtual void HandleTouchMoveEventSM(int NumberOfTouchpoints, QPointF MeanPosition);
@@ -259,7 +259,6 @@ private:
       bool    DownInsideObject;
       bool    SimpleInterface;
 
-      QPointF LastPointerPosition;
       bool    ShowPointer;
       bool    Showeraser;
       bool    SpongeAsEraser;
@@ -311,7 +310,7 @@ public:
    void SetNewState(StateBaseClass *NewState);
    enum PointerType {NONE, DRAWER, ERASER, WIPER};
    PointerType  PointerTypeToShow();
-   QPointF getLastPointerPosition() {return Context.LastPointerPosition;}
+   QPointF getLastPointerPosition() {return Context.MyDatas.getLastPointerPosition();}
    bool IsScrollingState() {return (CurrentState == &ScrollingDrawingArea)||(CurrentState == &WaitingToLeaveJitterProtectionForScrolling)
    ||(CurrentState == &WaitingForTouchScrolling) ||(CurrentState == &TouchScrollingDrawingArea);}
 

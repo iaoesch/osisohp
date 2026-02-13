@@ -65,6 +65,7 @@ public:
    double MovePostitPauseTimeout = 500*4;
    double PostitCopyTimeout = 1000*4;
    double DeletePostItTimeout = 2000*4;
+   double GlyphContinuationTimeout = 1000*4;
    double PointerHoldon = 250;
    int    EraserSize = 2;
    int    SpongeSize = 15;

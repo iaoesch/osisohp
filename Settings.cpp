@@ -66,6 +66,7 @@ SettingClass::SettingClass()
    InitInfoEntry(&MovePostitPauseTimeout, "MovePostitPauseTimeout", "MovePostitPauseTimeout");
    InitInfoEntry(&PostitCopyTimeout, "PostitCopyTimeout", "PostitCopyTimeout");
    InitInfoEntry(&DeletePostItTimeout, "DeletePostItTimeout", "DeletePostItTimeout");
+   InitInfoEntry(&GlyphContinuationTimeout, "GlyphContinuationTimeout", "GlyphContinuationTimeout");
    InitInfoEntry(&PointerHoldon, "PointerHoldon", "PointerHoldon");
    SetCurrentGroup("General");
 
@@ -87,6 +88,7 @@ void SettingClass::SetDefaultValues()
    DirectSelectTimeout = 10.0;
    CopyTimeout = 500 * DebugFactor;
    DeletePostItTimeout = 2000 * DebugFactor;
+   GlyphContinuationTimeout = 1000 * DebugFactor;
    GestureTimeout = 2000 * DebugFactor;
    GoingToFillTimeout = 800*DebugFactor;
    CancelFillTimeout = 800*DebugFactor;
