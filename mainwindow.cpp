@@ -148,6 +148,11 @@ MainWindow::MainWindow()
     UpdateColors();
 
 }
+
+void MainWindow::HandleTabletProximityEvent(QTabletEvent *event)
+{
+    scribbleArea->ProximityTabletEvent(event);
+}
 //! [0]
 
 

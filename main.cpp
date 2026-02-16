@@ -41,11 +41,24 @@
 #include <QApplication>
 
 #include "mainwindow.h"
+#include "tabletapplication.h"
+
+
+
+
+//TabletApplication::~TabletApplication()
+//{}
+
+
+
+
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+    TabletApplication app(argc, argv);
     MainWindow window;
+    app.setCanvas(&window);
+
     window.show();
     return app.exec();
 }

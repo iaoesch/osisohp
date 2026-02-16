@@ -58,6 +58,8 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow();
+    void HandleTabletProximityEvent(QTabletEvent *event);
+
 
 signals:
     void ValueChanged();

@@ -19,7 +19,8 @@ HEADERS       = mainwindow.h \
     box.hpp \
     position.hpp \
    scribbleareaStateMachine.h \
-   selectionclass.h
+   selectionclass.h \
+   tabletapplication.h
 SOURCES       = main.cpp \
    Settings.cpp \
    SettingsDialog.cpp \
@@ -36,7 +37,8 @@ SOURCES       = main.cpp \
     position.cpp \
    scribbleareaStateMachine.cpp\
    interface.cpp \
-   selectionclass.cpp
+   selectionclass.cpp \
+   tabletapplication.cpp
 
 resources.files = \
     images/HandWithPen.png \

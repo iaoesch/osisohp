@@ -121,6 +121,8 @@ public:
     void UpdateShowOverviewChanged(bool OverviewEnabled);
 
     bool SaveImage(const QString &fileName);
+    // Inject proximity Event
+    void ProximityTabletEvent(QTabletEvent * event) {tabletEvent(event);}
 public slots:
     void clearImage()  {MyDatas.clearImage();}
     void print();
