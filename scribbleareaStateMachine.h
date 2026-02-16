@@ -176,6 +176,7 @@ public:
    typedef std::chrono::milliseconds Milliseconds;
 
    StateBaseClass(ControllingStateMachine &sm) : StateMachine(sm) {}
+   virtual void HandleProximityEventSM(QPointF Position, bool InProximity);
    virtual void HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp);
    virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
   // void HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, QPointF ScaledPosition, Milliseconds Timestamp, const PenInfoClass &PenInfo);
@@ -199,6 +200,7 @@ class StateClass : public StateBaseClass {
    static constexpr State::ScribblingState TheState = State;
 public:
    StateClass(ControllingStateMachine &sm) : StateBaseClass(sm) {}
+   virtual void HandleProximityEventSM(QPointF Position, bool InProximity) override;
    virtual void HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp) override;
    virtual void HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo) override;
    virtual void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo) override;
@@ -316,6 +318,7 @@ public:
 
    bool IsInSelectingState() {return ((CurrentState == &MovingSelection)||(CurrentState == &WaitingToLeaveJitterProtectionWithSelectedAreaForMoving)||(CurrentState == &MovingSelectionPaused));}
 
+   void HandleProximityEventSM(QPointF Position, bool InProximity);
    void HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp);
    void HandleMoveEventSM(Qt::MouseButtons Buttons, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp, const PenInfoClass &PenInfo);
    void HandleReleaseEventSM(Qt::MouseButton Button, QPointF Position, const PenInfoClass &PenInfo);

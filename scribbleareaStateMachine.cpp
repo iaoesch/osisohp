@@ -50,6 +50,16 @@
 #include "databaseclass.h"
 #include "DebugStream.hpp"
 
+
+template<>
+void StateClass<State::Idle>::HandleProximityEventSM(QPointF Position, bool InProximity);
+
+void StateBaseClass::HandleProximityEventSM(QPointF Position, bool InProximity)
+{
+    DEBUG_LOG << "HandleProximityEventSM: unexpected State: (Baseclass)" << StateId()  << std::endl;
+    StateMachine.Idle.HandleProximityEventSM(Position, InProximity);
+}
+
 template<>
 void StateClass<State::Idle>::HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp);
 
@@ -156,6 +166,11 @@ void StateBaseClass::HandleKeyEventSM(MAY_BE_UNUSED PasteEvent Event)
 template<State::ScribblingState State>
 State::ScribblingState StateClass<State>::StateId() {return TheState;}
 
+template<State::ScribblingState State>
+void StateClass<State>::HandleProximityEventSM(MAY_BE_UNUSED QPointF Position, MAY_BE_UNUSED bool InProximity)
+{
+    DEBUG_LOG << "Unexpected event HandleProximityEventSM() in default<> State " << StateId() << std::endl;
+}
 
 
 template<State::ScribblingState State>
@@ -342,6 +357,16 @@ void StateClass<State::Idle>::timeoutSM()
     StateMachine.Context.MyDatas.InScalingMode = false;
 }
 
+template<>
+void StateClass<State::Idle>::HandleProximityEventSM(MAY_BE_UNUSED QPointF Position, MAY_BE_UNUSED bool InProximity)
+{
+    // Pen has left sensitive area of tablet
+    if (InProximity == false) {
+       StoppTimer();
+       StateMachine.Context.MyDatas.InScalingMode = false;
+    }
+    DEBUG_LOG << "Unexpected event HandleProximityEventSM() in default<> State " << StateId() << std::endl;
+}
 
 
 /***************  WaitingToLeaveJitterProtectionForDrawing  *****************/
@@ -1371,6 +1396,12 @@ void ControllingStateMachine::SetNewState(StateBaseClass *NewState)
 {
    CurrentState = NewState;
 }
+
+void ControllingStateMachine::HandleProximityEventSM(QPointF Position, bool InProximity)
+{
+    CurrentState->HandleProximityEventSM(Position, InProximity);
+}
+
 
 void ControllingStateMachine::HandlePressEventSM(Qt::MouseButton Button, Qt::KeyboardModifiers Modifiers, QPointF Position, Milliseconds Timestamp)
 {

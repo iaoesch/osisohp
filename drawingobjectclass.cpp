@@ -28,6 +28,7 @@ QRect DrawingObjectClass::drawLineTo(const QPointF &endPoint, float Pressure)
 //    double ModifiedPenWidth = CalculatePenWidthQuadratic(Pressure, myPenWidth);
     QPainter painter(&CurrentImage);
     painter.setCompositionMode(QPainter::CompositionMode_Source);
+    painter.setRenderHint(QPainter::Antialiasing, Settings.AntiAliasingMode);
     painter.setPen(QPen(myPenColor, ModifiedPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
     painter.drawLine(lastPointDrawn, endPoint);

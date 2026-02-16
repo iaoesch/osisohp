@@ -51,6 +51,8 @@ SettingClass::SettingClass()
    InitInfoEntry(&ScrollScaling, "ScrollScaling", "ScrollScaling");
    InitInfoEntry(&DrawScaling, "DrawScaling", "DrawScaling");
    InitInfoEntry(&MaxPenForceScaling, "MaxPenForceScaling", "MaxPenForceScaling");
+   InitInfoEntry(&AntiAliasingMode, "AntiAliasingMode", "AntiAliasingMode");
+
 
    SetCurrentGroup("Gestures");
    InitInfoEntry(&GestureTrackerTimeout, "GestureTrackerTimeout", "GestureTrackerTimeout");
@@ -85,6 +87,7 @@ void SettingClass::SetDefaultValues()
    ScrollScaling = 5.0;
    DrawScaling = 1.0;
    MaxPenForceScaling = 11.0;
+   AntiAliasingMode = 0;
    ThrowingSpeedLimit = 0.25;
    GestureTrackerTimeout = 500;
    DirectSelectTimeout = 10.0;

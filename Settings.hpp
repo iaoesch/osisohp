@@ -55,6 +55,7 @@ public:
    double ScrollScaling = 5.0;
    double DrawScaling = 1.0;
    double MaxPenForceScaling = 11.0;
+   bool   AntiAliasingMode = false;
    double DirectSelectTimeout = 10.0;
    double CopyTimeout = 500*4;
    double GestureTimeout = 800*4;
